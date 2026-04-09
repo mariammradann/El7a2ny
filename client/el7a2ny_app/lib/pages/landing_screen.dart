@@ -14,8 +14,8 @@ const Color _kCardGrey = Color(0xFFF5F5F5);
 /// Body text on light backgrounds.
 const Color _kTextDark = Color(0xFF424242);
 
-class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({
+class LandingScreen extends StatelessWidget {
+  const LandingScreen({
     super.key,
     this.onEmergencyReport,
     this.onCreateAccount,

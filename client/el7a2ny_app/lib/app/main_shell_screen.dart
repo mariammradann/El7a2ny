@@ -5,7 +5,7 @@ import '../pages/tabs/community_tab_page.dart';
 import '../pages/tabs/home_tab_page.dart';
 import '../pages/tabs/istighatha_tab_page.dart';
 import '../pages/tabs/profile_tab_page.dart';
-import '../pages/welcome_screen.dart';
+import '../pages/landing_screen.dart';
 import '../widgets/emergency_dashboard_widgets.dart';
 
 /// الهيكل الموحد: هيدر ثابت + محتوى + شريط تنقل سفلي.
@@ -46,7 +46,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
         if (!mounted) return;
         navigator.pushAndRemoveUntil(
           MaterialPageRoute<void>(
-            builder: (context) => const WelcomeScreen(),
+            builder: (context) => const LandingScreen(),
           ),
           (route) => false,
         );

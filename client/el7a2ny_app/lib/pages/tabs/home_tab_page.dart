@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/api_exception.dart';
+import '../../core/config/api_config.dart';
 import '../../data/models/device_status.dart';
 import '../../data/repositories/device_repository.dart';
 import '../../widgets/emergency_dashboard_widgets.dart';
@@ -53,7 +54,18 @@ class _HomeTabPageState extends State<HomeTabPage> {
   }
 
   String _errorText(Object e) {
-    if (e is ApiException) return e.message;
+    if (e is ApiException) {
+      final message = e.message;
+      final lower = message.toLowerCase();
+      if (lower.contains('connection refused') ||
+          lower.contains('failed host lookup') ||
+          lower.contains('socketexception')) {
+        return 'تعذر الاتصال بالخادم.\n'
+            'تأكدي أن السيرفر شغال وأن API_BASE_URL مضبوط صح.\n'
+            'العنوان الحالي: ${ApiConfig.baseUrl}${ApiConfig.apiPrefix}';
+      }
+      return message;
+    }
     return e.toString();
   }
 

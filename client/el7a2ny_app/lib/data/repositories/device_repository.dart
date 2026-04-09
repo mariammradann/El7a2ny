@@ -10,10 +10,26 @@ class DeviceRepository {
 
   /// مثال: `GET /api/v1/devices/status/`
   Future<DeviceStatus> fetchDeviceStatus() async {
-    final raw = await _client.get('devices/status/');
-    if (raw is Map<String, dynamic>) {
-      return DeviceStatus.fromJson(raw);
+    try {
+      final raw = await _client.get('devices/status/');
+      if (raw is Map<String, dynamic>) {
+        return DeviceStatus.fromJson(raw);
+      }
+      throw ApiException(500, 'شكل الاستجابة غير متوقع من الخادم');
+    } on ApiException catch (e) {
+      // Offline fallback: allow Home tab to render without backend.
+      if (e.statusCode == 0) {
+        return const DeviceStatus(
+          smartwatchConnected: false,
+          homeSensorConnected: false,
+        );
+      }
+      rethrow;
+    } catch (_) {
+      return const DeviceStatus(
+        smartwatchConnected: false,
+        homeSensorConnected: false,
+      );
     }
-    throw ApiException(500, 'شكل الاستجابة غير متوقع من الخادم');
   }
 }
