@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 // تأكدي إن اسم الملف هنا مطابق لاسم الملف اللي عملتي فيه صفحة الترحيب
-import 'pages/welcome_screen.dart';
+import 'pages/landing_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       // هنا خلينا التطبيق يبدأ بصفحة الترحيب اللي عملناها
-      home: const WelcomeScreen(),
+      home: const LandingScreen(),
     );
   }
 }
