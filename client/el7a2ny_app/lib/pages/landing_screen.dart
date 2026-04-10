@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../app/main_shell_screen.dart';
 import 'emergency_report_screen.dart';
@@ -43,7 +43,7 @@ class LandingScreen extends StatelessWidget {
                 Text(
                   'الحقني',
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     color: _kBrandRed,
@@ -54,7 +54,7 @@ class LandingScreen extends StatelessWidget {
                   'تطبيق الاستجابة للطوارئ',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 15,
                     color: Colors.grey.shade600,
                   ),
@@ -74,9 +74,9 @@ class LandingScreen extends StatelessWidget {
                     size: 22,
                   ),
                   label: Text(
-                    'لوحة التحكم',
+                    'demo',
                     style: TextStyle(
-                      fontFamily: 'Unixel',
+                      fontFamily: 'NotoSansArabic',
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: _kBrandRed,
@@ -202,7 +202,7 @@ class _EmergencyCard extends StatelessWidget {
                 Text(
                   'بلاغ طوارئ',
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -213,7 +213,7 @@ class _EmergencyCard extends StatelessWidget {
                   'بلاغ طوارئ سريع من غير تسجيل',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 14,
                     height: 1.35,
                     color: Colors.white.withValues(alpha: 0.95),
@@ -259,7 +259,7 @@ class _CreateAccountCard extends StatelessWidget {
                 Text(
                   'انشاء حساب',
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: _kTextDark,
@@ -270,7 +270,7 @@ class _CreateAccountCard extends StatelessWidget {
                   'سجل حساب عشان تستخدم كل المميزات وجهات الاتصال الطارئة',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 14,
                     height: 1.35,
                     color: Colors.grey.shade700,
@@ -306,7 +306,7 @@ class _LoginPrompt extends StatelessWidget {
               Text(
                 'عندك اكونت؟ ',
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 15,
                   color: _kTextDark,
                 ),
@@ -314,7 +314,7 @@ class _LoginPrompt extends StatelessWidget {
               Text(
                 'تسجيل دخول',
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: _kBrandRed,

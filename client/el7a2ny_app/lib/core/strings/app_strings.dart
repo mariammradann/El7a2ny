@@ -1,4 +1,4 @@
-/// نصوص واجهة عامة — ليست بيانات مستخدم.
+﻿/// نصوص واجهة عامة — ليست بيانات مستخدم.
 abstract final class AppStrings {
   /// تلميح تنسيق رقم (بدون رقم وهمي ثابت).
   static const String phoneFormatHint = '01xxxxxxxxx';

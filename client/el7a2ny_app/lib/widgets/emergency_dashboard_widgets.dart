@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// خلفية الصفحة — كريمي فاتح.
 const Color emergencyPageBg = Color(0xFFF5F3EF);
@@ -59,7 +59,7 @@ class EmergencyDeviceStatusRow extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontFamily: 'Unixel',
+              fontFamily: 'NotoSansArabic',
               fontSize: 15,
               fontWeight: FontWeight.w600,
               color: emergencyTextDark,
@@ -89,7 +89,7 @@ class EmergencyStatusChip extends StatelessWidget {
         child: Text(
           'متصل',
           style: TextStyle(
-            fontFamily: 'Unixel',
+            fontFamily: 'NotoSansArabic',
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: Colors.green.shade900,
@@ -106,7 +106,7 @@ class EmergencyStatusChip extends StatelessWidget {
       child: Text(
         'غير متصل',
         style: TextStyle(
-          fontFamily: 'Unixel',
+          fontFamily: 'NotoSansArabic',
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: Colors.red.shade900,
@@ -150,7 +150,7 @@ class EmergencySolidButton extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Unixel',
+            fontFamily: 'NotoSansArabic',
             fontSize: 14,
             fontWeight: FontWeight.w700,
           ),
@@ -193,7 +193,7 @@ class EmergencyGradientButton extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,

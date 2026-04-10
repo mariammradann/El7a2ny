@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/api/api_exception.dart';
@@ -79,7 +79,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           title: Text(
             'نسيت الباسورد',
             style: TextStyle(
-              fontFamily: 'Unixel',
+              fontFamily: 'NotoSansArabic',
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: _kBrandRed,
@@ -124,7 +124,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           'اكتب رقم موبايلك',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Unixel',
+                            fontFamily: 'NotoSansArabic',
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: Colors.black87,
@@ -135,7 +135,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           'هنبعتلك كود تحقق في رساله',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Unixel',
+                            fontFamily: 'NotoSansArabic',
                             fontSize: 14,
                             height: 1.4,
                             color: _kTextDark,
@@ -146,7 +146,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           'رقم الموبايل',
                           textAlign: TextAlign.right,
                           style: TextStyle(
-                            fontFamily: 'Unixel',
+                            fontFamily: 'NotoSansArabic',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: _kTextDark,
@@ -160,7 +160,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             FilteringTextInputFormatter.digitsOnly,
                           ],
                           textAlign: TextAlign.right,
-                          style: const TextStyle(fontFamily: 'Unixel'),
+                          style: const TextStyle(fontFamily: 'NotoSansArabic'),
                           validator: (v) {
                             if (v == null || v.trim().length < 10) {
                               return 'أدخل رقم موبايل صحيح';
@@ -170,7 +170,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           decoration: InputDecoration(
                             hintText: AppStrings.phoneFormatHint,
                             hintStyle: TextStyle(
-                              fontFamily: 'Unixel',
+                              fontFamily: 'NotoSansArabic',
                               color: Colors.grey.shade500,
                               fontSize: 14,
                             ),
@@ -232,7 +232,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 : Text(
                                     'ارسال كود التحقق',
                                     style: TextStyle(
-                                      fontFamily: 'Unixel',
+                                      fontFamily: 'NotoSansArabic',
                                       fontSize: 16,
                                       fontWeight: FontWeight.w800,
                                     ),

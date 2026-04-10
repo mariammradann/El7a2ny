@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'landing_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -40,7 +40,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const HomeScreen(),
+            pageBuilder: (_, __, ___) => const LandingScreen(),
             transitionsBuilder: (_, anim, __, child) =>
                 FadeTransition(opacity: anim, child: child),
             transitionDuration: const Duration(milliseconds: 600),
@@ -93,7 +93,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   const Text(
                     'الحقني',
                     style: TextStyle(
-                      fontFamily: 'Unixel',
+                      fontFamily: 'NotoSansArabic',
                       fontSize: 68,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,

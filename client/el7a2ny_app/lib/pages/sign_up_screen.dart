@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/api/api_exception.dart';
@@ -155,7 +155,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Text(
                 'انشاء حساب',
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: _kBrandRed,
@@ -164,7 +164,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Text(
                 'أكمل بياناتك للاستفادة من خدمات الطوارئ',
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 12,
                   color: Colors.grey.shade600,
                 ),
@@ -256,7 +256,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       Text(
                         'تاريخ الميلاد',
                         style: TextStyle(
-                          fontFamily: 'Unixel',
+                          fontFamily: 'NotoSansArabic',
                           fontSize: 13,
                           color: Colors.grey.shade700,
                         ),
@@ -375,7 +375,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     label: Text(
                       'إضافة جهات اتصال',
                       style: TextStyle(
-                        fontFamily: 'Unixel',
+                        fontFamily: 'NotoSansArabic',
                         fontWeight: FontWeight.w700,
                         color: _kBrandRed,
                       ),
@@ -433,7 +433,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         title: Text(
                           'أرغب في التطوع لمساعدة الآخرين في الطوارئ',
                           style: TextStyle(
-                            fontFamily: 'Unixel',
+                            fontFamily: 'NotoSansArabic',
                             fontSize: 14,
                             color: _kTextDark,
                           ),
@@ -488,7 +488,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         : Text(
                             'تسجيل',
                             style: TextStyle(
-                              fontFamily: 'Unixel',
+                              fontFamily: 'NotoSansArabic',
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
                             ),
@@ -545,7 +545,7 @@ class _PinkSection extends StatelessWidget {
                 child: Text(
                   title,
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: _kBrandRed,
@@ -652,7 +652,7 @@ class _PermissionTile extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Unixel',
+              fontFamily: 'NotoSansArabic',
               fontSize: 11,
               color: _kTextDark,
             ),
@@ -690,7 +690,7 @@ class _ProfileAvatarRow extends StatelessWidget {
           child: Text(
             'رفع الصورة',
             style: TextStyle(
-              fontFamily: 'Unixel',
+              fontFamily: 'NotoSansArabic',
               fontWeight: FontWeight.w700,
               color: _kBrandRed,
               fontSize: 15,
@@ -732,11 +732,11 @@ class _OutlinedField extends StatelessWidget {
       obscureText: obscure,
       maxLines: obscure ? 1 : maxLines,
       inputFormatters: inputFormatters,
-      style: const TextStyle(fontFamily: 'Unixel'),
+      style: const TextStyle(fontFamily: 'NotoSansArabic'),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
-          fontFamily: 'Unixel',
+          fontFamily: 'NotoSansArabic',
           color: _kPlaceholderGrey,
           fontSize: 14,
         ),
@@ -785,7 +785,7 @@ class _DropdownField<T> extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
-          fontFamily: 'Unixel',
+          fontFamily: 'NotoSansArabic',
           color: _kPlaceholderGrey,
           fontSize: 14,
         ),
@@ -807,7 +807,7 @@ class _DropdownField<T> extends StatelessWidget {
       ),
       hint: Text(
         'اختر',
-        style: TextStyle(fontFamily: 'Unixel', color: Colors.grey.shade500),
+        style: TextStyle(fontFamily: 'NotoSansArabic', color: Colors.grey.shade500),
       ),
       items: items
           .map(
@@ -815,7 +815,7 @@ class _DropdownField<T> extends StatelessWidget {
               value: e,
               child: Text(
                 e.toString(),
-                style: const TextStyle(fontFamily: 'Unixel'),
+                style: const TextStyle(fontFamily: 'NotoSansArabic'),
               ),
             ),
           )
@@ -842,7 +842,7 @@ class _ContactBlock extends StatelessWidget {
         Text(
           'جهة اتصال $index',
           style: TextStyle(
-            fontFamily: 'Unixel',
+            fontFamily: 'NotoSansArabic',
             fontWeight: FontWeight.w700,
             color: _kTextDark,
           ),
@@ -907,7 +907,7 @@ class _CertificateUploadZone extends StatelessWidget {
                 'أضف الشهادات الخاصة بك',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: _kTextDark,
@@ -917,7 +917,7 @@ class _CertificateUploadZone extends StatelessWidget {
               Text(
                 'تحميل الشهادات',
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 13,
                   color: _kBrandRed,
                 ),

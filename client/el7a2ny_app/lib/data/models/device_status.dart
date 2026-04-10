@@ -1,4 +1,4 @@
-/// حالة الأجهزة كما يعيدها الـ API (اضبطي أسماء الحقول لتطابق الـ serializer في Django).
+﻿/// حالة الأجهزة كما يعيدها الـ API (اضبطي أسماء الحقول لتطابق الـ serializer في Django).
 class DeviceStatus {
   const DeviceStatus({
     required this.smartwatchConnected,

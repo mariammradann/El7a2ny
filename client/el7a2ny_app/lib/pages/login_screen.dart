@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../app/main_shell_screen.dart';
@@ -89,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'مرحبا مجددا !',
                   textAlign: TextAlign.right,
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     color: Colors.black87,
@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'سجل دخولك.',
                   textAlign: TextAlign.right,
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 15,
                     color: Colors.grey.shade600,
                   ),
@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'الايميل',
                   textAlign: TextAlign.right,
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: _kTextDark,
@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(fontFamily: 'Unixel'),
+                  style: const TextStyle(fontFamily: 'NotoSansArabic'),
                   decoration: _fieldDecoration(hint: 'email@example.com'),
                 ),
                 const SizedBox(height: 20),
@@ -129,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'الباسورد',
                   textAlign: TextAlign.right,
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: _kTextDark,
@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _password,
                   obscureText: true,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(fontFamily: 'Unixel'),
+                  style: const TextStyle(fontFamily: 'NotoSansArabic'),
                   decoration: _fieldDecoration(hint: 'الباسورد'),
                 ),
                 const SizedBox(height: 16),
@@ -152,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Text(
                           'افتكرني',
                           style: TextStyle(
-                            fontFamily: 'Unixel',
+                            fontFamily: 'NotoSansArabic',
                             fontSize: 14,
                             color: _kTextDark,
                           ),
@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             'نسيت الباسورد؟',
                             textAlign: TextAlign.left,
                             style: TextStyle(
-                              fontFamily: 'Unixel',
+                              fontFamily: 'NotoSansArabic',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: _kAccentGreen,
@@ -227,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         : Text(
                             'سجل',
                             style: TextStyle(
-                              fontFamily: 'Unixel',
+                              fontFamily: 'NotoSansArabic',
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
                             ),
@@ -241,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       'هل انت جديد معنا؟ ',
                       style: TextStyle(
-                        fontFamily: 'Unixel',
+                        fontFamily: 'NotoSansArabic',
                         fontSize: 14,
                         color: Colors.grey.shade700,
                       ),
@@ -257,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         'سجل الآن',
                         style: TextStyle(
-                          fontFamily: 'Unixel',
+                          fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: _kAccentGreen,
@@ -341,7 +341,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
-        fontFamily: 'Unixel',
+        fontFamily: 'NotoSansArabic',
         color: _kPlaceholderGrey,
         fontSize: 14,
       ),
@@ -375,7 +375,7 @@ class _OrDivider extends StatelessWidget {
           child: Text(
             'او',
             style: TextStyle(
-              fontFamily: 'Unixel',
+              fontFamily: 'NotoSansArabic',
               fontSize: 14,
               color: Colors.grey.shade600,
             ),

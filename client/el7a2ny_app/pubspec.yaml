@@ -34,6 +34,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   font_awesome_flutter: ^11.0.0
   http: ^1.6.0
+  intl: ^0.20.2
+  image_picker: ^1.2.1
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  file_picker: ^11.0.2
 
 dev_dependencies:
   flutter_test:
@@ -58,9 +63,18 @@ flutter:
   uses-material-design: true
 
   fonts:
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/font/NotoSansArabic-VariableFont_wdth,wght.ttf
     - family: Unixel
       fonts:
         - asset: assets/fonts/font/unixel-Regular.ttf
+    - family: Trox
+      fonts:
+        - asset: assets/fonts/font/TROX.ttf
+    - family: UnixelWoff2
+      fonts:
+        - asset: assets/fonts/font/unixel-Regular.woff2
 
   # To add assets to your application, add an assets section, like this:
   # assets:

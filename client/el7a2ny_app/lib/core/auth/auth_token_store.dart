@@ -1,4 +1,4 @@
-/// تخزين مؤقت لرمز الجلسة بعد تسجيل الدخول.
+﻿/// تخزين مؤقت لرمز الجلسة بعد تسجيل الدخول.
 /// لاحقاً: استبدل بـ `flutter_secure_storage` أو `shared_preferences`.
 class AuthTokenStore {
   AuthTokenStore._();

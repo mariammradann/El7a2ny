@@ -10,7 +10,8 @@
 //      "location": "وسط البلد، شارع طلعت حرب",
 //      "severity": "high",   // "high" | "medium" | "low"
 //      "status": "جاري التعامل",
-//      "units": 3,
+//      "current_volunteers": 12,
+//      "total_volunteers": 87,
 //      "lat": 30.044,
 //      "lng": 31.235,
 //      "created_at": "2024-01-01T12:00:00Z"
@@ -24,7 +25,8 @@ class AlertModel {
   final String location;
   final String severity;   // "high" | "medium" | "low"
   final String status;
-  final int units;
+  final int currentVolunteers;
+  final int totalVolunteers;
   final double lat;
   final double lng;
   final DateTime? createdAt;
@@ -35,7 +37,8 @@ class AlertModel {
     required this.location,
     required this.severity,
     required this.status,
-    required this.units,
+    required this.currentVolunteers,
+    required this.totalVolunteers,
     required this.lat,
     required this.lng,
     this.createdAt,
@@ -48,7 +51,8 @@ class AlertModel {
       location: json['location'] as String,
       severity: json['severity'] as String,
       status: json['status'] as String,
-      units: json['units'] as int,
+      currentVolunteers: json['current_volunteers'] as int? ?? 0,
+      totalVolunteers: json['total_volunteers'] as int? ?? 50,
       lat: (json['lat'] as num).toDouble(),
       lng: (json['lng'] as num).toDouble(),
       createdAt: json['created_at'] != null

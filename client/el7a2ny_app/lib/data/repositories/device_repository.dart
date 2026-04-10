@@ -1,4 +1,4 @@
-import '../../core/api/api_client.dart';
+﻿import '../../core/api/api_client.dart';
 import '../../core/api/api_exception.dart';
 import '../models/device_status.dart';
 

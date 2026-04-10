@@ -114,7 +114,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
               Text(
                 'بلاغ طوارئ',
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: _kEmergencyRed,
@@ -123,7 +123,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
               Text(
                 'بلاغ سريع عن حادث',
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 12,
                   color: Colors.grey.shade600,
                 ),
@@ -179,15 +179,15 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _FieldLabel('الأسم'),
+                      _FieldLabel('الاسم'),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _name,
-                        style: const TextStyle(fontFamily: 'Unixel'),
+                        style: const TextStyle(fontFamily: 'NotoSansArabic'),
                         decoration: _inputDecoration(hint: 'اكتب اسمك'),
                       ),
                       const SizedBox(height: 16),
-                      _FieldLabel('رقم الموبيل'),
+                      _FieldLabel('رقم الموبايل'),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _phone,
@@ -201,7 +201,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                           }
                           return null;
                         },
-                        style: const TextStyle(fontFamily: 'Unixel'),
+                        style: const TextStyle(fontFamily: 'NotoSansArabic'),
                         decoration: _inputDecoration(
                           hint: AppStrings.phoneFormatHint,
                           prefixIcon: Icon(
@@ -224,9 +224,9 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                           }
                           return null;
                         },
-                        style: const TextStyle(fontFamily: 'Unixel'),
+                        style: const TextStyle(fontFamily: 'NotoSansArabic'),
                         decoration: _inputDecoration(
-                          hint: 'اوصف حاله الطوارئ',
+                          hint: 'اوصف حالة الطوارئ',
                           alignLabelWithHint: true,
                         ),
                       ),
@@ -256,9 +256,9 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                                   ),
                                 )
                               : Text(
-                                  'ارسال البلاغ',
+                                  'إرسال البلاغ',
                                   style: TextStyle(
-                                    fontFamily: 'Unixel',
+                                    fontFamily: 'NotoSansArabic',
                                     fontSize: 17,
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -284,7 +284,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
-        fontFamily: 'Unixel',
+        fontFamily: 'NotoSansArabic',
         color: Colors.grey.shade500,
         fontSize: 14,
       ),
@@ -324,7 +324,7 @@ class _FieldLabel extends StatelessWidget {
       text,
       textAlign: TextAlign.right,
       style: TextStyle(
-        fontFamily: 'Unixel',
+        fontFamily: 'NotoSansArabic',
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: _kTextDark,
@@ -362,7 +362,7 @@ class _PinkSection extends StatelessWidget {
             Text(
               title,
               style: TextStyle(
-                fontFamily: 'Unixel',
+                fontFamily: 'NotoSansArabic',
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: titleColor,
@@ -420,7 +420,7 @@ class _PermissionSquare extends StatelessWidget {
                 label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Unixel',
+                  fontFamily: 'NotoSansArabic',
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: active ? _kEmergencyRed : _kTextDark,
@@ -466,7 +466,7 @@ class _MediaUploadBox extends StatelessWidget {
                 Text(
                   'تحميل الصور/الفيديو',
                   style: TextStyle(
-                    fontFamily: 'Unixel',
+                    fontFamily: 'NotoSansArabic',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: _kTextDark,

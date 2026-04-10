@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────
+﻿// ─────────────────────────────────────────────────────────
 //  DASHBOARD MODEL — matches Django REST Framework response
 //
 //  Expected Django endpoint: GET /api/dashboard/stats/

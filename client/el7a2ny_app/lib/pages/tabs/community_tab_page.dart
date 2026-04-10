@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../widgets/emergency_dashboard_widgets.dart';
 
@@ -15,7 +15,7 @@ class CommunityTabPage extends StatelessWidget {
           child: Text(
             'Community',
             style: TextStyle(
-              fontFamily: 'Unixel',
+              fontFamily: 'NotoSansArabic',
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: emergencyTextDark,

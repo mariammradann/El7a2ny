@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────
+﻿// ─────────────────────────────────────────────────────────
 //  SENSOR MODELS  — matches Django REST Framework response
 //
 //  Expected Django endpoint: GET /api/sensors/

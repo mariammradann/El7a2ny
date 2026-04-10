@@ -1,4 +1,4 @@
-/// خطأ من الخادم أو الشبكة — مناسب لعرض رسالة للمستخدم أو للـ logging.
+﻿/// خطأ من الخادم أو الشبكة — مناسب لعرض رسالة للمستخدم أو للـ logging.
 class ApiException implements Exception {
   ApiException(this.statusCode, this.message);
 

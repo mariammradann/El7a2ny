@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/api/api_exception.dart';
@@ -118,7 +118,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           title: Text(
             'نسيت الباسورد',
             style: TextStyle(
-              fontFamily: 'Unixel',
+              fontFamily: 'NotoSansArabic',
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: _kBrandRed,
@@ -163,7 +163,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           'اكتب كود التحقق',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Unixel',
+                            fontFamily: 'NotoSansArabic',
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: Colors.black87,
@@ -174,7 +174,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           'ارسلنا كود من 6 ارقام علي',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Unixel',
+                            fontFamily: 'NotoSansArabic',
                             fontSize: 14,
                             height: 1.4,
                             color: _kTextDark,
@@ -185,7 +185,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           phone,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Unixel',
+                            fontFamily: 'NotoSansArabic',
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: _kBrandRed,
@@ -201,7 +201,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           ],
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Unixel',
+                            fontFamily: 'NotoSansArabic',
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 8,
@@ -215,7 +215,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           decoration: InputDecoration(
                             hintText: 'ادخل الارقام',
                             hintStyle: TextStyle(
-                              fontFamily: 'Unixel',
+                              fontFamily: 'NotoSansArabic',
                               color: Colors.grey.shade500,
                               fontSize: 16,
                               letterSpacing: 4,
@@ -273,7 +273,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                 : Text(
                                     'تحقق من الكود',
                                     style: TextStyle(
-                                      fontFamily: 'Unixel',
+                                      fontFamily: 'NotoSansArabic',
                                       fontSize: 16,
                                       fontWeight: FontWeight.w800,
                                     ),
@@ -287,7 +287,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             Text(
                               'مجاش الكود؟ ',
                               style: TextStyle(
-                                fontFamily: 'Unixel',
+                                fontFamily: 'NotoSansArabic',
                                 fontSize: 14,
                                 color: _kTextDark,
                               ),
@@ -297,7 +297,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               child: Text(
                                 'اعاده ارسال',
                                 style: TextStyle(
-                                  fontFamily: 'Unixel',
+                                  fontFamily: 'NotoSansArabic',
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: _kBrandRed,

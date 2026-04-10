@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../data/repositories/auth_repository.dart';
 import '../pages/tabs/community_tab_page.dart';
@@ -83,7 +83,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                     const SizedBox(width: 10),
                     Text(
                       'الإعدادات',
-                      style: TextStyle(fontFamily: 'Unixel', fontWeight: FontWeight.w600),
+                      style: TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -96,7 +96,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                     const SizedBox(width: 10),
                     Text(
                       'تسجيل الخروج',
-                      style: TextStyle(fontFamily: 'Unixel', fontWeight: FontWeight.w600),
+                      style: TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -109,7 +109,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                     const SizedBox(width: 10),
                     Text(
                       'المساعدة',
-                      style: TextStyle(fontFamily: 'Unixel', fontWeight: FontWeight.w600),
+                      style: TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),

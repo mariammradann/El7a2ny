@@ -7,13 +7,12 @@ import '../services/api_service.dart';
 // ─────────────────────────────────────────────
 //  UI ENUMS (local, derived from SensorModel strings)
 // ─────────────────────────────────────────────
-enum SensorType { gas, heat, smartwatch }
+enum SensorType { gas, heat }
 enum SensorStatus { normal, warning, danger }
 
 SensorType parseSensorType(String t) {
   switch (t) {
     case 'heat': return SensorType.heat;
-    case 'smartwatch': return SensorType.smartwatch;
     default: return SensorType.gas;
   }
 }
@@ -33,7 +32,6 @@ String sensorTypeName(SensorType t) {
   switch (t) {
     case SensorType.gas: return 'حساس الغاز';
     case SensorType.heat: return 'حساس الحرارة';
-    case SensorType.smartwatch: return 'الساعة الذكية';
   }
 }
 
@@ -41,7 +39,6 @@ IconData sensorIcon(SensorType t) {
   switch (t) {
     case SensorType.gas: return Icons.air;
     case SensorType.heat: return Icons.local_fire_department;
-    case SensorType.smartwatch: return Icons.watch_rounded;
   }
 }
 
@@ -49,7 +46,6 @@ String sensorDangerTitle(SensorType t) {
   switch (t) {
     case SensorType.gas: return 'تسريب غاز خطير 💨';
     case SensorType.heat: return 'حريق محتمل 🔥';
-    case SensorType.smartwatch: return 'خطر صحي حرج 💓';
   }
 }
 
@@ -68,13 +64,6 @@ List<String> sensorDangerSteps(SensorType t, String value, String unit) {
         'ابتعد عن مصدر الحرارة فوراً',
         'بلغ المطافي على 180',
         'إخلي المكان وسكر الأبواب ورايك',
-      ];
-    case SensorType.smartwatch:
-      return [
-        'مستوى الأمان: $value$unit — تحت الخطر',
-        'استلقي واستريح فوراً',
-        'خد دواؤك لو عندك',
-        'بلغ حد قريب منك أو اتصل بالإسعاف',
       ];
   }
 }
@@ -120,7 +109,8 @@ class _SensorsPageState extends State<SensorsPage> with TickerProviderStateMixin
   Future<void> _loadSensors() async {
     try {
       setState(() { _loading = true; _error = null; });
-      final sensors = await ApiService.fetchSensors();
+      final allSensors = await ApiService.fetchSensors();
+      final sensors = allSensors.where((s) => s.type != 'smartwatch').toList();
       if (mounted) setState(() { _sensors = sensors; _loading = false; });
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
@@ -145,7 +135,6 @@ class _SensorsPageState extends State<SensorsPage> with TickerProviderStateMixin
     String newValue = sensor.value;
     if (sensor.type == 'gas')        newValue = isWarning ? '350' : '560';
     if (sensor.type == 'heat')       newValue = isWarning ? '55'  : '90';
-    if (sensor.type == 'smartwatch') newValue = isWarning ? '45'  : '28';
 
     _updateSensorLocally(sensor.id, isWarning ? 'warning' : 'danger', newValue);
 
@@ -164,7 +153,7 @@ class _SensorsPageState extends State<SensorsPage> with TickerProviderStateMixin
     HapticFeedback.heavyImpact();
     setState(() {
       _sensors = _sensors.map((s) {
-        String newValue = s.type == 'gas' ? '560' : s.type == 'heat' ? '90' : '28';
+        String newValue = s.type == 'gas' ? '560' : '90';
         return s.copyWith(status: 'danger', value: newValue);
       }).toList();
       _drillMode = true;
@@ -874,7 +863,6 @@ class _SensorCard extends StatelessWidget {
     switch (parseSensorType(sensor.type)) {
       case SensorType.gas: return 'تركيز الغاز في الهواء';
       case SensorType.heat: return 'درجة الحرارة';
-      case SensorType.smartwatch: return 'مستوى الأمان';
     }
   }
 
@@ -956,8 +944,7 @@ class _SensorCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(child: Text(
                   type == SensorType.gas ? 'تركيز الغاز ارتفع! افتح الشبابيك'
-                      : type == SensorType.heat ? 'الحرارة مرتفعة! فعّل التهوية'
-                      : 'علامات حيوية غير طبيعية! استريح فوراً',
+                      : 'الحرارة مرتفعة! فعّل التهوية',
                   style: const TextStyle(color: Colors.white, fontSize: 12),
                 )),
               ]),
@@ -995,7 +982,6 @@ class _TestPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final gas = _find('gas');
     final heat = _find('heat');
-    final watch = _find('smartwatch');
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1020,11 +1006,6 @@ class _TestPanel extends StatelessWidget {
         if (heat != null) ...[
           _btn('تفعيل حريق 🔥', const Color(0xFF16A34A),
               heat.status == 'danger', () => onTrigger(heat)),
-          const SizedBox(height: 10),
-        ],
-        if (watch != null) ...[
-          _btn('تفعيل خطر صحي 💓', const Color(0xFF16A34A),
-              watch.status == 'danger', () => onTrigger(watch)),
           const SizedBox(height: 10),
         ],
         _btn('⚠️ تفعيل كل الطوارئ', const Color(0xFFEA580C), false, onTriggerAll),

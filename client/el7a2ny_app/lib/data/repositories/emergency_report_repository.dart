@@ -1,4 +1,4 @@
-import '../../core/api/api_client.dart';
+﻿import '../../core/api/api_client.dart';
 
 /// إرسال بلاغ طوارئ — الحقول تُرسل كـ JSON يطابق الـ Django view / serializer.
 class EmergencyReportRepository {

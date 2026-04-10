@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 // تأكدي إن اسم الملف هنا مطابق لاسم الملف اللي عملتي فيه صفحة الترحيب
-import 'pages/landing_screen.dart';
+import 'pages/welcome_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,9 +18,10 @@ class MyApp extends StatelessWidget {
         // تم تصحيح الخطأ هنا بإضافة ColorScheme
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB1010)),
         useMaterial3: true,
+        fontFamily: 'NotoSansArabic',
       ),
       // هنا خلينا التطبيق يبدأ بصفحة الترحيب اللي عملناها
-      home: const LandingScreen(),
+      home: const WelcomeScreen(),
     );
   }
 }
