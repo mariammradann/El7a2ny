@@ -7,6 +7,8 @@ import '../../data/repositories/device_repository.dart';
 import '../../widgets/emergency_dashboard_widgets.dart';
 import '../dashboard_tab.dart';
 import '../alerts_tab.dart';
+import '../sponsors_page.dart';
+import '../premium_subscription_page.dart';
 import '../sensors_page.dart';
 import '../smart_watch_page.dart';
 import '../safety_tab.dart';
@@ -93,7 +95,11 @@ class _HomeTabPageState extends State<HomeTabPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.cloud_off_outlined, size: 48, color: Colors.grey.shade600),
+                  Icon(
+                    Icons.cloud_off_outlined,
+                    size: 48,
+                    color: Colors.grey.shade600,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     _errorText(_error!),
@@ -108,7 +114,10 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     onPressed: _loadDevices,
                     child: Text(
                       'إعادة المحاولة',
-                      style: TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontFamily: 'NotoSansArabic',
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -199,13 +208,17 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     EmergencySolidButton(
                       label: 'تفعيل التنبيهات',
                       backgroundColor: const Color(0xFF1565C0),
-                      onPressed: () => _toast(context, 'تفعيل التنبيهات — اربطي الـ endpoint في المستودع'),
+                      onPressed: () => _toast(
+                        context,
+                        'تفعيل التنبيهات — اربطي الـ endpoint في المستودع',
+                      ),
                     ),
                     const SizedBox(height: 10),
                     EmergencySolidButton(
                       label: 'تفعيل تنبيه الطوارئ 🚨',
                       backgroundColor: const Color(0xFFE53935),
-                      onPressed: () => _toast(context, 'تنبيه الطوارئ — اربطي الـ endpoint'),
+                      onPressed: () =>
+                          _toast(context, 'تنبيه الطوارئ — اربطي الـ endpoint'),
                     ),
                     const SizedBox(height: 10),
                     EmergencySolidButton(
@@ -237,12 +250,15 @@ class _HomeTabPageState extends State<HomeTabPage> {
                       gradient: const LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [
-                          Color(0xFF42A5F5),
-                          Color(0xFF7E57C2),
-                        ],
+                        colors: [Color(0xFF42A5F5), Color(0xFF7E57C2)],
                       ),
-                      onPressed: () => _toast(context, 'Sponsors — قريباً'),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const SponsorsPage(),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 10),
                     EmergencySolidButton(
@@ -255,12 +271,19 @@ class _HomeTabPageState extends State<HomeTabPage> {
                               appBar: AppBar(
                                 title: const Text(
                                   'لوحة التحكم',
-                                  style: TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w700),
+                                  style: TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                                 flexibleSpace: Container(
                                   decoration: const BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: [Color(0xFF0F172A), Color(0xFF1E3A8A), Color(0xFF3730A3)],
+                                      colors: [
+                                        Color(0xFF0F172A),
+                                        Color(0xFF1E3A8A),
+                                        Color(0xFF3730A3),
+                                      ],
                                       begin: Alignment.centerRight,
                                       end: Alignment.centerLeft,
                                     ),
@@ -306,12 +329,19 @@ class _HomeTabPageState extends State<HomeTabPage> {
                               appBar: AppBar(
                                 title: const Text(
                                   'مكالمات الطوارئ',
-                                  style: TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w700),
+                                  style: TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                                 flexibleSpace: Container(
                                   decoration: const BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: [Color(0xFF0F172A), Color(0xFF1E3A8A), Color(0xFF3730A3)],
+                                      colors: [
+                                        Color(0xFF0F172A),
+                                        Color(0xFF1E3A8A),
+                                        Color(0xFF3730A3),
+                                      ],
                                       begin: Alignment.centerRight,
                                       end: Alignment.centerLeft,
                                     ),
@@ -333,12 +363,16 @@ class _HomeTabPageState extends State<HomeTabPage> {
                       gradient: const LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [
-                          Color(0xFF43A047),
-                          Color(0xFF2E7D32),
-                        ],
+                        colors: [Color(0xFF43A047), Color(0xFF2E7D32)],
                       ),
-                      onPressed: () => _toast(context, 'الاشتراك — قريباً'),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) =>
+                                const PremiumSubscriptionPage(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -367,10 +401,13 @@ class _PulseBadgeState extends State<_PulseBadge>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        duration: const Duration(milliseconds: 900), vsync: this)
-      ..repeat(reverse: true);
-    _opacity = Tween(begin: 0.4, end: 1.0).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    )..repeat(reverse: true);
+    _opacity = Tween(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -408,7 +445,12 @@ class _PulseBadgeState extends State<_PulseBadge>
             const SizedBox(width: 6),
             const Text(
               'كل الأنظمة شغالة',
-              style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 12, fontFamily: 'NotoSansArabic', height: 1),
+              style: TextStyle(
+                color: Color(0xFF6EE7B7),
+                fontSize: 12,
+                fontFamily: 'NotoSansArabic',
+                height: 1,
+              ),
             ),
           ],
         ),
