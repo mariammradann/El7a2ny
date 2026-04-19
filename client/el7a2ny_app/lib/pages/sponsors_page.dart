@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/localization/app_strings.dart';
+import '../services/session_service.dart';
 
 // ─────────────────────────────────────────────
 //  SPONSORS PAGE
@@ -104,12 +105,30 @@ class _SponsorsPageState extends State<SponsorsPage> {
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 20, right: 10),
-        child: FloatingActionButton.extended(
-          onPressed: () {},
-          backgroundColor: theme.primaryColor,
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.handshake_rounded),
-          label: Text(loc.becomePartner, style: const TextStyle(fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (SessionService().isAdmin)
+              FloatingActionButton.extended(
+                heroTag: 'add_sponsor',
+                onPressed: () {
+                   SessionService().logAction('Admin opened Add Sponsor dialog');
+                },
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                icon: const Icon(Icons.add_business_rounded),
+                label: const Text('Add Sponsor', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
+              ),
+            const SizedBox(height: 12),
+            FloatingActionButton.extended(
+              heroTag: 'become_partner',
+              onPressed: () {},
+              backgroundColor: theme.primaryColor,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.handshake_rounded),
+              label: Text(loc.becomePartner, style: const TextStyle(fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
+            ),
+          ],
         ),
       ),
     );
@@ -189,6 +208,24 @@ class _SponsorCard extends StatelessWidget {
                   ),
                 ),
                 IconButton.filledTonal(onPressed: () {}, icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16)),
+                if (SessionService().isAdmin) ...[
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    onPressed: () {
+                      SessionService().logAction('Started editing sponsor: $title');
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Sponsor Mode Active')));
+                    },
+                    icon: const Icon(Icons.edit_rounded, size: 16, color: Colors.blue),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    onPressed: () {
+                      SessionService().logAction('Deleted sponsor: $title');
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sponsor Deleted')));
+                    },
+                    icon: const Icon(Icons.delete_forever_rounded, size: 16, color: Colors.red),
+                  ),
+                ],
               ],
             ),
           ),

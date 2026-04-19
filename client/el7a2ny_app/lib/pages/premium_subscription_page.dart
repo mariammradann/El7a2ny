@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'payment_page.dart';
 import '../core/localization/app_strings.dart';
+import '../services/session_service.dart';
 
 class PremiumSubscriptionPage extends StatelessWidget {
   const PremiumSubscriptionPage({super.key});
@@ -237,7 +238,22 @@ class _PremiumHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 36),
+          if (SessionService().isAdmin) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: isAr ? Alignment.centerLeft : Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () {
+                   SessionService().logAction('Admin entered Edit Pricing mode for Plans');
+                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Pricing Mode Active')));
+                },
+                icon: const Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 18),
+                label: const Text('Edit Plan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                style: TextButton.styleFrom(backgroundColor: Colors.white24, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisAlignment: isAr ? MainAxisAlignment.end : MainAxisAlignment.start,

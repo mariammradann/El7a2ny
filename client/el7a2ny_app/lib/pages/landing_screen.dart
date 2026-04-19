@@ -5,6 +5,8 @@ import 'package:el7a2ny_app/app/main_shell_screen.dart';
 import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
 import 'package:el7a2ny_app/pages/login_screen.dart';
 import 'package:el7a2ny_app/pages/sign_up_screen.dart';
+import 'package:el7a2ny_app/pages/admin_screen.dart';
+import 'package:el7a2ny_app/services/session_service.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({
@@ -59,35 +61,74 @@ class LandingScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 18),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (context) => const MainShellScreen(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        SessionService().setRole(UserRole.citizen);
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const MainShellScreen(),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.dashboard_rounded,
+                        color: _kBrandRed(context),
+                        size: 20,
                       ),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.dashboard_rounded,
-                    color: _kBrandRed(context),
-                    size: 22,
-                  ),
-                  label: const Text(
-                    'demo',
-                    style: TextStyle(
-                      fontFamily: 'NotoSansArabic',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      label: const Text(
+                        'demo',
+                        style: TextStyle(
+                          fontFamily: 'NotoSansArabic',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _kBrandRed(context),
+                        side: BorderSide(color: _kBrandRed(context).withOpacity(0.4)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _kBrandRed(context),
-                    side: BorderSide(color: _kBrandRed(context).withOpacity(0.55)),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        SessionService().setRole(UserRole.admin);
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const AdminScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.admin_panel_settings_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      label: Text(
+                        context.loc.adminAuthTitle,
+                        style: const TextStyle(
+                          fontFamily: 'NotoSansArabic',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBrandRed(context),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: 32),
                 _EmergencyCard(

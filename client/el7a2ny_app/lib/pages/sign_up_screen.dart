@@ -188,7 +188,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    _AppField(controller: _email, label: loc.emailLabel, keyboardType: TextInputType.emailAddress, prefix: Icons.email_outlined),
+                    _AppField(
+                      controller: _email,
+                      label: loc.emailLabel,
+                      keyboardType: TextInputType.emailAddress,
+                      prefix: Icons.email_outlined,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return context.loc.requiredField;
+                        if (!v.contains('@')) return context.loc.emailValidationAt;
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: 16),
                     _AppField(
                       controller: _phone,
@@ -196,10 +206,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       keyboardType: TextInputType.phone,
                       prefix: Icons.phone_outlined,
                       formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
-                      validator: (v) => (v == null || v.trim().length != 11) ? loc.mobileValidation11 : null,
+                      validator: (v) => (v == null || v.trim().length != 11) ? context.loc.mobileValidation11 : null,
                     ),
                     const SizedBox(height: 16),
-                    _AppField(controller: _nationalId, label: loc.nationalIdLabel, keyboardType: TextInputType.number, prefix: Icons.badge_outlined),
+                    _AppField(
+                      controller: _nationalId,
+                      label: loc.nationalIdLabel,
+                      keyboardType: TextInputType.number,
+                      prefix: Icons.badge_outlined,
+                      formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
+                      validator: (v) => (v == null || v.trim().length != 14) ? context.loc.nationalIdValidation : null,
+                    ),
                     const SizedBox(height: 16),
                     _DateRow(day: _day, month: _month, year: _year),
                     const SizedBox(height: 16),
@@ -504,7 +521,13 @@ class _ContactItem extends StatelessWidget {
         const SizedBox(height: 12),
         _AppField(controller: controllers.relation, label: loc.relationLabel),
         const SizedBox(height: 12),
-        _AppField(controller: controllers.phone, label: loc.mobileNum, keyboardType: TextInputType.phone),
+        _AppField(
+          controller: controllers.phone, 
+          label: loc.mobileNum, 
+          keyboardType: TextInputType.phone,
+          formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+          validator: (v) => (v == null || v.trim().length != 11) ? context.loc.mobileValidation11 : null,
+        ),
       ],
     );
   }

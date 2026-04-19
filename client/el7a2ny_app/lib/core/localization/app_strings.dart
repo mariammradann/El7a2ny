@@ -687,4 +687,40 @@ class AppStrings {
   String get confirmLocationBtn => isAr ? 'تأكيد' : 'Confirm';
   String get recordVideo => isAr ? 'تصوير فيديو' : 'Record Video';
   String get changeLocation => isAr ? 'تغيير' : 'Change';
+
+  // Admin Dashboard
+  String get adminDashboard => isAr ? 'لوحة تحكم الأدمن' : 'Admin Dashboard';
+  String get systemStats => isAr ? 'إحصائيات النظام' : 'System Stats';
+  String get userManagement => isAr ? 'إدارة المستخدمين' : 'User Management';
+  String get incidentMonitoring => isAr ? 'مراقبة البلاغات' : 'Incident Monitoring';
+  String get totalUsers => isAr ? 'إجمالي المستخدمين' : 'Total Users';
+  String get globalAlerts => isAr ? 'البلاغات العالمية' : 'Global Alerts';
+  String get systemHealth => isAr ? 'صحة النظام' : 'System Health';
+  String get viewReports => isAr ? 'عرض التقارير' : 'View Reports';
+  String get manageUsers => isAr ? 'إدارة الأعضاء' : 'Manage Members';
+  String get adminAuthTitle => isAr ? 'دخول الأدمن' : 'Admin Access';
+
+  // Admin Specific Content
+  String get roleCitizen => isAr ? 'مواطن' : 'Citizen';
+  String get roleVolunteer => isAr ? 'متطوع' : 'Volunteer';
+  String get statusActiveAdmin => isAr ? 'نشط' : 'Active';
+  String get statusPending => isAr ? 'قيد الانتظار' : 'Pending';
+  String get statusSuspended => isAr ? 'موقوف' : 'Suspended';
+  String get statusInProgress => isAr ? 'قيد التنفيذ' : 'In Progress';
+  String get statusDispatched => isAr ? 'تم الإرسال' : 'Dispatched';
+  String get statusResolvedAdmin => isAr ? 'تم الحل' : 'Resolved';
+  String get actionVerify => isAr ? 'توثيق' : 'Verify';
+  String get actionSuspend => isAr ? 'إيقاف' : 'Suspend';
+  String get actionViewLogs => isAr ? 'سجل العمليات' : 'View Logs';
+  String get actionResolve => isAr ? 'إنهاء البلاغ' : 'Resolve';
+  String get actionMonitor => isAr ? 'مراقبة حية' : 'Monitor';
+  String get actionCancelAlert => isAr ? 'إلغاء البلاغ' : 'Cancel Alert';
+  String get actionDeleteIncident => isAr ? 'حذف من السجل' : 'Delete Incident';
+  String get adminActivityLog => isAr ? 'سجل نشاط الأدمن' : 'Admin Activity Log';
+  String get userVerifiedMsg => isAr ? 'تم توثيق المستخدم' : 'User Verified';
+  String get userSuspendedMsg => isAr ? 'تم إيقاف الحساب' : 'User Suspended';
+  String get incidentResolvedMsg => isAr ? 'تم إنهاء البلاغ بنجاح' : 'Incident Resolved';
+  String get incidentCancelledMsg => isAr ? 'تم إلغاء البلاغ وتنبيه الجهات المختصة' : 'Incident cancelled and authorities notified';
+  String get incidentDeletedMsg => isAr ? 'تم حذف السجل نهائياً' : 'Incident deleted permanently';
+  String get monitoringStartedMsg => isAr ? 'جاري المراقبة الحية وتتبع الموقع' : 'Live monitoring and location tracking started';
 }

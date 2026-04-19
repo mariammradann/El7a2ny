@@ -4,6 +4,7 @@ import '../models/alert_model.dart';
 import '../services/api_service.dart';
 import '../core/localization/app_strings.dart';
 import 'alert_details_page.dart';
+import '../services/session_service.dart';
 
 class AlertsTab extends StatefulWidget {
   const AlertsTab({super.key});
@@ -512,11 +513,99 @@ class _AlertCard extends StatelessWidget {
                       ],
                     ),
                   ),
+
+                  // Admin Action Row
+                  if (SessionService().isAdmin) ...[
+                    const Divider(height: 1),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          _AdminActionButton(
+                            label: context.loc.actionMonitor,
+                            icon: Icons.track_changes_rounded,
+                            color: Colors.blue,
+                            onTap: () {
+                              SessionService().logAction('Started monitoring incident: ${alert.type} at ${alert.location}');
+                              _showAdminFeedback(context, context.loc.monitoringStartedMsg);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          _AdminActionButton(
+                            label: context.loc.actionCancelAlert,
+                            icon: Icons.cancel_outlined,
+                            color: Colors.orange,
+                            onTap: () {
+                              SessionService().logAction('Cancelled incident: ${alert.type} at ${alert.location}');
+                              _showAdminFeedback(context, context.loc.incidentCancelledMsg);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          _AdminActionButton(
+                            label: context.loc.actionDeleteIncident,
+                            icon: Icons.delete_outline_rounded,
+                            color: Colors.red,
+                            onTap: () {
+                              SessionService().logAction('Permanently deleted record of: ${alert.type} at ${alert.location}');
+                              _showAdminFeedback(context, context.loc.incidentDeletedMsg);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAdminFeedback(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: const TextStyle(fontFamily: 'NotoSansArabic')),
+        backgroundColor: const Color(0xFF1E293B),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+class _AdminActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _AdminActionButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16, color: color),
+      label: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          fontFamily: 'NotoSansArabic',
+        ),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        backgroundColor: color.withOpacity(0.08),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
