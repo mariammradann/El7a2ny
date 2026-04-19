@@ -47,7 +47,7 @@ class _EmergencyTabState extends State<EmergencyTab>
                 border: Border.all(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Colors.white10
-                      : const Color(0xFFFECACA),
+                      : Theme.of(context).primaryColor.withOpacity(0.2),
                 ),
                 boxShadow: [
                   BoxShadow(

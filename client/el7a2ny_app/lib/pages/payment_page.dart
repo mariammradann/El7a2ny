@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/localization/app_strings.dart';
 
 enum PaymentMethod { card, eps, giropay, other }
 
@@ -11,6 +12,7 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   PaymentMethod _selectedMethod = PaymentMethod.card;
+
   final _cardNumberController = TextEditingController();
   final _expiryController = TextEditingController();
   final _cvcController = TextEditingController();
@@ -29,160 +31,174 @@ class _PaymentPageState extends State<PaymentPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.close, color: Color(0xFF111827)),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: const Text(
-            'دفع الاشتراك',
-            style: TextStyle(
-              fontFamily: 'NotoSansArabic',
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF111827),
-            ),
-          ),
-          centerTitle: true,
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: Icon(Icons.close, color: onSurface),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Column(
-            children: [
-              _PaymentMethodTabs(
-                selectedMethod: _selectedMethod,
-                onChange: (method) => setState(() => _selectedMethod = method),
-              ),
-              const SizedBox(height: 18),
-              Expanded(
-                child: ListView(
-                  children: [
-                    if (_selectedMethod == PaymentMethod.card) ...[
-                      _PaymentField(
-                        label: 'رقم البطاقة',
-                        hintText: '1234 1234 1234 1234',
-                        controller: _cardNumberController,
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _PaymentField(
-                              label: 'تاريخ الانتهاء',
-                              hintText: 'MM / YY',
-                              controller: _expiryController,
-                              keyboardType: TextInputType.datetime,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _PaymentField(
-                              label: 'CVC',
-                              hintText: 'CVC',
-                              controller: _cvcController,
-                              keyboardType: TextInputType.number,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 12),
+        title: Text(
+          context.loc.paymentTitle,
+          style: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+            color: onSurface,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(
+          children: [
+            _PaymentMethodTabs(
+              selectedMethod: _selectedMethod,
+              onChange: (method) => setState(() => _selectedMethod = method),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: ListView(
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  if (_selectedMethod == PaymentMethod.card) ...[
                     _PaymentField(
-                      label: 'البلد',
-                      hintText: 'مصر',
-                      controller: _countryController,
-                      readOnly: true,
-                      suffixIcon: Icons.arrow_drop_down,
+                      label: context.loc.cardNumber,
+                      hintText: '1234 1234 1234 1234',
+                      controller: _cardNumberController,
+                      keyboardType: TextInputType.number,
                     ),
-                    const SizedBox(height: 14),
-                    _PaymentField(
-                      label: 'الرمز البريدي',
-                      hintText: '11511',
-                      controller: _postalCodeController,
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _PaymentField(
+                            label: context.loc.cardExpiry,
+                            hintText: 'MM / YY',
+                            controller: _expiryController,
+                            keyboardType: TextInputType.datetime,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _PaymentField(
+                            label: context.loc.cardCvc,
+                            hintText: '123',
+                            controller: _cvcController,
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          const BoxShadow(
-                            color: Color.fromRGBO(0, 0, 0, 0.04),
-                            blurRadius: 14,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: const [
-                          Text(
-                            'المجموع',
-                            style: TextStyle(
-                              fontFamily: 'NotoSansArabic',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            '299 جنيه / شهرياً',
-                            style: TextStyle(
-                              fontFamily: 'NotoSansArabic',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            'أو 2,990 جنيه سنوياً (وفر 17%)',
-                            style: TextStyle(
-                              fontFamily: 'NotoSansArabic',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF6B7280),
-                            ),
-                          ),
-                        ],
-                      ),
+                  ],
+                  const SizedBox(height: 16),
+                  _PaymentField(
+                    label: context.loc.paymentCountry,
+                    hintText: context.loc.paymentEgypt,
+                    controller: _countryController,
+                    readOnly: true,
+                    suffixIcon: Icons.keyboard_arrow_down_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  _PaymentField(
+                    label: context.loc.paymentPostalCode,
+                    hintText: '11511',
+                    controller: _postalCodeController,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Order Summary Card
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainer,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.2 : 0.03),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.loc.paymentTotal,
+                          style: TextStyle(
+                            fontFamily: 'NotoSansArabic',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          context.loc.paymentMonthlyPrice,
+                          style: TextStyle(
+                            fontFamily: 'NotoSansArabic',
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          context.loc.paymentYearlySavings,
+                          style: TextStyle(
+                            fontFamily: 'NotoSansArabic',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: theme.primaryColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  // Pay Button
+                  SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF9500),
+                        backgroundColor: theme.primaryColor,
+                        foregroundColor: Colors.white,
+                        elevation: 4,
+                        shadowColor: theme.primaryColor.withOpacity(0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       onPressed: () {
+                        // In a real app, integrate with Stripe/Paymob here
                         Navigator.of(context).pop();
                       },
-                      child: const Text(
-                        'دفع الآن',
-                        style: TextStyle(
+                      child: Text(
+                        context.loc.payNow,
+                        style: const TextStyle(
                           fontFamily: 'NotoSansArabic',
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 40),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -200,44 +216,40 @@ class _PaymentMethodTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _PaymentMethodTab(
-            label: 'بطاقة',
-            icon: Icons.credit_card,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          _PaymentMethodTab(
+            label: context.loc.paymentCard,
+            icon: Icons.credit_card_rounded,
             active: selectedMethod == PaymentMethod.card,
             onTap: () => onChange(PaymentMethod.card),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _PaymentMethodTab(
-            label: 'فوري',
-            icon: Icons.payment,
+          const SizedBox(width: 12),
+          _PaymentMethodTab(
+            label: context.loc.paymentFawry,
+            icon: Icons.account_balance_rounded,
             active: selectedMethod == PaymentMethod.eps,
             onTap: () => onChange(PaymentMethod.eps),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _PaymentMethodTab(
-            label: 'محفظة',
-            icon: Icons.account_balance_wallet,
+          const SizedBox(width: 12),
+          _PaymentMethodTab(
+            label: context.loc.paymentWallet,
+            icon: Icons.account_balance_wallet_rounded,
             active: selectedMethod == PaymentMethod.giropay,
             onTap: () => onChange(PaymentMethod.giropay),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _PaymentMethodTab(
-            label: 'أخرى',
-            icon: Icons.more_horiz,
+          const SizedBox(width: 12),
+          _PaymentMethodTab(
+            label: context.loc.paymentOther,
+            icon: Icons.more_horiz_rounded,
             active: selectedMethod == PaymentMethod.other,
             onTap: () => onChange(PaymentMethod.other),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -257,36 +269,38 @@ class _PaymentMethodTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.primaryColor;
+    
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFFEFF6FF) : Colors.white,
+          color: active ? primaryColor.withOpacity(0.12) : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: active ? const Color(0xFF3B82F6) : const Color(0xFFE5E7EB),
-            width: 1.4,
+            color: active ? primaryColor : theme.dividerColor.withOpacity(0.1),
+            width: 1.5,
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 18,
-              color: active ? const Color(0xFF2563EB) : const Color(0xFF6B7280),
+              size: 20,
+              color: active ? primaryColor : theme.colorScheme.onSurface.withOpacity(0.5),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Text(
               label,
               style: TextStyle(
                 fontFamily: 'NotoSansArabic',
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: active
-                    ? const Color(0xFF2563EB)
-                    : const Color(0xFF475569),
+                color: active ? primaryColor : theme.colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
           ],
@@ -315,45 +329,52 @@ class _PaymentField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'NotoSansArabic',
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF111827),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, right: 4),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'NotoSansArabic',
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.onSurface.withOpacity(0.8),
+            ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         TextField(
           controller: controller,
           keyboardType: keyboardType,
           readOnly: readOnly,
+          style: const TextStyle(fontFamily: 'NotoSansArabic', fontSize: 16, fontWeight: FontWeight.w600),
           decoration: InputDecoration(
             hintText: hintText,
+            hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.35), fontWeight: FontWeight.normal),
             suffixIcon: suffixIcon != null
-                ? Icon(suffixIcon, color: const Color(0xFF6B7280))
+                ? Icon(suffixIcon, color: theme.colorScheme.onSurface.withOpacity(0.4))
                 : null,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: theme.colorScheme.surfaceContainer,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: theme.dividerColor.withOpacity(0.05)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFF3B82F6)),
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: theme.primaryColor, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 16,
+              horizontal: 18,
+              vertical: 18,
             ),
           ),
         ),

@@ -86,10 +86,14 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
         ? DateFormat('dd/MM/yyyy').format(widget.alert.createdAt!)
         : DateFormat('dd/MM/yyyy').format(DateTime.now());
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final onSurface = theme.colorScheme.onSurface;
+
     return Directionality(
       textDirection: isAr ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Stack(
           children: [
             SingleChildScrollView(
@@ -156,17 +160,17 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: theme.colorScheme.surface,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               children: [
                                 Text(
                                   widget.isMyAlerts ? context.loc.completed : context.loc.activeStatusNow,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
-                                    color: Color(0xFF0F172A),
+                                    color: onSurface,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -260,7 +264,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                                color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Row(
@@ -273,8 +277,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   const SizedBox(width: 4),
                                   Text(
                                     widget.alert.getLocalizedSeverity(context.loc),
-                                    style: const TextStyle(
-                                      color: Color(0xFF475569),
+                                    style: TextStyle(
+                                      color: onSurface.withOpacity(0.7),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
@@ -289,10 +293,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                         // Title
                         Text(
                           widget.alert.getLocalizedType(context.loc) + (widget.isMyAlerts ? context.loc.pastAlert : context.loc.activeStatus),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF0F172A),
+                            color: onSurface,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -307,10 +311,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   horizontal: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEFF6FF),
+                                  color: isDark ? theme.colorScheme.surface : theme.primaryColor.withOpacity(0.05),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFBFDBFE),
+                                    color: theme.dividerColor.withOpacity(0.1),
                                   ),
                                 ),
                                 child: Column(
@@ -339,8 +343,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                     Text(
                                       widget.alert.getLocalizedLocation(context.loc),
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Color(0xFF1E3A8A),
+                                      style: TextStyle(
+                                        color: onSurface,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
                                         height: 1.4,
@@ -358,10 +362,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   horizontal: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFAF5FF),
+                                  color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withOpacity(0.05),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFE9D5FF),
+                                    color: theme.dividerColor.withOpacity(0.1),
                                   ),
                                 ),
                                 child: Column(
@@ -392,8 +396,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                           ? context.loc.justNow
                                           : widget.alert.timeAgoLocalized(context.loc),
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Color(0xFF581C87),
+                                      style: TextStyle(
+                                        color: onSurface,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
                                         height: 1.4,
@@ -411,9 +415,9 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
+                            color: isDark ? theme.colorScheme.surface : const Color(0xFFF0FDF4),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                            border: Border.all(color: isDark ? theme.dividerColor.withOpacity(0.1) : const Color(0xFFBBF7D0)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -439,8 +443,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                       const SizedBox(width: 8),
                                       Text(
                                         context.loc.volunteers,
-                                        style: const TextStyle(
-                                          color: Color(0xFF166534),
+                                        style: TextStyle(
+                                          color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF166534),
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
                                         ),
@@ -462,20 +466,20 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 crossAxisAlignment: CrossAxisAlignment.baseline,
                                 textBaseline: TextBaseline.alphabetic,
                                 children: [
-                                  Text(
-                                    '$_currVols',
-                                    style: const TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF0F172A),
+                                    Text(
+                                      '$_currVols',
+                                      style: TextStyle(
+                                        fontSize: 40,
+                                        fontWeight: FontWeight.w900,
+                                        color: onSurface,
+                                      ),
                                     ),
-                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     '${context.loc.outOfLabel} $_totalVols',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 16,
-                                      color: Color(0xFF475569),
+                                      color: onSurface.withOpacity(0.6),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -485,10 +489,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                               // Progress bar
                               Container(
                                 height: 8,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE2E8F0),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
                                 child: Row(
                                   children: [
                                     Expanded(
@@ -518,9 +522,9 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: theme.colorScheme.surfaceContainer,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,8 +539,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   const SizedBox(width: 8),
                                   Text(
                                     context.loc.alertDetails,
-                                    style: const TextStyle(
-                                      color: Color(0xFF0F172A),
+                                    style: TextStyle(
+                                      color: onSurface,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                     ),
@@ -547,8 +551,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                               if (widget.alert.description != null)
                                 Text(
                                   widget.alert.description!,
-                                  style: const TextStyle(
-                                    color: Color(0xFF475569),
+                                  style: TextStyle(
+                                    color: onSurface.withOpacity(0.7),
                                     height: 1.7,
                                     fontSize: 13,
                                   ),
@@ -565,9 +569,9 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             horizontal: 20,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -577,8 +581,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 children: [
                                   Text(
                                     context.loc.contactForInquiry,
-                                    style: const TextStyle(
-                                      color: Color(0xFF1E3A8A),
+                                    style: TextStyle(
+                                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),

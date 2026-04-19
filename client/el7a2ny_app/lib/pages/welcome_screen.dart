@@ -62,11 +62,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     const arLoc = AppStrings(true);
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFE44646), Color(0xFF8B0000)],
+            colors: Theme.of(context).brightness == Brightness.light
+                ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor.withOpacity(0.8)]
+                : [Theme.of(context).colorScheme.primaryContainer, Theme.of(context).primaryColor],
           ),
         ),
         child: Center(

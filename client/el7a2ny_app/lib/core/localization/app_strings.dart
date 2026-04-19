@@ -54,6 +54,8 @@ class AppStrings {
   // Shared Auth
   String get email => isAr ? 'البريد الإلكتروني' : 'Email Address';
   String get emailHint => isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email';
+  String get emailOrMobile => isAr ? 'البريد الإلكتروني أو رقم الموبايل' : 'Email or Mobile Number';
+  String get emailOrMobileHint => isAr ? 'أدخل البريد أو رقم الموبايل' : 'Enter email or mobile number';
   String get requiredField => isAr ? 'مطلوب' : 'Required';
   String get password => isAr ? 'كلمة السر' : 'Password';
   String get passwordHint => isAr ? 'أدخل كلمة السر' : 'Enter your password';
@@ -580,4 +582,109 @@ class AppStrings {
       isAr ? 'عرض مراكز السيارات' : 'View Car Centers';
   String get viewInsuranceCount =>
       isAr ? 'عرض شركات التأمين' : 'View Insurance Companies';
+
+  // Community Tab
+  String get communityTitle => isAr ? 'مجتمع إلحقني' : 'El7a2ny Community';
+  String get communityDesc => isAr ? 'شارك وساعد في إنقاذ الأرواح' : 'Share and help save lives';
+  String get activeVolunteers => isAr ? 'المتطوعون النشطون' : 'Active Volunteers';
+  String get communityPosts => isAr ? 'آخر التحديثات' : 'Latest Updates';
+
+  // Profile Tab
+  String get profileSubtitle => isAr ? 'إدارة حسابك وتفضيلات الأمان' : 'Manage your account and security';
+  String get personalInfo => isAr ? 'المعلومات الشخصية' : 'Personal Information';
+  String get securitySettings => isAr ? 'إعدادات الأمان' : 'Security Settings';
+  String get appPreferences => isAr ? 'تفضيلات التطبيق' : 'App Preferences';
+
+  // Payment
+  String get paymentTitle => isAr ? 'دفع الاشتراك' : 'Subscription Payment';
+  String get paymentCard => isAr ? 'بطاقة' : 'Card';
+  String get paymentFawry => isAr ? 'فوري' : 'Fawry';
+  String get paymentWallet => isAr ? 'محفظة' : 'Wallet';
+
+  // Smart Watch
+  String get watchMonitoring => isAr ? 'مراقبة الساعة الذكية' : 'Smart Watch Monitoring';
+  String get vitalSignsUnstable => isAr ? 'علامات حيوية غير مستقرة ⚠️' : 'Vital signs unstable ⚠️';
+  String get lifeDanger => isAr ? 'خطر على الحياة 🚨' : 'Life in danger 🚨';
+  String get stableHealthStatus => isAr ? 'الحالة الصحية مستقرة' : 'Health status stable';
+  String get heartRate => isAr ? 'نبض القلب' : 'Heart Rate';
+  String get oxygenLevel => isAr ? 'مستوى الأكسجين' : 'Oxygen Level';
+  String get caloriesBurned => isAr ? 'السعرات الحرارية' : 'Calories Burned';
+
+  String get paymentOther => isAr ? 'أخرى' : 'Other';
+  String get cardNumber => isAr ? 'رقم البطاقة' : 'Card Number';
+  String get cardExpiry => isAr ? 'تاريخ الانتهاء' : 'Expiry Date';
+  String get cardCvc => isAr ? 'CVC' : 'CVC';
+  String get paymentCountry => isAr ? 'البلد' : 'Country';
+  String get paymentEgypt => isAr ? 'مصر' : 'Egypt';
+  String get paymentPostalCode => isAr ? 'الرمز البريدي' : 'Postal Code';
+  String get paymentTotal => isAr ? 'المجموع' : 'Total';
+  String get paymentMonthlyPrice => isAr ? '299 جنيه / شهرياً' : '299 EGP / Month';
+  String get paymentYearlySavings => isAr ? 'أو 2,990 جنيه سنوياً (وفر 17%)' : 'or 2,990 EGP / Year (Save 17%)';
+  String get payNow => isAr ? 'دفع الآن' : 'Pay Now';
+
+  // Premium Subscription
+  String get premiumPlusTitle => isAr ? 'إلحقني بلس' : 'El7a2ny Plus';
+  String get premiumPlusSubtitle => isAr ? 'خدمات الطوارئ المميزة' : 'Premium Emergency Services';
+  String get exclusiveFeaturesTitle => isAr ? 'المميزات الحصرية' : 'Exclusive Features';
+  String get instantResponse => isAr ? 'استجابة فورية' : 'Instant Response';
+  String get instantResponseDesc => isAr ? 'توصيل بخدمات الطوارئ أسرع 10 مرات' : 'Connect to emergency services 10x faster';
+  String get premiumInsurance => isAr ? 'تأمين مميز' : 'Premium Insurance';
+  String get premiumInsuranceDesc => isAr ? 'تغطية موسعة مع أفضل شركات التأمين' : 'Expanded coverage with top partners';
+  String get support24_7_Title => isAr ? 'دعم 24/7' : '24/7 Support';
+  String get support24_7_Desc => isAr ? 'استشارات طبية متاحة على مدار الساعة' : 'Medical consultations available 24/7';
+  String get familyProtection => isAr ? 'حماية العائلة' : 'Family Protection';
+  String get familyProtectionDesc => isAr ? 'تغطية تصل لـ 5 أفراد من العائلة' : 'Coverage for up to 5 family members';
+  String get liveTrackingTitle => isAr ? 'تتبع مباشر' : 'Live Tracking';
+  String get liveTrackingDesc => isAr ? 'تتبع الإسعاف والخدمات في الوقت الفعلي' : 'Real-time tracking of ambulance & services';
+  String get healthRecordsTitle => isAr ? 'السجلات الصحية' : 'Health Records';
+  String get healthRecordsDesc => isAr ? 'الوصول للتاريخ الطبي والتقارير الكاملة' : 'Access full medical history & reports';
+  String get serviceCategoriesTitle => isAr ? 'فئات الخدمات' : 'Service Categories';
+  String get medicalServicesTitle => isAr ? 'الخدمات الطبية' : 'Medical Services';
+  String get transportServicesTitle => isAr ? 'النقل الطارئ' : 'Emergency Transport';
+  String get insuranceCoverageTitle => isAr ? 'التأمين والتغطية' : 'Insurance & Coverage';
+  String get supportServicesTitle => isAr ? 'خدمات الدعم' : 'Support Services';
+  String get testimonialText => isAr 
+      ? '"إلحقني بلس أنقذ حياتي. الاستجابة السريعة وصلتني للمستشفى في وقت قياسي."'
+      : '"El7a2ny Plus saved my life. The quick response got me to the hospital in record time."';
+  String get upgradeToPlus => isAr ? 'الترقية لإلحقني بلس' : 'Upgrade to El7a2ny Plus';
+  String get maybeLater => isAr ? 'ربما لاحقاً' : 'Maybe Later';
+  String get moneyBackGuarantee => isAr 
+      ? 'ضمان استرجاع المال لمدة 30 يوم • يمكن الإلغاء في أي وقت'
+      : '30-day money-back guarantee • Cancel anytime';
+  String get monthlyLabelSmall => isAr ? 'شهرياً' : 'Monthly';
+
+  // Report Incident
+  String get reportIncidentTitle => isAr ? 'تبليغ عن مشكلة' : 'Report an Incident';
+  String get incidentQuestion => isAr ? 'ايه المشكله اللي بتواجهك؟' : 'What problem are you facing?';
+  String get typeAccident => isAr ? 'حادث' : 'Accident';
+  String get typeFireAlt => isAr ? 'حريق' : 'Fire';
+  String get typeMedicalAlt => isAr ? 'طبي' : 'Medical';
+  String get typeFlood => isAr ? 'فيضان' : 'Flood';
+  String get typeEarthquake => isAr ? 'زلزال' : 'Earthquake';
+  String get typeTheft => isAr ? 'سرقة' : 'Theft';
+  String get typeAssault => isAr ? 'اعتداء' : 'Assault';
+  String get typeOtherAlt => isAr ? 'أخرى' : 'Other';
+  String get otherTypeHint => isAr ? 'مثال: محبوس في الأسانسير...' : 'e.g. Stuck in elevator...';
+  String get volunteersNeededLabel => isAr ? 'عدد المتطوعين المطلوب (تقريبي)' : 'Number of volunteers needed (approx)';
+  String get volunteersNeededHint => isAr ? 'مثال: 5' : 'e.g. 5';
+  String get addEvidenceLabel => isAr ? 'زود دليل' : 'Add Evidence';
+  String get evidencePhoto => isAr ? 'صورة' : 'Photo';
+  String get evidenceVideo => isAr ? 'فيديو' : 'Video';
+  String get evidenceRecord => isAr ? 'ريكورد' : 'Record';
+  String get selectProblemFirst => isAr ? 'اختار المشكلة الأول' : 'Select problem first';
+  String get reportBtn => isAr ? 'بلغ' : 'Report';
+  String get helpOnWayTitle => isAr ? 'المساعدة في الطريق' : 'Help is on the way';
+  String get helpOnWayDesc => isAr ? 'اقرأ التعليمات لحد ما المساعدة توصل' : 'Read instructions until help arrives';
+  String get readInstructionsBtn => isAr ? 'اقرأ التعليمات' : 'Read Instructions';
+  
+  // Location Selector
+  String get locationPickerTitle => isAr ? 'لوكيشن' : 'Location';
+  String get searchAddressHint => isAr ? 'ابحث عن عنوان' : 'Search Address';
+  String get findMyLocation => isAr ? 'حدد موقفي الحالي' : 'Locate my position';
+  String get cityLabel => isAr ? 'المدينة' : 'City';
+  String get govLabel => isAr ? 'محافظة' : 'Governorate';
+  String get buildingLabel => isAr ? 'رقم المبنى' : 'Building/Street';
+  String get confirmLocationBtn => isAr ? 'تأكيد' : 'Confirm';
+  String get recordVideo => isAr ? 'تصوير فيديو' : 'Record Video';
+  String get changeLocation => isAr ? 'تغيير' : 'Change';
 }

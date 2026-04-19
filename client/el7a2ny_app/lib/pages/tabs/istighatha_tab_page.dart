@@ -36,173 +36,177 @@ class _IstighathaTabPageState extends State<IstighathaTabPage>
   }
 
   void _onSOSPressed() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const ReportIncidentPage()));
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ReportIncidentPage()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 20,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SizedBox(width: 28),
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.grey.shade200,
-                          child: const Icon(Icons.person, color: Colors.grey),
-                        ),
-                      ],
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(width: 40), // Spacer for centering
+                  Text(
+                    context.loc.tabIstighatha,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: theme.colorScheme.onSurface,
                     ),
-                  ],
-                ),
+                  ),
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: isDark ? Colors.white12 : Colors.grey.shade200,
+                    child: Icon(Icons.person, color: isDark ? Colors.white54 : Colors.grey),
+                  ),
+                ],
               ),
+            ),
 
-              const Spacer(flex: 1),
+            const Spacer(flex: 1),
 
-              // Motivational Text
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Column(
-                  children: [
-                    Text(
-                      context.loc.weGotYourBack,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF64748B),
-                      ),
-                      textAlign: TextAlign.center,
+            // Motivational Text
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Column(
+                children: [
+                  Text(
+                    context.loc.weGotYourBack,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: theme.colorScheme.onSurface,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      context.loc.pressSOSDesc,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF94A3B8),
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    context.loc.pressSOSDesc,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      height: 1.5,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
-                ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
+            ),
 
-              const SizedBox(height: 60),
+            const SizedBox(height: 60),
 
-              // Giant SOS Button
-              GestureDetector(
-                onTap: _onSOSPressed,
-                child: ScaleTransition(
-                  scale: _pulseAnimation,
-                  child: Container(
-                    width: 280,
-                    height: 280,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFFEF4444).withOpacity(0.1),
+            // Giant SOS Button with Pulsing Effect
+            GestureDetector(
+              onTap: _onSOSPressed,
+              child: ScaleTransition(
+                scale: _pulseAnimation,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Outer Glow
+                    Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFEF4444).withOpacity(0.1),
+                      ),
                     ),
-                    child: Center(
-                      child: Container(
-                        width: 240,
-                        height: 240,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFFEF4444).withOpacity(0.2),
+                    // Middle Glow
+                    Container(
+                      width: 240,
+                      height: 240,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFEF4444).withOpacity(0.2),
+                      ),
+                    ),
+                    // Main Button
+                    Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFEF4444), Color(0xFFB91C1C)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        child: Center(
-                          child: Container(
-                            width: 200,
-                            height: 200,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFFDC2626),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0x66DC2626),
-                                  blurRadius: 30,
-                                  spreadRadius: 10,
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Text(
-                                context.loc.sosButton,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFEF4444).withOpacity(0.5),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          context.loc.sosButton,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 44,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
                           ),
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ),
+
+            const Spacer(flex: 2),
+
+            // Vibration Toggle
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    context.loc.constantVibration,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
-                ),
+                  CupertinoSwitch(
+                    value: _isVibrationEnabled,
+                    activeTrackColor: const Color(0xFFEF4444),
+                    onChanged: (val) {
+                      setState(() => _isVibrationEnabled = val);
+                    },
+                  ),
+                ],
               ),
-
-              const Spacer(flex: 2),
-
-              // Vibration Toggle
-              Container(
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 30,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    CupertinoSwitch(
-                      value: _isVibrationEnabled,
-                      activeTrackColor: const Color(0xFFDC2626),
-                      onChanged: (val) {
-                        setState(() => _isVibrationEnabled = val);
-                      },
-                    ),
-                    Text(
-                      context.loc.constantVibration,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }

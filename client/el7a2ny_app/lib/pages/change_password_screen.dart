@@ -4,9 +4,6 @@ import '../data/repositories/auth_repository.dart';
 import '../core/localization/app_strings.dart';
 import '../widgets/language_toggle_button.dart';
 
-const Color _kBrandRed = Color(0xFFE44646);
-const Color _kCardPink = Color(0xFFFDECEC);
-const Color _kTextDark = Color(0xFF424242);
 
 class ChangePasswordScreen extends StatefulWidget {
   final String oldPassword;
@@ -50,8 +47,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       
       // Pop all the way back to settings
       Navigator.of(context).popUntil((route) => route.isFirst || route.settings.name == '/settings');
-      // If no route name was set, we might need a better way. 
-      // For now, since it's a simple app, we can just pop twice.
       Navigator.of(context).pop(); 
       Navigator.of(context).pop();
     } on ApiException catch (e) {
@@ -71,28 +66,35 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryRed = theme.primaryColor;
+    final onSurface = theme.colorScheme.onSurface;
+    final surfaceColor = theme.colorScheme.surface;
+    final cardColor = isDark ? theme.colorScheme.surfaceContainer : theme.primaryColor.withOpacity(0.05);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: onSurface),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           context.loc.changePassword,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: _kBrandRed,
+            color: primaryRed,
           ),
         ),
-        actions: const [
-          LanguageToggleButton(iconColor: _kBrandRed),
-          SizedBox(width: 8),
+        actions: [
+          LanguageToggleButton(iconColor: primaryRed),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -107,7 +109,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 28),
                   decoration: BoxDecoration(
-                    color: _kCardPink,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -117,9 +119,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         child: Container(
                           width: 76,
                           height: 76,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: _kBrandRed,
+                            color: primaryRed,
                           ),
                           child: const Icon(
                             Icons.lock_reset_rounded,
@@ -132,54 +134,66 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       Text(
                         context.loc.changePassword,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'NotoSansArabic',
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: Colors.black87,
+                          color: onSurface,
                         ),
                       ),
                       const SizedBox(height: 28),
                       Text(
                         context.loc.newPasswordLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: _kTextDark,
+                          color: onSurface.withOpacity(0.7),
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _newPassword,
                         obscureText: true,
-                        style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                        style: TextStyle(fontFamily: 'NotoSansArabic', color: onSurface),
                         validator: (v) {
                           if (v == null || v.trim().length < 6) return context.loc.min6Chars;
                           return null;
                         },
-                        decoration: _inputDecoration(hint: context.loc.passwordHint),
+                        decoration: _inputDecoration(
+                          hint: context.loc.passwordHint,
+                          theme: theme,
+                          onSurface: onSurface,
+                          primaryRed: primaryRed,
+                          surfaceColor: surfaceColor,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       Text(
                         context.loc.confirmNewPasswordLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: _kTextDark,
+                          color: onSurface.withOpacity(0.7),
                         ),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _confirmPassword,
                         obscureText: true,
-                        style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                        style: TextStyle(fontFamily: 'NotoSansArabic', color: onSurface),
                         validator: (v) {
                           if (v != _newPassword.text) return context.loc.noMatch;
                           return null;
                         },
-                        decoration: _inputDecoration(hint: context.loc.confirmPassword),
+                        decoration: _inputDecoration(
+                          hint: context.loc.confirmPassword,
+                          theme: theme,
+                          onSurface: onSurface,
+                          primaryRed: primaryRed,
+                          surfaceColor: surfaceColor,
+                        ),
                       ),
                       const SizedBox(height: 32),
                       SizedBox(
@@ -188,7 +202,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         child: FilledButton(
                           onPressed: _loading ? null : _change,
                           style: FilledButton.styleFrom(
-                            backgroundColor: _kBrandRed,
+                            backgroundColor: primaryRed,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -224,28 +238,35 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     );
   }
 
-  InputDecoration _inputDecoration({required String hint}) {
+  InputDecoration _inputDecoration({
+    required String hint,
+    required ThemeData theme,
+    required Color onSurface,
+    required Color primaryRed,
+    required Color surfaceColor,
+  }) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: const Icon(Icons.lock_outline_rounded, size: 22),
+      hintStyle: TextStyle(color: onSurface.withOpacity(0.4)),
+      prefixIcon: Icon(Icons.lock_outline_rounded, size: 22, color: onSurface.withOpacity(0.5)),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: surfaceColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade400),
+        borderSide: BorderSide(color: onSurface.withOpacity(0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade400),
+        borderSide: BorderSide(color: onSurface.withOpacity(0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _kBrandRed, width: 1.2),
+        borderSide: BorderSide(color: primaryRed, width: 1.2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.red.shade400),
+        borderSide: BorderSide(color: theme.colorScheme.error),
       ),
     );
   }

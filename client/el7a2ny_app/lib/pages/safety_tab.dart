@@ -76,7 +76,7 @@ class SafetyTab extends StatelessWidget {
                 border: Border.all(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Colors.white10
-                      : const Color(0xFFA7F3D0),
+                      : Theme.of(context).primaryColor.withOpacity(0.2),
                 ),
               ),
               child: Row(
@@ -193,7 +193,7 @@ class SafetyTab extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark
                               ? Colors.white.withOpacity(0.05)
-                              : const Color(0xFFF8FAFC),
+                              : Theme.of(context).colorScheme.surfaceContainer,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                               color: Theme.of(context).brightness == Brightness.dark

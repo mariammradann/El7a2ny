@@ -9,12 +9,11 @@ import '../core/localization/app_strings.dart';
 import '../data/repositories/emergency_report_repository.dart';
 
 /// أحمر العنوان والزر الرئيسي.
-const Color _kEmergencyRed = Color(0xFFE51A1A);
-
-/// خلفية الأقسام الوردية الفاتحة.
-const Color _kSectionPink = Color(0xFFFDECEC);
-
-const Color _kTextDark = Color(0xFF424242);
+Color _kEmergencyRed(BuildContext context) => Theme.of(context).primaryColor;
+Color _kSectionPink(BuildContext context) => Theme.of(context).brightness == Brightness.light
+    ? Theme.of(context).primaryColor.withOpacity(0.05)
+    : Theme.of(context).colorScheme.surfaceContainer;
+Color _kTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
 
 class EmergencyReportScreen extends StatefulWidget {
   const EmergencyReportScreen({super.key});
@@ -131,7 +130,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined, color: _kEmergencyRed),
+              leading: Icon(Icons.camera_alt_outlined, color: _kEmergencyRed(context)),
               title: Text(context.loc.takePhoto, style: const TextStyle(fontFamily: 'NotoSansArabic')),
               onTap: () async {
                 Navigator.pop(context);
@@ -140,7 +139,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: _kEmergencyRed),
+              leading: Icon(Icons.photo_library_outlined, color: _kEmergencyRed(context)),
               title: Text(context.loc.chooseFromGallery, style: const TextStyle(fontFamily: 'NotoSansArabic')),
               onTap: () async {
                 Navigator.pop(context);
@@ -157,13 +156,13 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: _kTextDark(context)),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Column(
@@ -171,11 +170,11 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
             children: [
               Text(
                 context.loc.emergencyReportTitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'NotoSansArabic',
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: _kEmergencyRed,
+                  color: _kEmergencyRed(context),
                 ),
               ),
               Text(
@@ -198,7 +197,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
               children: [
                 _PinkSection(
                   title: context.loc.requiredPermissions,
-                  titleColor: _kTextDark,
+                  titleColor: _kTextDark(context),
                   child: Row(
                     children: [
                       Expanded(
@@ -252,10 +251,11 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                         keyboardType: TextInputType.phone,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(11),
                         ],
                         validator: (v) {
-                          if (v == null || v.trim().length < 10) {
-                            return context.loc.enterValidMobile;
+                          if (v == null || v.trim().length != 11) {
+                            return context.loc.mobileValidation11;
                           }
                           return null;
                         },
@@ -300,7 +300,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                         child: FilledButton(
                           onPressed: _submitting ? null : _sendReport,
                           style: FilledButton.styleFrom(
-                            backgroundColor: _kEmergencyRed,
+                            backgroundColor: _kEmergencyRed(context),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -350,20 +350,20 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
       ),
       prefixIcon: prefixIcon,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Theme.of(context).colorScheme.surface,
       alignLabelWithHint: alignLabelWithHint,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade400),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade400),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _kEmergencyRed, width: 1.2),
+        borderSide: BorderSide(color: _kEmergencyRed(context), width: 1.2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -387,7 +387,7 @@ class _FieldLabel extends StatelessWidget {
         fontFamily: 'NotoSansArabic',
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: _kTextDark,
+        color: _kTextDark(context),
       ),
     );
   }
@@ -397,13 +397,13 @@ class _PinkSection extends StatelessWidget {
   const _PinkSection({
     required this.title,
     required this.child,
-    this.titleColor = _kEmergencyRed,
+    this.titleColor,
     this.showTitle = true,
   });
 
   final String title;
   final Widget child;
-  final Color titleColor;
+  final Color? titleColor;
   final bool showTitle;
 
   @override
@@ -412,7 +412,7 @@ class _PinkSection extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kSectionPink,
+        color: _kSectionPink(context),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -425,7 +425,7 @@ class _PinkSection extends StatelessWidget {
                 fontFamily: 'NotoSansArabic',
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: titleColor,
+                color: titleColor ?? _kEmergencyRed(context),
               ),
             ),
             const SizedBox(height: 12),
@@ -463,7 +463,7 @@ class _PermissionSquare extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: active ? _kEmergencyRed : Colors.black87,
+              color: active ? _kEmergencyRed(context) : _kTextDark(context).withOpacity(0.4),
               width: active ? 2 : 1,
             ),
           ),
@@ -472,7 +472,7 @@ class _PermissionSquare extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: active ? _kEmergencyRed : Colors.black87,
+                color: active ? _kEmergencyRed(context) : _kTextDark(context),
                 size: 28,
               ),
               const SizedBox(height: 8),
@@ -483,7 +483,7 @@ class _PermissionSquare extends StatelessWidget {
                   fontFamily: 'NotoSansArabic',
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: active ? _kEmergencyRed : _kTextDark,
+                  color: active ? _kEmergencyRed(context) : _kTextDark(context),
                 ),
               ),
             ],
@@ -515,13 +515,13 @@ class _MediaUploadBox extends StatelessWidget {
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-            color: _kSectionPink,
+            color: _kSectionPink(context),
             child: Column(
               children: [
                 Icon(
                   hasMedia ? Icons.check_circle_outline : Icons.perm_media_outlined,
                   size: 40,
-                  color: hasMedia ? _kEmergencyRed : Colors.grey.shade700,
+                  color: hasMedia ? _kEmergencyRed(context) : _kTextDark(context).withOpacity(0.7),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -530,7 +530,7 @@ class _MediaUploadBox extends StatelessWidget {
                     fontFamily: 'NotoSansArabic',
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: hasMedia ? _kEmergencyRed : _kTextDark,
+                    color: hasMedia ? _kEmergencyRed(context) : _kTextDark(context),
                   ),
                 ),
               ],

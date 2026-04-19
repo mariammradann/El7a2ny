@@ -57,59 +57,58 @@ class _AlertsTabState extends State<AlertsTab>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-          leading: const BackButton(color: Color(0xFF0F172A)),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(kToolbarHeight),
-            child: Container(
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.5),
-                ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        foregroundColor: theme.colorScheme.onSurface,
+        elevation: 0,
+        leading: BackButton(color: theme.colorScheme.onSurface),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: theme.dividerColor, width: 1.5),
               ),
-              child: TabBar(
-                controller: _tabController,
-                labelColor: const Color(0xFFE11D48),
-                unselectedLabelColor: const Color(0xFF475569),
-                indicatorColor: const Color(0xFFE11D48),
-                indicatorWeight: 3,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  fontFamily: 'NotoSansArabic',
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  fontFamily: 'NotoSansArabic',
-                ),
-                tabs: [
-                  Tab(text: context.loc.activeAlerts),
-                  Tab(text: context.loc.myAlerts),
-                ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Theme.of(context).primaryColor,
+              unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
+              indicatorColor: Theme.of(context).primaryColor,
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                fontFamily: 'NotoSansArabic',
               ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                fontFamily: 'NotoSansArabic',
+              ),
+              tabs: [
+                Tab(text: context.loc.activeAlerts),
+                Tab(text: context.loc.myAlerts),
+              ],
             ),
           ),
         ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildList(isMyAlerts: false),
-            _buildList(isMyAlerts: true),
-          ],
-        ),
-      );
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [_buildList(isMyAlerts: false), _buildList(isMyAlerts: true)],
+      ),
+    );
   }
 
   Widget _buildList({required bool isMyAlerts}) {
     if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFFE11D48)),
+      return Center(
+        child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
       );
     }
     if (_error != null) {
@@ -125,7 +124,7 @@ class _AlertsTabState extends State<AlertsTab>
             const SizedBox(height: 12),
             Text(
               context.loc.cannotReachServer,
-              style: const TextStyle(color: Color(0xFF64748B), fontSize: 16),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 16),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -133,7 +132,7 @@ class _AlertsTabState extends State<AlertsTab>
               icon: const Icon(Icons.refresh),
               label: Text(context.loc.tryAgain),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE11D48),
+                backgroundColor: Theme.of(context).primaryColor,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -150,14 +149,14 @@ class _AlertsTabState extends State<AlertsTab>
       return Center(
         child: Text(
           context.loc.noAlerts,
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 16),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 16),
         ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: _load,
-      color: const Color(0xFFE11D48),
+      color: Theme.of(context).primaryColor,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         itemCount: displayAlerts.length,
@@ -177,6 +176,10 @@ class _AlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final onSurface = theme.colorScheme.onSurface;
+
     // Determine colors and faux imagery based on type
     Color bannerColor;
     IconData largeIcon;
@@ -206,7 +209,7 @@ class _AlertCard extends StatelessWidget {
         ? DateFormat('dd/MM/yyyy').format(alert.createdAt!)
         : DateFormat('dd/MM/yyyy').format(DateTime.now());
 
-    final timeColor = const Color(0xFFE11D48);
+    final timeColor = Theme.of(context).primaryColor;
 
     return GestureDetector(
       onTap: () {
@@ -219,12 +222,12 @@ class _AlertCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.08)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -294,7 +297,7 @@ class _AlertCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isMyAlerts
                             ? const Color(0xFFF97316)
-                            : const Color(0xFFEF4444),
+                            : Theme.of(context).primaryColor,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
@@ -318,19 +321,19 @@ class _AlertCard extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: theme.colorScheme.surface,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
                             blurRadius: 4,
                           ),
                         ],
                       ),
                       child: Text(
                         alert.getLocalizedType(context.loc),
-                        style: const TextStyle(
-                          color: Color(0xFF0F172A),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -353,18 +356,23 @@ class _AlertCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          alert.getLocalizedType(context.loc) + (isMyAlerts ? context.loc.pastAlert : context.loc.activeStatus),
-                          style: const TextStyle(
+                          alert.getLocalizedType(context.loc) +
+                              (isMyAlerts
+                                  ? context.loc.pastAlert
+                                  : context.loc.activeStatus),
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                            color: onSurface,
                           ),
                           textAlign: isAr ? TextAlign.right : TextAlign.left,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        alert.timeAgoLocalized(context.loc).isEmpty ? context.loc.justNow : alert.timeAgoLocalized(context.loc),
+                        alert.timeAgoLocalized(context.loc).isEmpty
+                            ? context.loc.justNow
+                            : alert.timeAgoLocalized(context.loc),
                         style: TextStyle(
                           color: timeColor,
                           fontSize: 12,
@@ -377,28 +385,30 @@ class _AlertCard extends StatelessWidget {
 
                   // Location Line
                   Row(
-                    mainAxisAlignment: isAr ? MainAxisAlignment.end : MainAxisAlignment.start,
+                    mainAxisAlignment: isAr
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start,
                     children: [
                       if (!isAr)
-                        const Icon(
+                        Icon(
                           Icons.location_on,
                           size: 16,
-                          color: Color(0xFFE11D48),
+                          color: theme.primaryColor,
                         ),
                       if (!isAr) const SizedBox(width: 4),
                       Text(
                         alert.getLocalizedLocation(context.loc),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF64748B),
+                          color: onSurface.withOpacity(0.6),
                         ),
                       ),
                       if (isAr) const SizedBox(width: 4),
                       if (isAr)
-                        const Icon(
+                        Icon(
                           Icons.location_on,
                           size: 16,
-                          color: Color(0xFFE11D48),
+                          color: theme.primaryColor,
                         ),
                     ],
                   ),
@@ -406,7 +416,9 @@ class _AlertCard extends StatelessWidget {
 
                   // Date Line
                   Row(
-                    mainAxisAlignment: isAr ? MainAxisAlignment.end : MainAxisAlignment.start,
+                    mainAxisAlignment: isAr
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start,
                     children: [
                       if (!isAr)
                         const Icon(
@@ -417,9 +429,9 @@ class _AlertCard extends StatelessWidget {
                       if (!isAr) const SizedBox(width: 4),
                       Text(
                         dateStr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF64748B),
+                          color: onSurface.withOpacity(0.6),
                         ),
                       ),
                       if (isAr) const SizedBox(width: 4),
@@ -437,10 +449,10 @@ class _AlertCard extends StatelessWidget {
                   if (alert.description != null)
                     Text(
                       alert.description!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         height: 1.5,
-                        color: Color(0xFF475569),
+                        color: onSurface.withOpacity(0.8),
                       ),
                       textAlign: isAr ? TextAlign.right : TextAlign.left,
                     ),
@@ -453,7 +465,7 @@ class _AlertCard extends StatelessWidget {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: isDark ? theme.colorScheme.surface : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -468,17 +480,17 @@ class _AlertCard extends StatelessWidget {
                           children: [
                             Text(
                               context.loc.volunteers,
-                              style: const TextStyle(
-                                color: Color(0xFF64748B),
+                              style: TextStyle(
+                                color: onSurface.withOpacity(0.5),
                                 fontSize: 11,
                               ),
                             ),
                             Text(
                               '$currVols ${context.loc.outOfLabel} ${alert.totalVolunteers}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: Color(0xFF0F172A),
+                                color: onSurface,
                               ),
                             ),
                           ],
@@ -487,14 +499,14 @@ class _AlertCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: isDark ? Colors.white10 : Colors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.people_alt_rounded,
                             size: 16,
-                            color: Color(0xFFE11D48),
+                            color: theme.primaryColor,
                           ),
                         ),
                       ],

@@ -21,92 +21,112 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // We override some properties to match the "Premium Dark" image precisely
+    final primaryColor = gradientColors[0];
+    const cardBgColor = Color(0xFF0F172A); // Deep charcoal/dark blue from reference
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: gradientColors[0].withOpacity(0.2)),
+        color: cardBgColor.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withOpacity(0.05), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Icon
+          // Icon Box with Glow
           Container(
-            width: 60,
-            height: 60,
+            width: 72,
+            height: 72,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: gradientColors,
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color: gradientColors[0].withOpacity(0.4),
-                  blurRadius: 10,
+                  color: primaryColor.withOpacity(0.5),
+                  blurRadius: 20,
+                  spreadRadius: -2,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(icon, color: Colors.white, size: 28),
+            child: Icon(icon, color: Colors.white, size: 32),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
 
-          // Name + Number
+          // Name and Number
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   name,
-                  style: TextStyle(
-                    fontSize: 18,
+                  style: const TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: textColor,
+                    color: Colors.white, // Standard white for premium dark look
+                    fontFamily: 'NotoSansArabic',
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   number,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    fontFamily: 'NotoSansArabic',
+                    letterSpacing: 1.2,
                   ),
                 ),
               ],
             ),
           ),
 
-          // Status + Call button
+          // Status Badge and Action Button
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              // "Available" Badge (متاح)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981),
-                  borderRadius: BorderRadius.circular(20),
+                  color: const Color(0xFF10B981), // Emerald Green
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(color: const Color(0xFF10B981).withOpacity(0.3), blurRadius: 8)
+                  ]
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle, color: Colors.white, size: 12),
-                    SizedBox(width: 4),
                     Text('متاح',
-                        style: TextStyle(color: Colors.white, fontSize: 11)),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'NotoSansArabic')),
+                    SizedBox(width: 4),
+                    Icon(Icons.check_circle_rounded, color: Colors.white, size: 12),
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
+              
+              // Call Now Button (اتصل دلوقتي)
               GestureDetector(
                 onTap: () async {
                   final uri = Uri.parse('tel:$number');
@@ -125,38 +145,38 @@ class ServiceCard extends StatelessWidget {
                   } catch (e) {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('حدث خطأ: \$e')),
+                      SnackBar(content: Text('حدث خطأ: $e')),
                     );
                   }
                 },
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: gradientColors,
-                      begin: Alignment.centerRight,
-                      end: Alignment.centerLeft,
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: gradientColors[0].withOpacity(0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                        color: primaryColor.withOpacity(0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.phone, color: Colors.white, size: 16),
-                      SizedBox(width: 6),
                       Text('اتصل دلوقتي',
                           style: TextStyle(
                               color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600)),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'NotoSansArabic')),
+                      SizedBox(width: 8),
+                      Icon(Icons.phone_in_talk_rounded, color: Colors.white, size: 18),
                     ],
                   ),
                 ),

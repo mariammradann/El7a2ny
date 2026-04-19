@@ -10,12 +10,12 @@ class AuthRepository {
 
   /// يتوقع استجابة تحتوي `access` / `refresh` (JWT) أو `token` حسب إعداد الخادم.
   Future<void> login({
-    required String email,
+    required String identifier,
     required String password,
     bool rememberMe = true,
   }) async {
     final raw = await _client.post('auth/login/', {
-      'email': email,
+      'identifier': identifier,
       'password': password,
       'remember_me': rememberMe,
     });

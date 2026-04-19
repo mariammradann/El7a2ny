@@ -1,13 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
-/// خلفية الصفحة — كريمي فاتح.
-const Color emergencyPageBg = Color(0xFFF5F3EF);
-
-const Color emergencyTitleRed = Color(0xFFE44646);
-
-const Color emergencySubtitleTeal = Color(0xFF1A5F6B);
-
-const Color emergencyTextDark = Color(0xFF2C2C2C);
+/// Semantic colors for the emergency dashboard
+Color getEmergencyTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
+Color getEmergencyTitleRed(BuildContext context) => Theme.of(context).primaryColor;
+Color getEmergencyPageBg(BuildContext context) => Theme.of(context).scaffoldBackgroundColor;
 
 class EmergencyDashboardCard extends StatelessWidget {
   const EmergencyDashboardCard({super.key, required this.child});
@@ -16,15 +12,16 @@ class EmergencyDashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withOpacity(theme.brightness == Brightness.light ? 0.06 : 0.2),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -62,7 +59,7 @@ class EmergencyDeviceStatusRow extends StatelessWidget {
               fontFamily: 'NotoSansArabic',
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: emergencyTextDark,
+              color: getEmergencyTextDark(context),
             ),
           ),
         ),
@@ -79,12 +76,14 @@ class EmergencyStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (connected) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFFC8E6C9),
+          color: isDark ? Colors.green.withOpacity(0.1) : Colors.green.withOpacity(0.12),
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isDark ? Colors.green.shade400.withOpacity(0.4) : Colors.green.shade600.withOpacity(0.3)),
         ),
         child: Text(
           'متصل',
@@ -92,7 +91,7 @@ class EmergencyStatusChip extends StatelessWidget {
             fontFamily: 'NotoSansArabic',
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: Colors.green.shade900,
+            color: isDark ? Colors.green.shade300 : Colors.green.shade700,
           ),
         ),
       );
@@ -100,8 +99,9 @@ class EmergencyStatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFCDD2),
+        color: isDark ? Colors.red.withOpacity(0.1) : Colors.red.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.red.shade400.withOpacity(0.4) : Colors.red.shade600.withOpacity(0.3)),
       ),
       child: Text(
         'غير متصل',
@@ -109,7 +109,7 @@ class EmergencyStatusChip extends StatelessWidget {
           fontFamily: 'NotoSansArabic',
           fontSize: 12,
           fontWeight: FontWeight.w700,
-          color: Colors.red.shade900,
+          color: isDark ? Colors.red.shade300 : Colors.red.shade700,
         ),
       ),
     );

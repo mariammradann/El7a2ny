@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen>
               MaterialPageRoute(builder: (context) => const EmergencyChatScreen()),
             );
           },
-          backgroundColor: const Color(0xFF2D3243),
+          backgroundColor: Theme.of(context).primaryColor,
           child: const Icon(Icons.chat_bubble_rounded, color: Colors.white),
         ),
         body: Column(
@@ -201,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen>
           indicatorPadding: const EdgeInsets.all(4),
           dividerColor: Colors.transparent,
           labelColor: Colors.white,
-          unselectedLabelColor: const Color(0xFF64748B),
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           labelStyle:
               const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 11),

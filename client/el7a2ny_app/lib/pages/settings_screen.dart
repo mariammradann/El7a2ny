@@ -5,10 +5,6 @@ import '../widgets/language_toggle_button.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'verify_password_screen.dart';
 
-const Color _kBrandRed = Color(0xFFE44646);
-const Color _kTextDark = Color(0xFF424242);
-const Color _kBgWhite = Colors.white;
-const Color _kSectionBg = Color(0xFFF9F9F9);
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -75,23 +71,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Scaffold(
-      backgroundColor: _kBgWhite,
+      backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: _kBgWhite,
+          backgroundColor: theme.appBarTheme.backgroundColor,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87),
+            icon: Icon(Icons.arrow_back_ios_new_rounded, color: colorScheme.onSurface),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
             context.loc.settings,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'NotoSansArabic',
               fontSize: 18,
               fontWeight: FontWeight.w800,
-              color: _kBrandRed,
+              color: theme.primaryColor,
             ),
           ),
           actions: const [
@@ -103,8 +102,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
-              _buildSectionHeader(context.loc.account),
+              _buildSectionHeader(context, context.loc.account),
               _buildTile(
+                context,
                 icon: Icons.person_outline_rounded,
                 title: context.loc.editProfile,
                 onTap: () {
@@ -112,6 +112,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               _buildTile(
+                context,
                 icon: Icons.lock_outline_rounded,
                 title: context.loc.changePassword,
                 onTap: () {
@@ -124,8 +125,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              _buildSectionHeader(context.loc.preferences),
+              _buildSectionHeader(context, context.loc.preferences),
               _buildSwitchTile(
+                context,
                 icon: Icons.dark_mode_outlined,
                 title: context.loc.darkMode,
                 value: AppConfigProvider.of(context).isDarkMode,
@@ -134,25 +136,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               _buildSwitchTile(
+                context,
                 icon: Icons.notifications_active_outlined,
                 title: context.loc.notifications,
                 value: _notifications,
                 onChanged: _toggleNotifications,
               ),
               _buildTile(
+                context,
                 icon: Icons.language_rounded,
                 title: context.loc.language,
                 trailing: Text(
                   context.loc.isAr ? 'العربية' : 'English',
-                  style: TextStyle(fontFamily: 'NotoSansArabic', color: Colors.grey.shade600),
+                  style: TextStyle(fontFamily: 'NotoSansArabic', color: colorScheme.onSurface.withOpacity(0.6)),
                 ),
                 onTap: () {
                   AppConfigProvider.of(context).toggleLanguage();
                 },
               ),
               const SizedBox(height: 24),
-              _buildSectionHeader(context.loc.helpAndSupport),
+              _buildSectionHeader(context, context.loc.helpAndSupport),
               _buildTile(
+                context,
                 icon: Icons.help_outline_rounded,
                 title: context.loc.helpCenter,
                 onTap: () {
@@ -160,6 +165,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               _buildTile(
+                context,
                 icon: Icons.info_outline_rounded,
                 title: context.loc.aboutApp,
                 onTap: () {
@@ -167,7 +173,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     context: context,
                     applicationName: 'El7a2ny App',
                     applicationVersion: '1.0.0',
-                    applicationIcon: const Icon(Icons.shield_rounded, color: _kBrandRed, size: 40),
+                    applicationIcon: Icon(Icons.shield_rounded, color: theme.primaryColor, size: 40),
                     children: [
                       Text(context.loc.aboutAppDesc),
                     ],
@@ -180,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, right: 8),
       child: Text(
@@ -189,56 +195,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
           fontFamily: 'NotoSansArabic',
           fontSize: 15,
           fontWeight: FontWeight.w700,
-          color: Colors.grey.shade700,
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
         ),
       ),
     );
   }
 
-  Widget _buildTile({required IconData icon, required String title, Widget? trailing, VoidCallback? onTap}) {
+  Widget _buildTile(BuildContext context, {required IconData icon, required String title, Widget? trailing, VoidCallback? onTap}) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: _kSectionBg,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
         onTap: onTap,
-        leading: Icon(icon, color: _kBrandRed),
+        leading: Icon(icon, color: theme.primaryColor),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: _kTextDark,
+            color: theme.colorScheme.onSurface,
           ),
         ),
-        trailing: trailing ?? Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey.shade400, size: 16),
+        trailing: trailing ?? Icon(Icons.arrow_forward_ios_rounded, color: theme.colorScheme.onSurface.withOpacity(0.3), size: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
-  Widget _buildSwitchTile({required IconData icon, required String title, required bool value, required ValueChanged<bool> onChanged}) {
+  Widget _buildSwitchTile(BuildContext context, {required IconData icon, required String title, required bool value, required ValueChanged<bool> onChanged}) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: _kSectionBg,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
       ),
       child: SwitchListTile.adaptive(
         value: value,
         onChanged: onChanged,
-        activeColor: _kBrandRed,
-        secondary: Icon(icon, color: _kBrandRed),
+        activeColor: theme.primaryColor,
+        secondary: Icon(icon, color: theme.primaryColor),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: _kTextDark,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

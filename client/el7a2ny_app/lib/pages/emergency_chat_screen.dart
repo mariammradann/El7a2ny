@@ -110,7 +110,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Column(
           children: [
             _buildHeader(context),
@@ -131,9 +131,9 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
         left: 20,
         right: 20,
       ),
-      decoration: const BoxDecoration(
-        color: Color(0xFF2D3243),
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surfaceContainer : const Color(0xFF2D3243),
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(20),
           bottomRight: Radius.circular(20),
         ),
@@ -278,6 +278,8 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
   }
 
   Widget _buildChatList() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -294,13 +296,14 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
               maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
             decoration: BoxDecoration(
-              color: isBot ? const Color(0xFF434D65) : const Color(0xFFF1F5F9),
+              color: isBot ? (isDark ? theme.colorScheme.primaryContainer : const Color(0xFF434D65)) : (isDark ? theme.colorScheme.surface : const Color(0xFFF1F5F9)),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
                 bottomLeft: Radius.circular(isBot ? 16 : 0),
                 bottomRight: Radius.circular(isBot ? 0 : 16),
               ),
+              border: isBot ? null : Border.all(color: theme.dividerColor.withOpacity(0.1)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,7 +311,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                 Text(
                   m.text,
                   style: TextStyle(
-                    color: isBot ? Colors.white : Colors.black87,
+                    color: isBot ? (isDark ? theme.colorScheme.onPrimaryContainer : Colors.white) : theme.colorScheme.onSurface,
                     fontSize: 14,
                     height: 1.4,
                     fontFamily: 'NotoSansArabic',
@@ -339,8 +342,8 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
         top: 10,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
       ),
       child: Column(
         children: [
@@ -358,10 +361,10 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                     decoration: InputDecoration(
                       hintText: context.loc.chatInputHint,
                       border: InputBorder.none,
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 14,
-                        color: Colors.black45,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                       ),
                     ),
                     onSubmitted: (_) => _sendMessage(),
@@ -384,7 +387,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
           const SizedBox(height: 8),
           Text(
             context.loc.chatFooterNote,
-            style: const TextStyle(color: Colors.black54, fontSize: 10, fontFamily: 'NotoSansArabic'),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 10, fontFamily: 'NotoSansArabic'),
           ),
         ],
       ),

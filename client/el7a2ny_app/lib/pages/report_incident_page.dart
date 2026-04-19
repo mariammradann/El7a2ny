@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
+import '../core/localization/app_strings.dart';
 
 class ReportIncidentPage extends StatefulWidget {
   const ReportIncidentPage({super.key});
@@ -17,30 +17,25 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   final TextEditingController _customTypeCtrl = TextEditingController();
   final TextEditingController _volunteersNeededCtrl = TextEditingController();
 
-  String _locationText = 'مدينة نصر، القاهرة 11740';
+  String _locationText = '';
 
   // Storing items as maps to support different types: image, video, audio
   final List<Map<String, String>> _evidenceItems = [];
   final ImagePicker _picker = ImagePicker();
 
-  final List<Map<String, dynamic>> _types = [
-    {'id': 'accident', 'label': 'حادث', 'icon': Icons.car_crash_rounded},
-    {
-      'id': 'fire',
-      'label': 'حريق',
-      'icon': Icons.local_fire_department_rounded,
-    },
-    {'id': 'medical', 'label': 'طبية', 'icon': Icons.medical_services_rounded},
-    {'id': 'flood', 'label': 'فيضان', 'icon': Icons.flood_rounded},
-    {'id': 'earthquake', 'label': 'إنزال', 'icon': Icons.house_siding_rounded},
-    {'id': 'theft', 'label': 'سرقة', 'icon': Icons.back_hand_rounded},
-    {
-      'id': 'assault',
-      'label': 'اعتداء',
-      'icon': Icons.sports_martial_arts_rounded,
-    },
-    {'id': 'other', 'label': 'حاجة تانية', 'icon': Icons.more_horiz_rounded},
-  ];
+  List<Map<String, dynamic>> _getTypes(BuildContext context) {
+    final loc = context.loc;
+    return [
+      {'id': 'accident', 'label': loc.typeAccident, 'icon': Icons.car_crash_rounded},
+      {'id': 'fire', 'label': loc.typeFireAlt, 'icon': Icons.local_fire_department_rounded},
+      {'id': 'medical', 'label': loc.typeMedicalAlt, 'icon': Icons.medical_services_rounded},
+      {'id': 'flood', 'label': loc.typeFlood, 'icon': Icons.flood_rounded},
+      {'id': 'earthquake', 'label': loc.typeEarthquake, 'icon': Icons.house_siding_rounded},
+      {'id': 'theft', 'label': loc.typeTheft, 'icon': Icons.back_hand_rounded},
+      {'id': 'assault', 'label': loc.typeAssault, 'icon': Icons.sports_martial_arts_rounded},
+      {'id': 'other', 'label': loc.typeOtherAlt, 'icon': Icons.more_horiz_rounded},
+    ];
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -69,64 +64,51 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   }
 
   void _mockPickAudio(String method) async {
-    // Show a loading indicator
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
-    // Mock delay to simulate recording or picking an audio file
     await Future.delayed(const Duration(seconds: 2));
-    if (context.mounted) Navigator.pop(context); // close dialog
+    if (context.mounted) Navigator.pop(context);
 
     setState(() {
       _evidenceItems.add({'path': 'mock_audio_$method.mp3', 'type': 'audio'});
     });
   }
 
-  // --- BOTTOM SHEETS ---
+  // --- PICKERS ---
 
   void _showImageSourcePicker() {
+    final theme = Theme.of(context);
+    final loc = context.loc;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: Color(0xFFDC2626)),
-              title: const Text(
-                'التقاط صورة بالكاميرا',
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              leading: Icon(Icons.camera_alt_rounded, color: theme.primaryColor),
+              title: Text(loc.takePhoto, style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: const Icon(
-                Icons.photo_library,
-                color: Color(0xFFDC2626),
-              ),
-              title: const Text(
-                'اختيار من المعرض',
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              leading: Icon(Icons.photo_library_rounded, color: theme.primaryColor),
+              title: Text(loc.chooseFromGallery, style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
               },
             ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -134,46 +116,35 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   }
 
   void _showVideoSourcePicker() {
+    final theme = Theme.of(context);
+    final loc = context.loc;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(Icons.videocam, color: Color(0xFFDC2626)),
-              title: const Text(
-                'تصوير فيديو بالكاميرا',
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              leading: Icon(Icons.videocam_rounded, color: theme.primaryColor),
+              title: Text(loc.recordVideo, style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () {
                 Navigator.pop(context);
                 _pickVideo(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: const Icon(
-                Icons.video_library,
-                color: Color(0xFFDC2626),
-              ),
-              title: const Text(
-                'اختيار من المعرض',
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              leading: Icon(Icons.video_library_rounded, color: theme.primaryColor),
+              title: Text(loc.chooseFromGallery, style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () {
                 Navigator.pop(context);
                 _pickVideo(ImageSource.gallery);
               },
             ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -181,43 +152,27 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   }
 
   void _showAudioSourcePicker() {
+    final theme = Theme.of(context);
+    final loc = context.loc;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 12),
             ListTile(
-              leading: const Icon(Icons.mic, color: Color(0xFFDC2626)),
-              title: const Text(
-                'تسجيل مقطع صوتي',
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              leading: Icon(Icons.mic_rounded, color: theme.primaryColor),
+              title: Text(loc.evidenceRecord, style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () {
                 Navigator.pop(context);
                 _mockPickAudio('recording');
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.audio_file, color: Color(0xFFDC2626)),
-              title: const Text(
-                'اختيار ملف صوتي',
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _mockPickAudio('file');
-              },
-            ),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -241,397 +196,334 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   }
 
   void _showSuccessDialog() {
+    final loc = context.loc;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
-                  shape: BoxShape.circle,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: theme.brightness == Brightness.dark ? const Color(0xFF10B981).withOpacity(0.2) : const Color(0xFF10B981).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF10B981),
+                    size: 48,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 48,
+                const SizedBox(height: 24),
+                Text(
+                  loc.helpOnWayTitle,
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic'),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'المساعدة في الطريق',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'اقرأ التعليمات لحد ما المساعدة توصل',
-                style: TextStyle(color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close Dialog
-                    Navigator.of(context).pop(); // Close Report Page
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFDC2626),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 10),
+                Text(
+                  loc.helpOnWayDesc,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    fontFamily: 'NotoSansArabic',
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: theme.primaryColor,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text(
+                      loc.readInstructionsBtn,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
                     ),
                   ),
-                  child: const Text(
-                    'اقرأ التعليمات',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF1F5F9), // Light grayish background
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-          leading: const BackButton(),
-          centerTitle: true,
-          title: const Text(
-            'تبليغ عن مشكلة',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+    final theme = Theme.of(context);
+    final loc = context.loc;
+    final isDark = theme.brightness == Brightness.dark;
+    final onSurface = theme.colorScheme.onSurface;
+    final cardColor = isDark ? theme.colorScheme.surfaceContainer : theme.colorScheme.surface;
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: onSurface,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: true,
+        title: Text(
+          loc.reportIncidentTitle,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic'),
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Incident Type
-              const Text(
-                'ايه المشكله اللي بتواجهك؟',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Incident Type
+            Text(
+              loc.incidentQuestion,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic'),
+            ),
+            const SizedBox(height: 20),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.82,
               ),
-              const SizedBox(height: 16),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.85,
-                ),
-                itemCount: _types.length,
-                itemBuilder: (context, index) {
-                  final t = _types[index];
-                  final isSelected = _selectedType == t['id'];
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedType = t['id'] as String;
-                      });
-                    },
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isSelected
-                                ? const Color(0xFFDC2626)
-                                : Colors.transparent,
+              itemCount: _getTypes(context).length,
+              itemBuilder: (context, index) {
+                final t = _getTypes(context)[index];
+                final isSelected = _selectedType == t['id'];
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedType = t['id'] as String),
+                  child: Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSelected ? theme.primaryColor : cardColor,
+                          border: Border.all(
+                            color: isSelected ? theme.primaryColor : theme.dividerColor.withOpacity(0.08),
+                            width: 1.5,
                           ),
-                          child: Stack(
-                            children: [
-                              Icon(
-                                t['icon'] as IconData,
-                                color: isSelected
-                                    ? Colors.white
-                                    : const Color(0xFF94A3B8),
-                                size: 32,
-                              ),
-                              if (isSelected)
-                                Positioned(
-                                  top: -4,
-                                  right: -4,
-                                  child: Container(
-                                    width: 14,
-                                    height: 14,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.check,
-                                      size: 10,
-                                      color: Color(0xFFDC2626),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isSelected ? theme.primaryColor.withOpacity(0.3) : Colors.black.withOpacity(0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          t['label'] as String,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            color: isSelected
-                                ? const Color(0xFFDC2626)
-                                : const Color(0xFF64748B),
-                          ),
+                        child: Icon(
+                          t['icon'] as IconData,
+                          color: isSelected ? Colors.white : onSurface.withOpacity(0.6),
+                          size: 28,
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              if (_selectedType == 'other') ...[
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _customTypeCtrl,
-                  decoration: InputDecoration(
-                    hintText: 'Stuck in elevator...',
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFDC2626),
-                        width: 1.5,
                       ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFDC2626),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-
-              const SizedBox(height: 32),
-
-              // 2. Location
-              const Text(
-                'المكان',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _locationText,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _showLocationSheet,
-                      child: const Text(
-                        'تغيير',
+                      const SizedBox(height: 10),
+                      Text(
+                        t['label'] as String,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0xFFDC2626),
-                          fontWeight: FontWeight.bold,
+                          fontFamily: 'NotoSansArabic',
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                          color: isSelected ? theme.primaryColor : onSurface.withOpacity(0.5),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Volunteers Needed
-              const Text(
-                'عدد المتطوعين المطلوب (تقريبي)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
+                    ],
+                  ),
+                );
+              },
+            ),
+            if (_selectedType == 'other') ...[
+              const SizedBox(height: 20),
               TextField(
-                controller: _volunteersNeededCtrl,
-                keyboardType: TextInputType.number,
+                controller: _customTypeCtrl,
+                style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
-                  hintText: 'مثال: 5',
+                  hintText: loc.otherTypeHint,
+                  hintStyle: TextStyle(color: onSurface.withOpacity(0.35)),
                   filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: const Icon(
-                    Icons.people_outline,
-                    color: Color(0xFF64748B),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFDC2626)),
-                  ),
+                  fillColor: cardColor,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor.withOpacity(0.2))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor, width: 2)),
                 ),
               ),
+            ],
 
-              const SizedBox(height: 32),
+            const SizedBox(height: 36),
 
-              // 3. Evidence
-              const Text(
-                'زود دليل',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            // 2. Location
+            _SectionLabel(label: loc.locationLabel),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: theme.dividerColor.withOpacity(0.08)),
               ),
-              const SizedBox(height: 16),
-              if (_evidenceItems.isNotEmpty) ...[
-                SizedBox(
-                  height: 100,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _evidenceItems.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 12),
-                    itemBuilder: (context, i) {
-                      final item = _evidenceItems[i];
-                      if (item['type'] == 'image') {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.file(
-                            File(item['path']!),
-                            width: 100,
-                            height: 100,
-                            fit: BoxFit.cover,
-                          ),
-                        );
-                      } else {
-                        // Video or Audio generic icon
-                        return Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: Icon(
-                            item['type'] == 'video'
-                                ? Icons.videocam
-                                : Icons.audiotrack,
-                            size: 40,
-                            color: const Color(0xFFDC2626),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-              Row(
+              child: Row(
                 children: [
+                  Icon(Icons.location_on_rounded, color: theme.primaryColor, size: 24),
+                  const SizedBox(width: 14),
                   Expanded(
-                    child: _EvidenceButton(
-                      icon: Icons.camera_alt_outlined,
-                      label: 'صورة',
-                      onTap: _showImageSourcePicker,
+                    child: Text(
+                      _locationText.isEmpty ? loc.locationUpdating : _locationText,
+                      style: TextStyle(fontWeight: FontWeight.w600, color: onSurface, fontFamily: 'NotoSansArabic'),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _EvidenceButton(
-                      icon: Icons.videocam_outlined,
-                      label: 'مقطع فيديو',
-                      onTap: _showVideoSourcePicker,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _EvidenceButton(
-                      icon: Icons.mic_none_rounded,
-                      label: 'ريكورد',
-                      onTap: _showAudioSourcePicker,
+                  TextButton(
+                    onPressed: _showLocationSheet,
+                    child: Text(
+                      loc.changeLocation,
+                      style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic'),
                     ),
                   ),
                 ],
               ),
+            ),
 
-              const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-              // Report Button
+            // Volunteers Needed
+            _SectionLabel(label: loc.volunteersNeededLabel),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _volunteersNeededCtrl,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+              decoration: InputDecoration(
+                hintText: loc.volunteersNeededHint,
+                hintStyle: TextStyle(color: onSurface.withOpacity(0.35)),
+                filled: true,
+                fillColor: cardColor,
+                prefixIcon: Icon(Icons.people_alt_rounded, color: theme.primaryColor.withOpacity(0.5)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor, width: 1.5)),
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // 3. Evidence
+            _SectionLabel(label: loc.addEvidenceLabel),
+            const SizedBox(height: 16),
+            if (_evidenceItems.isNotEmpty) ...[
               SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    // Mute validation for mock flow
-                    if (_selectedType.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('اختار المشكلة الأول')),
-                      );
-                      return;
-                    }
-                    _showSuccessDialog();
+                height: 110,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _evidenceItems.length,
+                  separatorBuilder: (_, i) => const SizedBox(width: 14),
+                  itemBuilder: (context, i) {
+                    final item = _evidenceItems[i];
+                    return Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: item['type'] == 'image'
+                              ? Image.file(File(item['path']!), width: 110, height: 110, fit: BoxFit.cover)
+                              : Container(
+                                  width: 110,
+                                  height: 110,
+                                  color: theme.primaryColor.withOpacity(0.1),
+                                  child: Icon(item['type'] == 'video' ? Icons.videocam_rounded : Icons.mic_rounded, color: theme.primaryColor, size: 36),
+                                ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => setState(() => _evidenceItems.removeAt(i)),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                              child: const Icon(Icons.close_rounded, color: Colors.white, size: 14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
                   },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFDC2626),
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'بلغ',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 16),
             ],
-          ),
+            Row(
+              children: [
+                Expanded(child: _EvidenceButton(icon: Icons.camera_alt_rounded, label: loc.evidencePhoto, onTap: _showImageSourcePicker)),
+                const SizedBox(width: 12),
+                Expanded(child: _EvidenceButton(icon: Icons.videocam_rounded, label: loc.evidenceVideo, onTap: _showVideoSourcePicker)),
+                const SizedBox(width: 12),
+                Expanded(child: _EvidenceButton(icon: Icons.mic_rounded, label: loc.evidenceRecord, onTap: _showAudioSourcePicker)),
+              ],
+            ),
+
+            const SizedBox(height: 48),
+
+            // Report Button
+            SizedBox(
+              width: double.infinity,
+              height: 60,
+              child: FilledButton(
+                onPressed: () {
+                  if (_selectedType.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.selectProblemFirst)));
+                    return;
+                  }
+                  _showSuccessDialog();
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.primaryColor,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  elevation: 4,
+                  shadowColor: theme.primaryColor.withOpacity(0.4),
+                ),
+                child: Text(
+                  loc.reportBtn,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 48),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic'),
     );
   }
 }
@@ -656,44 +548,33 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
   final _cityCtrl = TextEditingController();
   final _govCtrl = TextEditingController();
   final _streetCtrl = TextEditingController();
-
   bool _isLoadingLoc = false;
 
   @override
   void initState() {
     super.initState();
-    _cityCtrl.text = 'مدينة نصر';
-    _govCtrl.text = 'القاهرة';
-    _streetCtrl.text = '11740';
+    _cityCtrl.text = 'Maadi';
+    _govCtrl.text = 'Cairo';
+    _streetCtrl.text = '9th Street';
   }
 
   Future<void> _getCurrentLocation() async {
     setState(() => _isLoadingLoc = true);
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) throw Exception('Location disabled');
+      if (!serviceEnabled) return;
+      LocationPermission p = await Geolocator.checkPermission();
+      if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
+      if (p == LocationPermission.deniedForever) return;
 
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied)
-          throw Exception('Permission denied');
-      }
-
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (placemarks.isNotEmpty) {
-        final p = placemarks.first;
+      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      List<Placemark> pm = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      if (pm.isNotEmpty) {
+        final first = pm.first;
         setState(() {
-          _cityCtrl.text = p.subAdministrativeArea ?? p.locality ?? 'Unknown';
-          _govCtrl.text = p.administrativeArea ?? 'Unknown';
-          _streetCtrl.text = p.street ?? p.name ?? '';
+          _cityCtrl.text = first.locality ?? first.subAdministrativeArea ?? '';
+          _govCtrl.text = first.administrativeArea ?? '';
+          _streetCtrl.text = first.street ?? '';
           _searchCtrl.text = '${_streetCtrl.text}, ${_cityCtrl.text}';
         });
       }
@@ -706,267 +587,155 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: ui.TextDirection.rtl,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+    final theme = Theme.of(context);
+    final loc = context.loc;
+    final onSurface = theme.colorScheme.onSurface;
+    final cardColor = theme.colorScheme.surfaceContainer;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -10))],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(width: 48, height: 6, decoration: BoxDecoration(color: theme.dividerColor.withOpacity(0.1), borderRadius: BorderRadius.circular(3))),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Icon(Icons.map_rounded, color: theme.primaryColor, size: 24),
+              const SizedBox(width: 14),
+              Text(loc.locationPickerTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
+            ],
+          ),
+          const SizedBox(height: 24),
+          TextField(
+            controller: _searchCtrl,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              hintText: loc.searchAddressHint,
+              hintStyle: TextStyle(color: onSurface.withOpacity(0.35)),
+              prefixIcon: Icon(Icons.search_rounded, color: theme.primaryColor.withOpacity(0.5)),
+              filled: true,
+              fillColor: cardColor,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            height: 180,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: cardColor,
+              image: const DecorationImage(
+                image: NetworkImage('https://maps.googleapis.com/maps/api/staticmap?center=30.044,31.235&zoom=14&size=600x300&maptype=roadmap&key=mock'),
+                fit: BoxFit.cover,
               ),
             ),
-            const SizedBox(height: 16),
-            const Row(
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                Icon(Icons.arrow_back, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'لوكيشن',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Search Input
-            TextField(
-              controller: _searchCtrl,
-              decoration: InputDecoration(
-                hintText: 'Search Address',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Map Mock Image
-            Container(
-              height: 150,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: const Color(0xFFE2E8F0),
-                image: const DecorationImage(
-                  image: NetworkImage(
-                    'https://maps.googleapis.com/maps/api/staticmap?center=30.044,31.235&zoom=14&size=600x300&maptype=roadmap&key=mock',
-                  ),
-                  fit: BoxFit.cover,
-                ),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Icon(
-                    Icons.location_pin,
-                    color: Color(0xFFDC2626),
-                    size: 40,
-                  ),
-                  Positioned(
-                    bottom: 12,
-                    right: 12,
-                    child: GestureDetector(
-                      onTap: _getCurrentLocation,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            if (_isLoadingLoc)
-                              const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFFDC2626),
-                                ),
-                              )
-                            else
-                              const Icon(
-                                Icons.my_location_rounded,
-                                color: Color(0xFFDC2626),
-                                size: 16,
-                              ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'Locate my location',
-                              style: TextStyle(
-                                color: Color(0xFFDC2626),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Fields
-            Row(
-              children: [
-                const Icon(
-                  Icons.location_on_outlined,
-                  color: Color(0xFF64748B),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${_cityCtrl.text}، ${_govCtrl.text} ${_streetCtrl.text}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                Icon(Icons.location_pin, color: theme.primaryColor, size: 48),
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoadingLoc ? null : _getCurrentLocation,
+                    icon: _isLoadingLoc ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.my_location_rounded, size: 16),
+                    label: Text(loc.findMyLocation, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.surface,
+                      foregroundColor: theme.primaryColor,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-
-            _LocationField(ctrl: _cityCtrl, hint: 'المدينة'),
-            const SizedBox(height: 12),
-            _LocationField(ctrl: _govCtrl, hint: 'محافظة'),
-            const SizedBox(height: 12),
-            _LocationField(ctrl: _streetCtrl, hint: 'رقم المبنى'),
-
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  widget.onLocationSelected(
-                    '${_cityCtrl.text}، ${_govCtrl.text} ${_streetCtrl.text}',
-                  );
-                  Navigator.of(context).pop();
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'تأكيد',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(child: _LocField(ctrl: _cityCtrl, label: loc.cityLabel)),
+              const SizedBox(width: 12),
+              Expanded(child: _LocField(ctrl: _govCtrl, label: loc.govLabel)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _LocField(ctrl: _streetCtrl, label: loc.buildingLabel),
+          const SizedBox(height: 32),
+          SizedBox(
+            height: 56,
+            child: FilledButton(
+              onPressed: () {
+                widget.onLocationSelected('${_cityCtrl.text}, ${_govCtrl.text} ${_streetCtrl.text}');
+                Navigator.of(context).pop();
+              },
+              style: FilledButton.styleFrom(backgroundColor: theme.primaryColor, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+              child: Text(loc.confirmLocationBtn, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 20),
+        ],
       ),
     );
   }
 }
 
-class _LocationField extends StatelessWidget {
+class _LocField extends StatelessWidget {
   final TextEditingController ctrl;
-  final String hint;
-
-  const _LocationField({required this.ctrl, required this.hint});
-
+  final String label;
+  const _LocField({required this.ctrl, required this.label});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return TextField(
       controller: ctrl,
+      style: const TextStyle(fontWeight: FontWeight.w600),
       decoration: InputDecoration(
-        hintText: hint,
+        labelText: label,
+        labelStyle: TextStyle(color: theme.primaryColor.withOpacity(0.7), fontWeight: FontWeight.bold, fontSize: 13),
         filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFDC2626)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFDC2626)),
-        ),
+        fillColor: theme.colorScheme.surfaceContainer,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor, width: 1.5)),
       ),
     );
   }
 }
-
-// ─── SMALL EVIDENCE BUTTON ────────────────────────────────────────────────────────
 
 class _EvidenceButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
-  const _EvidenceButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+  const _EvidenceButton({required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 90,
+        height: 100,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: const Color(0xFFDC2626), size: 28),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFFDC2626),
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
+            Icon(icon, color: theme.primaryColor, size: 32),
+            const SizedBox(height: 10),
+            Text(label, style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w900, fontSize: 13, fontFamily: 'NotoSansArabic')),
           ],
         ),
       ),
