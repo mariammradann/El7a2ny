@@ -4,11 +4,11 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 
-import '../core/api/api_exception.dart';
-import '../core/services/social_auth_service.dart';
-import '../data/repositories/auth_repository.dart';
-import '../core/localization/app_strings.dart';
-import '../widgets/language_toggle_button.dart';
+import 'package:el7a2ny_app/core/api/api_exception.dart';
+import 'package:el7a2ny_app/core/services/social_auth_service.dart';
+import 'package:el7a2ny_app/data/repositories/auth_repository.dart';
+import 'package:el7a2ny_app/core/localization/app_strings.dart';
+import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
 
 class SignUpScreen extends StatefulWidget {
   final SocialProfile? socialProfile;
@@ -257,10 +257,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: _AppDropdown<String>(
                   label: loc.selectModel,
                   value: _smartWatch,
-                  isRequired: false,
                   items: const ['Apple Watch', 'Samsung Galaxy Watch', 'Huawei Watch', 'other'],
                   itemLabel: (v) => v == 'other' ? loc.otherModel : v,
                   onChanged: (v) => setState(() => _smartWatch = v),
+                  isRequired: false,
                 ),
               ),
 
@@ -270,10 +270,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: _AppDropdown<String>(
                   label: loc.selectModel,
                   value: _sensor,
-                  isRequired: false,
                   items: const ['pulse', 'glucose', 'other'],
                   itemLabel: (v) => v == 'pulse' ? loc.pulseSensor : (v == 'glucose' ? loc.glucoseSensor : loc.otherModel),
                   onChanged: (v) => setState(() => _sensor = v),
+                  isRequired: false,
                 ),
               ),
 

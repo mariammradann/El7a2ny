@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../app/main_shell_screen.dart';
-import '../core/api/api_exception.dart';
-import '../data/repositories/auth_repository.dart';
-import '../widgets/language_toggle_button.dart';
-import '../core/localization/app_strings.dart';
-import 'forgot_password_screen.dart';
-import 'sign_up_screen.dart';
+import 'package:el7a2ny_app/app/main_shell_screen.dart';
+import 'package:el7a2ny_app/core/api/api_exception.dart';
+import 'package:el7a2ny_app/data/repositories/auth_repository.dart';
+import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
+import 'package:el7a2ny_app/core/localization/app_strings.dart';
+import 'package:el7a2ny_app/pages/forgot_password_screen.dart';
+import 'package:el7a2ny_app/pages/sign_up_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -251,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (context) => const SignUpScreen(),
+                          builder: (context) => SignUpScreen(),
                         ),
                       );
                     },

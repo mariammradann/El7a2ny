@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../core/localization/app_strings.dart';
-import '../widgets/language_toggle_button.dart';
-
-import '../app/main_shell_screen.dart';
-import 'emergency_report_screen.dart';
-import 'login_screen.dart';
-import 'sign_up_screen.dart';
+import 'package:el7a2ny_app/core/localization/app_strings.dart';
+import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
+import 'package:el7a2ny_app/app/main_shell_screen.dart';
+import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
+import 'package:el7a2ny_app/pages/login_screen.dart';
+import 'package:el7a2ny_app/pages/sign_up_screen.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({
@@ -111,7 +110,7 @@ class LandingScreen extends StatelessWidget {
                       () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (context) => const SignUpScreen(),
+                            builder: (context) => SignUpScreen(),
                           ),
                         );
                       },
