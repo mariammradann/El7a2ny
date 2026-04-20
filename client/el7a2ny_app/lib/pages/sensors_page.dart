@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../models/sensor_model.dart';
 import '../services/api_service.dart';
 import '../core/localization/app_strings.dart';
+import 'emergency_confirmation_page.dart';
 
 // ─────────────────────────────────────────────
 //  UI ENUMS & HELPERS
@@ -41,7 +42,7 @@ class _SensorsPageState extends State<SensorsPage> with TickerProviderStateMixin
   List<SensorModel> _sensors = [];
   bool _loading = true;
   String? _error;
-  bool _drillMode = false;
+  final bool _drillMode = false;
 
   late AnimationController _pulseCtrl;
   late AnimationController _shakeCtrl;
@@ -146,7 +147,8 @@ class _SensorsPageState extends State<SensorsPage> with TickerProviderStateMixin
                       ),
                     )),
                     const SizedBox(height: 12),
-                    _TestPanel(sensors: _sensors, onTrigger: _triggerSensor, onReset: _loadSensors),
+                    if (ApiService.useMock)
+                      _TestPanel(sensors: _sensors, onTrigger: _triggerSensor, onReset: _loadSensors),
                   ],
                 ]),
               ),
@@ -232,9 +234,9 @@ class _SensorCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainer,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: statusColor.withOpacity(0.25), width: 1.5),
+            border: Border.all(color: statusColor.withValues(alpha: 0.25), width: 1.5),
             boxShadow: [
-              BoxShadow(color: statusColor.withOpacity(0.12), blurRadius: 15, offset: const Offset(0, 8)),
+              BoxShadow(color: statusColor.withValues(alpha: 0.12), blurRadius: 15, offset: const Offset(0, 8)),
             ],
           ),
           padding: const EdgeInsets.all(20),
@@ -242,7 +244,7 @@ class _SensorCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(18)),
+                decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(18)),
                 child: Icon(sensorIcon(type), color: statusColor, size: 32),
               ),
               const SizedBox(width: 18),
@@ -257,7 +259,7 @@ class _SensorCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${sensor.value} ${sensor.unit}',
-                      style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -267,7 +269,7 @@ class _SensorCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                     child: Row(
                       children: [
                         Icon(statusIcon, size: 14, color: statusColor),
@@ -323,7 +325,7 @@ class SensorNormalPage extends StatelessWidget {
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(32),
-                boxShadow: [BoxShadow(color: theme.primaryColor.withOpacity(0.35), blurRadius: 20, offset: const Offset(0, 10))],
+                boxShadow: [BoxShadow(color: theme.primaryColor.withValues(alpha: 0.35), blurRadius: 20, offset: const Offset(0, 10))],
               ),
               child: Column(
                 children: [
@@ -334,7 +336,7 @@ class SensorNormalPage extends StatelessWidget {
                     style: const TextStyle(color: Colors.white, fontSize: 52, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 8),
-                  Text(loc.safeStatus, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                  Text(loc.safeStatus, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
                 ],
               ),
             ),
@@ -344,7 +346,7 @@ class SensorNormalPage extends StatelessWidget {
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+                border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
               ),
               child: Column(
                 children: [
@@ -352,7 +354,7 @@ class SensorNormalPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(loc.noProblemsTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
                   const SizedBox(height: 10),
-                  Text(loc.allNormalDesc, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), height: 1.5, fontFamily: 'NotoSansArabic')),
+                  Text(loc.allNormalDesc, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), height: 1.5, fontFamily: 'NotoSansArabic')),
                 ],
               ),
             ),
@@ -368,32 +370,42 @@ class SensorEmergencyPage extends StatefulWidget {
   final bool isDrill;
   final VoidCallback onReset;
 
-  const SensorEmergencyPage({super.key, required this.sensor, required this.isDrill, required this.onReset});
+  const SensorEmergencyPage({
+    super.key,
+    required this.sensor,
+    required this.isDrill,
+    required this.onReset,
+  });
 
   @override
   State<SensorEmergencyPage> createState() => _SensorEmergencyPageState();
 }
 
-class _SensorEmergencyPageState extends State<SensorEmergencyPage> with TickerProviderStateMixin {
+class _SensorEmergencyPageState extends State<SensorEmergencyPage>
+    with TickerProviderStateMixin {
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
-  int _secondsLeft = 30;
+  int _secondsLeft = 135; // 2:15
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _pulseCtrl = AnimationController(duration: const Duration(milliseconds: 600), vsync: this)..repeat(reverse: true);
-    _pulseAnim = Tween(begin: 1.0, end: 1.15).animate(_pulseCtrl);
+    _pulseCtrl = AnimationController(
+        duration: const Duration(milliseconds: 800), vsync: this)
+      ..repeat(reverse: true);
+    _pulseAnim = Tween(begin: 1.0, end: 1.1).animate(
+        CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _startTimer();
   }
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_secondsLeft > 0) {
-        setState(() => _secondsLeft--);
+        if (mounted) setState(() => _secondsLeft--);
       } else {
         _timer?.cancel();
+        // Trigger automated dispatch here in the future
       }
     });
   }
@@ -405,81 +417,272 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage> with TickerPr
     super.dispose();
   }
 
+  String _formatTime(int seconds) {
+    final mins = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '$mins:${secs.toString().padLeft(2, '0')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
-    final type = parseSensorType(widget.sensor.type);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A0606),
+      backgroundColor: const Color(0xFFDC2626), // Solid emergency red
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             children: [
-              const SizedBox(height: 40),
-              ScaleTransition(
-                scale: _pulseAnim,
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(color: Color(0xFFDC2626), shape: BoxShape.circle),
-                  child: Icon(sensorIcon(type), color: Colors.white, size: 80),
+              // Header & Icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ScaleTransition(
+                    scale: _pulseAnim,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(Icons.report_gmailerrorred_rounded,
+                          color: Colors.white, size: 40),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        loc.isAr ? 'تنبيه الحساسات' : 'Sensors Alert',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            fontFamily: 'NotoSansArabic'),
+                      ),
+                      Text(
+                        loc.isAr ? 'اكتشاف تسريب غاز ؟' : 'Gas Leak Detected?',
+                        style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'NotoSansArabic'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 30),
+
+              // Timer
+              Text(
+                _formatTime(_secondsLeft),
+                style: const TextStyle(
+                    color: Color(0xFFFFD700), // Gold/Yellow timer
+                    fontSize: 72,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 4),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                loc.isAr
+                    ? 'رد حالاً وإلا سيتم إطلاق بلاغ تلقائي'
+                    : 'Respond now or an auto-report will be triggered',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'NotoSansArabic'),
+              ),
+
+              const SizedBox(height: 30),
+
+              // Detection Details Card
+              _buildSectionCard(
+                title: loc.isAr ? 'تفاصيل الاكتشاف:' : 'Detection Details:',
+                child: Column(
+                  children: [
+                    _buildDetailRow(
+                      label: loc.isAr ? 'القيمة الحالية :' : 'Current Value:',
+                      value: '${widget.sensor.value} ${widget.sensor.unit}',
+                      valueColor: const Color(0xFFFFD700),
+                    ),
+                    const Divider(color: Colors.white12, height: 24),
+                    _buildDetailRow(
+                      label: loc.isAr ? 'الحد الآمن :' : 'Safety Limit:',
+                      value: widget.sensor.type == 'gas' ? '500 ppm' : '45°C',
+                      valueColor: Colors.white,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        _buildBadge(loc.isAr ? 'عالية' : 'High', Colors.orange),
+                        const SizedBox(width: 8),
+                        _buildBadge(
+                            loc.isAr ? 'المطبخ' : 'Kitchen', Colors.grey),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 40),
-              Text(
-                widget.sensor.type == 'gas' ? loc.sensorDangerTitleGas : loc.sensorDangerTitleHeat,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic'),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                loc.autoReportStatusUrgent,
-                style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 16, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
-              ),
-              const Spacer(),
-              _EmergencyActions(onReset: widget.onReset),
+
               const SizedBox(height: 20),
+
+              // Safety Measures Card
+              _buildSectionCard(
+                title: loc.isAr ? '⚠ نصائح أمان بسرعة :' : '⚠ Quick Safety:',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSafetyTip(loc.isAr
+                        ? 'لا تستخدم زر الكهرباء خالص'
+                        : "Don't use electrical switches"),
+                    _buildSafetyTip(
+                        loc.isAr ? 'افتح الشبابيك فوراً' : 'Open windows immediately'),
+                    _buildSafetyTip(loc.isAr
+                        ? 'اخرج من المكان لو تقدر'
+                        : 'Evacuate the area if possible'),
+                    _buildSafetyTip(loc.isAr
+                        ? 'مينفعش ولا عود كبريت أو نار'
+                        : 'No matches or flames'),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
+              // Actions
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: FilledButton(
+                  onPressed: widget.onReset,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                  ),
+                  child: Text(loc.isAr ? 'إنذار كاذب الوضع تمام' : "False Alarm - All Good",
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'NotoSansArabic')),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const EmergencyConfirmationPage()));
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFFACC15), // Yellow
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                  ),
+                  child: Text(loc.isAr ? 'أكد الطوارئ - بلغ دلوقتى !' : "Confirm Emergency - Dispatch!",
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          fontFamily: 'NotoSansArabic')),
+                ),
+              ),
+              const SizedBox(height: 30),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-class _EmergencyActions extends StatelessWidget {
-  final VoidCallback onReset;
-  const _EmergencyActions({required this.onReset});
+  Widget _buildSectionCard({required String title, required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'NotoSansArabic')),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final loc = context.loc;
-    return Column(
+  Widget _buildDetailRow(
+      {required String label, required String value, required Color valueColor}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(
-          width: double.infinity,
-          height: 64,
-          child: FilledButton(
-            onPressed: onReset,
-            style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.black, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-            child: Text(loc.imSafeBtn, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          height: 64,
-          child: OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white24), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
-            child: Text(loc.needHelpBtn, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
-          ),
-        ),
+        Text(label,
+            style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'NotoSansArabic')),
+        Text(value,
+            style: TextStyle(
+                color: valueColor, fontSize: 18, fontWeight: FontWeight.w900)),
       ],
     );
   }
+
+  Widget _buildBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(text,
+          style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              fontFamily: 'NotoSansArabic')),
+    );
+  }
+
+  Widget _buildSafetyTip(String tip) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          const Text('• ',
+              style:
+                  TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Expanded(
+            child: Text(tip,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'NotoSansArabic')),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
 
 class _ErrorBanner extends StatelessWidget {
   final VoidCallback onRetry;
@@ -489,7 +692,7 @@ class _ErrorBanner extends StatelessWidget {
     final loc = context.loc;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
       child: Column(
         children: [
           const Icon(Icons.error_outline_rounded, color: Colors.red, size: 40),
@@ -514,7 +717,7 @@ class _TestPanel extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainer, borderRadius: BorderRadius.circular(20), border: Border.all(color: theme.dividerColor.withOpacity(0.1))),
+      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainer, borderRadius: BorderRadius.circular(20), border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

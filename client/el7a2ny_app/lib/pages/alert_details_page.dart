@@ -111,7 +111,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                bannerColor.withOpacity(0.9),
+                                bannerColor.withValues(alpha: 0.9),
                                 bannerColor,
                               ],
                               begin: Alignment.topCenter,
@@ -126,7 +126,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           child: Icon(
                             largeIcon,
                             size: 200,
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                           ),
                         ),
                         // Back Button
@@ -278,7 +278,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   Text(
                                     widget.alert.getLocalizedSeverity(context.loc),
                                     style: TextStyle(
-                                      color: onSurface.withOpacity(0.7),
+                                      color: onSurface.withValues(alpha: 0.7),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
@@ -311,10 +311,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   horizontal: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isDark ? theme.colorScheme.surface : theme.primaryColor.withOpacity(0.05),
+                                  color: isDark ? theme.colorScheme.surface : theme.primaryColor.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: theme.dividerColor.withOpacity(0.1),
+                                    color: theme.dividerColor.withValues(alpha: 0.1),
                                   ),
                                 ),
                                 child: Column(
@@ -362,10 +362,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   horizontal: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withOpacity(0.05),
+                                  color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: theme.dividerColor.withOpacity(0.1),
+                                    color: theme.dividerColor.withValues(alpha: 0.1),
                                   ),
                                 ),
                                 child: Column(
@@ -417,7 +417,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           decoration: BoxDecoration(
                             color: isDark ? theme.colorScheme.surface : const Color(0xFFF0FDF4),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: isDark ? theme.dividerColor.withOpacity(0.1) : const Color(0xFFBBF7D0)),
+                            border: Border.all(color: isDark ? theme.dividerColor.withValues(alpha: 0.1) : const Color(0xFFBBF7D0)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -479,7 +479,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                     '${context.loc.outOfLabel} $_totalVols',
                                     style: TextStyle(
                                       fontSize: 16,
-                                      color: onSurface.withOpacity(0.6),
+                                      color: onSurface.withValues(alpha: 0.6),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -524,7 +524,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surfaceContainer,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -552,7 +552,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 Text(
                                   widget.alert.description!,
                                   style: TextStyle(
-                                    color: onSurface.withOpacity(0.7),
+                                    color: onSurface.withValues(alpha: 0.7),
                                     height: 1.7,
                                     fontSize: 13,
                                   ),
@@ -569,9 +569,9 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             horizontal: 20,
                           ),
                           decoration: BoxDecoration(
-                            color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withOpacity(0.05),
+                            color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -623,7 +623,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                   decoration: BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: _joined ? Colors.grey.withOpacity(0.4) : const Color(0xFF10B981).withOpacity(0.4),
+                        color: _joined ? Colors.grey.withValues(alpha: 0.4) : const Color(0xFF10B981).withValues(alpha: 0.4),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),

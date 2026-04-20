@@ -11,7 +11,7 @@ import '../data/repositories/emergency_report_repository.dart';
 /// أحمر العنوان والزر الرئيسي.
 Color _kEmergencyRed(BuildContext context) => Theme.of(context).primaryColor;
 Color _kSectionPink(BuildContext context) => Theme.of(context).brightness == Brightness.light
-    ? Theme.of(context).primaryColor.withOpacity(0.05)
+    ? Theme.of(context).primaryColor.withValues(alpha: 0.05)
     : Theme.of(context).colorScheme.surfaceContainer;
 Color _kTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
 
@@ -73,7 +73,9 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
       setState(() => _locationGranted = true);
       try {
         _currentPosition = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+          ),
         );
       } catch (_) {}
     } else {
@@ -355,11 +357,11 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1)),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -463,7 +465,7 @@ class _PermissionSquare extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: active ? _kEmergencyRed(context) : _kTextDark(context).withOpacity(0.4),
+              color: active ? _kEmergencyRed(context) : _kTextDark(context).withValues(alpha: 0.4),
               width: active ? 2 : 1,
             ),
           ),
@@ -521,7 +523,7 @@ class _MediaUploadBox extends StatelessWidget {
                 Icon(
                   hasMedia ? Icons.check_circle_outline : Icons.perm_media_outlined,
                   size: 40,
-                  color: hasMedia ? _kEmergencyRed(context) : _kTextDark(context).withOpacity(0.7),
+                  color: hasMedia ? _kEmergencyRed(context) : _kTextDark(context).withValues(alpha: 0.7),
                 ),
                 const SizedBox(height: 10),
                 Text(

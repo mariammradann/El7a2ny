@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'core/localization/locale_provider.dart';
-import 'core/theme/app_theme.dart';
-import 'pages/welcome_screen.dart';
+import 'package:el7a2ny_app/core/localization/locale_provider.dart';
+import 'package:el7a2ny_app/core/theme/app_theme.dart';
+import 'package:el7a2ny_app/pages/welcome_screen.dart';
+import 'package:el7a2ny_app/widgets/global_fab_overlay.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,11 +41,14 @@ class _MyAppState extends State<MyApp> {
             title: 'El7a2ny App',
             debugShowCheckedModeBanner: false,
             builder: (context, child) {
-              return Directionality(
-                textDirection: config.isArabic ? TextDirection.rtl : TextDirection.ltr,
-                child: child!,
+              return GlobalFabOverlay(
+                child: Directionality(
+                  textDirection: config.isArabic ? TextDirection.rtl : TextDirection.ltr,
+                  child: child!,
+                ),
               );
             },
+            navigatorObservers: [GlobalFabRouteObserver()],
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: config.isDarkMode ? ThemeMode.dark : ThemeMode.light,

@@ -21,7 +21,7 @@ class EmergencyDashboardCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(theme.brightness == Brightness.light ? 0.06 : 0.2),
+            color: Colors.black.withValues(alpha: theme.brightness == Brightness.light ? 0.06 : 0.2),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -81,9 +81,9 @@ class EmergencyStatusChip extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isDark ? Colors.green.withOpacity(0.1) : Colors.green.withOpacity(0.12),
+          color: isDark ? Colors.green.withValues(alpha: 0.1) : Colors.green.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isDark ? Colors.green.shade400.withOpacity(0.4) : Colors.green.shade600.withOpacity(0.3)),
+          border: Border.all(color: isDark ? Colors.green.shade400.withValues(alpha: 0.4) : Colors.green.shade600.withValues(alpha: 0.3)),
         ),
         child: Text(
           'متصل',
@@ -99,9 +99,9 @@ class EmergencyStatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? Colors.red.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+        color: isDark ? Colors.red.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.red.shade400.withOpacity(0.4) : Colors.red.shade600.withOpacity(0.3)),
+        border: Border.all(color: isDark ? Colors.red.shade400.withValues(alpha: 0.4) : Colors.red.shade600.withValues(alpha: 0.3)),
       ),
       child: Text(
         'غير متصل',

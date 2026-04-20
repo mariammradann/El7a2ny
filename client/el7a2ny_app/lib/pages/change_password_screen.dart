@@ -71,7 +71,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final primaryRed = theme.primaryColor;
     final onSurface = theme.colorScheme.onSurface;
     final surfaceColor = theme.colorScheme.surface;
-    final cardColor = isDark ? theme.colorScheme.surfaceContainer : theme.primaryColor.withOpacity(0.05);
+    final cardColor = isDark ? theme.colorScheme.surfaceContainer : theme.primaryColor.withValues(alpha: 0.05);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -148,7 +148,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: onSurface.withOpacity(0.7),
+                          color: onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -175,7 +175,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: onSurface.withOpacity(0.7),
+                          color: onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -247,18 +247,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: onSurface.withOpacity(0.4)),
-      prefixIcon: Icon(Icons.lock_outline_rounded, size: 22, color: onSurface.withOpacity(0.5)),
+      hintStyle: TextStyle(color: onSurface.withValues(alpha: 0.4)),
+      prefixIcon: Icon(Icons.lock_outline_rounded, size: 22, color: onSurface.withValues(alpha: 0.5)),
       filled: true,
       fillColor: surfaceColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: onSurface.withOpacity(0.1)),
+        borderSide: BorderSide(color: onSurface.withValues(alpha: 0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: onSurface.withOpacity(0.1)),
+        borderSide: BorderSide(color: onSurface.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

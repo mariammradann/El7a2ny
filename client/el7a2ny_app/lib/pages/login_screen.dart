@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Color _kAccentGreen(BuildContext context) => Theme.of(context).primaryColor;
   Color _kTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
-  Color _kPlaceholderGrey(BuildContext context) => Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
+  Color _kPlaceholderGrey(BuildContext context) => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
 
   @override
   void dispose() {
@@ -107,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 15,
-                    color: _kTextDark(context).withOpacity(0.6),
+                    color: _kTextDark(context).withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 36),
@@ -182,7 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             activeColor: _kAccentGreen(context),
                             checkColor: Colors.white,
                             side: BorderSide(
-                              color: _kTextDark(context).withOpacity(0.4),
+                              color: _kTextDark(context).withValues(alpha: 0.4),
                               width: 1.5,
                             ),
                             materialTapTargetSize:
@@ -263,7 +263,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 14,
-                        color: _kTextDark(context).withOpacity(0.7),
+                        color: _kTextDark(context).withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -310,11 +310,11 @@ class _LoginScreenState extends State<LoginScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.1)),
+        borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: theme.colorScheme.onSurface.withOpacity(0.1)),
+        borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

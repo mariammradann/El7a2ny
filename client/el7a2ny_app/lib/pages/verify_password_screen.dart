@@ -23,7 +23,7 @@ class _VerifyCurrentPasswordScreenState extends State<VerifyCurrentPasswordScree
 
   Color _kBrandRed(BuildContext context) => Theme.of(context).primaryColor;
   Color _kSectionColor(BuildContext context) => Theme.of(context).brightness == Brightness.light
-      ? Theme.of(context).primaryColor.withOpacity(0.05)
+      ? Theme.of(context).primaryColor.withValues(alpha: 0.05)
       : Theme.of(context).colorScheme.surfaceContainer;
   Color _kTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
 
@@ -142,7 +142,7 @@ class _VerifyCurrentPasswordScreenState extends State<VerifyCurrentPasswordScree
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: textDark.withOpacity(0.8),
+                          color: textDark.withValues(alpha: 0.8),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -234,18 +234,18 @@ class _VerifyCurrentPasswordScreenState extends State<VerifyCurrentPasswordScree
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: textDark.withOpacity(0.4)),
-      prefixIcon: Icon(Icons.lock_outline_rounded, size: 22, color: textDark.withOpacity(0.5)),
+      hintStyle: TextStyle(color: textDark.withValues(alpha: 0.4)),
+      prefixIcon: Icon(Icons.lock_outline_rounded, size: 22, color: textDark.withValues(alpha: 0.5)),
       filled: true,
       fillColor: fillColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: textDark.withOpacity(0.1)),
+        borderSide: BorderSide(color: textDark.withValues(alpha: 0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: textDark.withOpacity(0.1)),
+        borderSide: BorderSide(color: textDark.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

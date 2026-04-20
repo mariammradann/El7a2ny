@@ -69,15 +69,6 @@ flutter:
     - family: NotoSansArabic
       fonts:
         - asset: assets/fonts/font/NotoSansArabic-VariableFont_wdth,wght.ttf
-    - family: Unixel
-      fonts:
-        - asset: assets/fonts/font/unixel-Regular.ttf
-    - family: Trox
-      fonts:
-        - asset: assets/fonts/font/TROX.ttf
-    - family: UnixelWoff2
-      fonts:
-        - asset: assets/fonts/font/unixel-Regular.woff2
 
   # To add assets to your application, add an assets section, like this:
   # assets:

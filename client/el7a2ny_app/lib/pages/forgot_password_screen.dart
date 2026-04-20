@@ -25,7 +25,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Color _kBrandRed(BuildContext context) => Theme.of(context).primaryColor;
   Color _kSectionColor(BuildContext context) => Theme.of(context).brightness == Brightness.light
-      ? Theme.of(context).primaryColor.withOpacity(0.05)
+      ? Theme.of(context).primaryColor.withValues(alpha: 0.05)
       : Theme.of(context).colorScheme.surfaceContainer;
   Color _kTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
 
@@ -140,43 +140,40 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: RadioListTile<bool>(
-                              title: Text(context.loc.phoneOption,
-                                  style: const TextStyle(
-                                      fontFamily: 'NotoSansArabic',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold)),
-                              value: true,
-                              groupValue: _isPhone,
-                              activeColor: brandRed,
-                              contentPadding: EdgeInsets.zero,
-                              onChanged: (v) => setState(() {
-                                _isPhone = v!;
-                                _contact.clear();
-                              }),
+                      RadioGroup<bool>(
+                        groupValue: _isPhone,
+                        onChanged: (v) => setState(() {
+                          _isPhone = v!;
+                          _contact.clear();
+                        }),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                title: Text(context.loc.phoneOption,
+                                    style: const TextStyle(
+                                        fontFamily: 'NotoSansArabic',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold)),
+                                value: true,
+                                activeColor: brandRed,
+                                contentPadding: EdgeInsets.zero,
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: RadioListTile<bool>(
-                              title: Text(context.loc.emailOption,
-                                  style: const TextStyle(
-                                      fontFamily: 'NotoSansArabic',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold)),
-                              value: false,
-                              groupValue: _isPhone,
-                              activeColor: brandRed,
-                              contentPadding: EdgeInsets.zero,
-                              onChanged: (v) => setState(() {
-                                _isPhone = v!;
-                                _contact.clear();
-                              }),
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                title: Text(context.loc.emailOption,
+                                    style: const TextStyle(
+                                        fontFamily: 'NotoSansArabic',
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold)),
+                                value: false,
+                                activeColor: brandRed,
+                                contentPadding: EdgeInsets.zero,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 28),
                       Text(
@@ -208,12 +205,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           hintText: _isPhone ? '01xxxxxxxxx' : 'email@example.com',
                           hintStyle: TextStyle(
                             fontFamily: 'NotoSansArabic',
-                            color: textDark.withOpacity(0.4),
+                            color: textDark.withValues(alpha: 0.4),
                             fontSize: 14,
                           ),
                           prefixIcon: Icon(
                             _isPhone ? Icons.phone_rounded : Icons.email_outlined,
-                            color: textDark.withOpacity(0.5),
+                            color: textDark.withValues(alpha: 0.5),
                             size: 22,
                           ),
                           filled: true,
@@ -224,11 +221,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: textDark.withOpacity(0.1)),
+                            borderSide: BorderSide(color: textDark.withValues(alpha: 0.1)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: textDark.withOpacity(0.1)),
+                            borderSide: BorderSide(color: textDark.withValues(alpha: 0.1)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),

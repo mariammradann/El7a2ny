@@ -78,7 +78,7 @@ class _AlertsTabState extends State<AlertsTab>
             child: TabBar(
               controller: _tabController,
               labelColor: Theme.of(context).primaryColor,
-              unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
+              unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               indicatorColor: Theme.of(context).primaryColor,
               indicatorWeight: 3,
               labelStyle: const TextStyle(
@@ -125,7 +125,7 @@ class _AlertsTabState extends State<AlertsTab>
             const SizedBox(height: 12),
             Text(
               context.loc.cannotReachServer,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 16),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -150,7 +150,7 @@ class _AlertsTabState extends State<AlertsTab>
       return Center(
         child: Text(
           context.loc.noAlerts,
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 16),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16),
         ),
       );
     }
@@ -225,10 +225,10 @@ class _AlertCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.08)),
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black26 : Colors.black.withOpacity(0.04),
+              color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -243,7 +243,7 @@ class _AlertCard extends StatelessWidget {
               height: 140,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [bannerColor, bannerColor.withOpacity(0.8)],
+                  colors: [bannerColor, bannerColor.withValues(alpha: 0.8)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -259,7 +259,7 @@ class _AlertCard extends StatelessWidget {
                       child: Icon(
                         largeIcon,
                         size: 160,
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                       ),
                     ),
                   ),
@@ -326,7 +326,7 @@ class _AlertCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
                             blurRadius: 4,
                           ),
                         ],
@@ -401,7 +401,7 @@ class _AlertCard extends StatelessWidget {
                         alert.getLocalizedLocation(context.loc),
                         style: TextStyle(
                           fontSize: 13,
-                          color: onSurface.withOpacity(0.6),
+                          color: onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       if (isAr) const SizedBox(width: 4),
@@ -432,7 +432,7 @@ class _AlertCard extends StatelessWidget {
                         dateStr,
                         style: TextStyle(
                           fontSize: 13,
-                          color: onSurface.withOpacity(0.6),
+                          color: onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       if (isAr) const SizedBox(width: 4),
@@ -453,7 +453,7 @@ class _AlertCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.5,
-                        color: onSurface.withOpacity(0.8),
+                        color: onSurface.withValues(alpha: 0.8),
                       ),
                       textAlign: isAr ? TextAlign.right : TextAlign.left,
                     ),
@@ -482,7 +482,7 @@ class _AlertCard extends StatelessWidget {
                             Text(
                               context.loc.volunteers,
                               style: TextStyle(
-                                color: onSurface.withOpacity(0.5),
+                                color: onSurface.withValues(alpha: 0.5),
                                 fontSize: 11,
                               ),
                             ),
@@ -502,7 +502,7 @@ class _AlertCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: isDark ? Colors.white10 : Colors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
                           ),
                           child: Icon(
                             Icons.people_alt_rounded,
@@ -604,7 +604,7 @@ class _AdminActionButton extends StatelessWidget {
       ),
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        backgroundColor: color.withOpacity(0.08),
+        backgroundColor: color.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );

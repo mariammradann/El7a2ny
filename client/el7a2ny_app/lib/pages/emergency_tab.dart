@@ -47,13 +47,13 @@ class _EmergencyTabState extends State<EmergencyTab>
                 border: Border.all(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Colors.white10
-                      : Theme.of(context).primaryColor.withOpacity(0.2),
+                      : Theme.of(context).primaryColor.withValues(alpha: 0.2),
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Colors.black26
-                        : Colors.black.withOpacity(0.05),
+                        : Colors.black.withValues(alpha: 0.05),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -76,7 +76,7 @@ class _EmergencyTabState extends State<EmergencyTab>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFEF4444).withOpacity(0.4),
+                            color: const Color(0xFFEF4444).withValues(alpha: 0.4),
                             blurRadius: 20,
                             spreadRadius: 4,
                           ),
@@ -115,7 +115,7 @@ class _EmergencyTabState extends State<EmergencyTab>
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15,
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       height: 1.6,
                     ),
                   ),
@@ -139,7 +139,7 @@ class _EmergencyTabState extends State<EmergencyTab>
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFDC2626).withOpacity(0.5),
+                            color: const Color(0xFFDC2626).withValues(alpha: 0.5),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),
@@ -234,7 +234,7 @@ class _QuickActionCard extends StatelessWidget {
           BoxShadow(
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.black26
-                : Colors.black.withOpacity(0.06),
+                : Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -252,7 +252,7 @@ class _QuickActionCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: gradientColors[0].withOpacity(0.4),
+                  color: gradientColors[0].withValues(alpha: 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -270,7 +270,7 @@ class _QuickActionCard extends StatelessWidget {
           Text(description,
               style: TextStyle(
                   fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   height: 1.5)),
           const SizedBox(height: 14),
           GestureDetector(

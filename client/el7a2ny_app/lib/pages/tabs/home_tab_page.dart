@@ -55,10 +55,6 @@ class _HomeTabPageState extends State<HomeTabPage> {
     }
   }
 
-  void _toast(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   String _errorText(Object e) {
     if (e is ApiException) {
       final message = e.message;
@@ -96,7 +92,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
                   Icon(
                     Icons.cloud_off_outlined,
                     size: 48,
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -205,13 +201,6 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     const SizedBox(height: 14),
 
                     EmergencySolidButton(
-                      label: context.loc.triggerAlert,
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                      onPressed: () =>
-                          _toast(context, 'تنبيه الطوارئ — اربطي الـ endpoint'),
-                    ),
-                    const SizedBox(height: 10),
-                    EmergencySolidButton(
                       label: context.loc.sensors,
                       backgroundColor: Theme.of(context).colorScheme.secondary,
                       onPressed: () {
@@ -240,7 +229,10 @@ class _HomeTabPageState extends State<HomeTabPage> {
                       gradient: LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [Theme.of(context).colorScheme.primary, Theme.of(context).colorScheme.secondary],
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.secondary,
+                        ],
                       ),
                       onPressed: () {
                         Navigator.of(context).push(
@@ -253,7 +245,8 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     const SizedBox(height: 10),
                     EmergencySolidButton(
                       label: context.loc.emergencyDashboard,
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
                           ? Colors.grey.shade800
                           : Colors.grey.shade700,
                       onPressed: () {
@@ -271,7 +264,9 @@ class _HomeTabPageState extends State<HomeTabPage> {
                                 flexibleSpace: Container(
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: Theme.of(context).brightness == Brightness.dark
+                                      colors:
+                                          Theme.of(context).brightness ==
+                                              Brightness.dark
                                           ? [
                                               const Color(0xFF020617),
                                               const Color(0xFF0F172A),
@@ -303,8 +298,8 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     const SizedBox(height: 10),
                     EmergencySolidButton(
                       label: context.loc.alerts,
-                      backgroundColor: theme.brightness == Brightness.light 
-                          ? Colors.grey.shade400 
+                      backgroundColor: theme.brightness == Brightness.light
+                          ? Colors.grey.shade400
                           : Colors.grey.shade800,
                       foregroundColor: getEmergencyTextDark(context),
                       height: 44,
@@ -326,7 +321,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
                         end: Alignment.centerRight,
                         colors: [
                           theme.colorScheme.secondary,
-                          theme.colorScheme.secondaryContainer
+                          theme.colorScheme.secondaryContainer,
                         ],
                       ),
                       onPressed: () {
@@ -386,9 +381,15 @@ class _PulseBadgeState extends State<_PulseBadge>
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       margin: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF10B981).withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.1 : 0.2),
+        color: const Color(0xFF10B981).withValues(
+          alpha: Theme.of(context).brightness == Brightness.dark ? 0.1 : 0.2,
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF10B981).withOpacity(Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.4)),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(
+            alpha: Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.4,
+          ),
+        ),
       ),
       child: Center(
         child: Row(

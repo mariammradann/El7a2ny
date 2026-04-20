@@ -121,10 +121,10 @@ class _PaymentPageState extends State<PaymentPage> {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainer,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+                      border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.2 : 0.03),
+                          color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.2 : 0.03),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -139,7 +139,7 @@ class _PaymentPageState extends State<PaymentPage> {
                             fontFamily: 'NotoSansArabic',
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: onSurface.withOpacity(0.6),
+                            color: onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -175,7 +175,7 @@ class _PaymentPageState extends State<PaymentPage> {
                         backgroundColor: theme.primaryColor,
                         foregroundColor: Colors.white,
                         elevation: 4,
-                        shadowColor: theme.primaryColor.withOpacity(0.4),
+                        shadowColor: theme.primaryColor.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -278,10 +278,10 @@ class _PaymentMethodTab extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
-          color: active ? primaryColor.withOpacity(0.12) : theme.colorScheme.surface,
+          color: active ? primaryColor.withValues(alpha: 0.12) : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: active ? primaryColor : theme.dividerColor.withOpacity(0.1),
+            color: active ? primaryColor : theme.dividerColor.withValues(alpha: 0.1),
             width: 1.5,
           ),
         ),
@@ -291,7 +291,7 @@ class _PaymentMethodTab extends StatelessWidget {
             Icon(
               icon,
               size: 20,
-              color: active ? primaryColor : theme.colorScheme.onSurface.withOpacity(0.5),
+              color: active ? primaryColor : theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             const SizedBox(width: 10),
             Text(
@@ -300,7 +300,7 @@ class _PaymentMethodTab extends StatelessWidget {
                 fontFamily: 'NotoSansArabic',
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: active ? primaryColor : theme.colorScheme.onSurface.withOpacity(0.7),
+                color: active ? primaryColor : theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -342,7 +342,7 @@ class _PaymentField extends StatelessWidget {
               fontFamily: 'NotoSansArabic',
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
             ),
           ),
         ),
@@ -354,9 +354,9 @@ class _PaymentField extends StatelessWidget {
           style: const TextStyle(fontFamily: 'NotoSansArabic', fontSize: 16, fontWeight: FontWeight.w600),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.35), fontWeight: FontWeight.normal),
+            hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.35), fontWeight: FontWeight.normal),
             suffixIcon: suffixIcon != null
-                ? Icon(suffixIcon, color: theme.colorScheme.onSurface.withOpacity(0.4))
+                ? Icon(suffixIcon, color: theme.colorScheme.onSurface.withValues(alpha: 0.4))
                 : null,
             filled: true,
             fillColor: theme.colorScheme.surfaceContainer,
@@ -366,7 +366,7 @@ class _PaymentField extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: theme.dividerColor.withOpacity(0.05)),
+              borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.05)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),

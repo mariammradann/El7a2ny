@@ -4,9 +4,13 @@ import '../services/session_service.dart';
 import 'sponsors_page.dart';
 import 'premium_subscription_page.dart';
 import 'stat_card.dart';
+import '../services/api_service.dart';
+import '../models/user_model.dart';
+import '../models/admin_stats_model.dart';
 
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+  final bool isNested;
+  const AdminScreen({super.key, this.isNested = false});
 
   @override
   State<AdminScreen> createState() => _AdminScreenState();
@@ -14,13 +18,40 @@ class AdminScreen extends StatefulWidget {
 
 class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  // Mock data moved into builder methods for direct localization access
+  
+  AdminStats? _stats;
+  List<UserModel> _users = [];
+  bool _loadingStats = true;
+  bool _loadingUsers = true;
+  String? _statsError;
+  String? _usersError;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _loadStats();
+    _loadUsers();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      setState(() { _loadingStats = true; _statsError = null; });
+      final data = await ApiService.fetchAdminStats();
+      if (mounted) setState(() { _stats = data; _loadingStats = false; });
+    } catch (e) {
+      if (mounted) setState(() { _statsError = e.toString(); _loadingStats = false; });
+    }
+  }
+
+  Future<void> _loadUsers() async {
+    try {
+      setState(() { _loadingUsers = true; _usersError = null; });
+      final data = await ApiService.fetchUserList();
+      if (mounted) setState(() { _users = data; _loadingUsers = false; });
+    } catch (e) {
+      if (mounted) setState(() { _usersError = e.toString(); _loadingUsers = false; });
+    }
   }
 
   @override
@@ -35,6 +66,38 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     final loc = context.loc;
     final primary = theme.primaryColor;
 
+    if (widget.isNested) {
+      return Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            labelColor: primary,
+            unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            indicatorColor: primary,
+            indicatorWeight: 3,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'NotoSansArabic'),
+            tabs: [
+              Tab(text: loc.dashboard),
+              Tab(text: loc.userManagement),
+              const Tab(text: 'Resources'),
+              const Tab(text: 'Admin Logs'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                RefreshIndicator(onRefresh: _loadStats, color: primary, child: _buildDashboardTab(context)),
+                RefreshIndicator(onRefresh: _loadUsers, color: primary, child: _buildUsersTab(context)),
+                _buildResourcesTab(context),
+                _buildLogsTab(context),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -44,7 +107,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         bottom: TabBar(
           controller: _tabController,
           labelColor: primary,
-          unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.5),
+          unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
           indicatorColor: primary,
           indicatorWeight: 3,
           tabs: [
@@ -58,8 +121,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildDashboardTab(context),
-          _buildUsersTab(context),
+          RefreshIndicator(onRefresh: _loadStats, color: primary, child: _buildDashboardTab(context)),
+          RefreshIndicator(onRefresh: _loadUsers, color: primary, child: _buildUsersTab(context)),
           _buildResourcesTab(context),
           _buildLogsTab(context),
         ],
@@ -70,62 +133,73 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   Widget _buildDashboardTab(BuildContext context) {
     final loc = context.loc;
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(title: loc.systemHealth),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: StatCard(
-                  label: loc.totalUsers,
-                  value: '1,240',
-                  unit: '',
-                  gradientColors: const [Color(0xFF6366F1), Color(0xFF4F46E5)],
-                  icon: Icons.people_rounded,
+          if (_loadingStats)
+            const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator()))
+          else if (_statsError != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Center(child: Text('Error loading stats: $_statsError')),
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: StatCard(
+                    label: loc.totalUsers,
+                    value: _stats?.totalUsers.toString() ?? '0',
+                    unit: '',
+                    gradientColors: const [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                    icon: Icons.people_rounded,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: StatCard(
-                  label: loc.globalAlerts,
-                  value: '42',
-                  unit: '',
-                  gradientColors: const [Color(0xFFF43F5E), Color(0xFFE11D48)],
-                  icon: Icons.notifications_active_rounded,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: StatCard(
+                    label: loc.globalAlerts,
+                    value: _stats?.activeAlerts.toString() ?? '0',
+                    unit: '',
+                    gradientColors: const [Color(0xFFF43F5E), Color(0xFFE11D48)],
+                    icon: Icons.notifications_active_rounded,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: StatCard(
-                  label: loc.responseTime,
-                  value: '3:45',
-                  unit: loc.minute,
-                  gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
-                  icon: Icons.timer_rounded,
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: StatCard(
+                    label: loc.responseTime,
+                    value: _stats?.avgResponseTime ?? '0:00',
+                    unit: loc.minute,
+                    gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
+                    icon: Icons.timer_rounded,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: StatCard(
-                  label: loc.successRate,
-                  value: '98',
-                  unit: '%',
-                  gradientColors: const [Color(0xFFF59E0B), Color(0xFFD97706)],
-                  icon: Icons.verified_rounded,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: StatCard(
+                    label: loc.successRate,
+                    value: ((_stats?.successRate ?? 0.0) * 100).toInt().toString(),
+                    unit: '%',
+                    gradientColors: const [Color(0xFFF59E0B), Color(0xFFD97706)],
+                    icon: Icons.verified_rounded,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          _SectionHeader(title: 'Response Efficiency (Hours)'),
-          const SizedBox(height: 20),
-          const _CustomBarChart(),
+              ],
+            ),
+            const SizedBox(height: 32),
+            _SectionHeader(title: 'Response Efficiency (Daily Trend)'),
+            const SizedBox(height: 20),
+            _CustomBarChart(values: _stats?.weeklyEfficiency ?? []),
+          ],
           const SizedBox(height: 32),
           _SectionHeader(title: 'Recent Activity Snippet'),
           const SizedBox(height: 16),
@@ -199,24 +273,40 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
   Widget _buildUsersTab(BuildContext context) {
     final loc = context.loc;
-    final List<Map<String, dynamic>> users = [
-      {'name': 'Ahmed Ali', 'email': 'ahmed@example.com', 'role': loc.roleCitizen, 'status': loc.statusActiveAdmin, 'roleKey': 'Citizen'},
-      {'name': 'Sara Mohamed', 'email': 'sara@example.com', 'role': loc.roleVolunteer, 'status': loc.statusPending, 'roleKey': 'Volunteer'},
-      {'name': 'Khaled Omar', 'email': 'khaled@example.com', 'role': loc.roleCitizen, 'status': loc.statusActiveAdmin, 'roleKey': 'Citizen'},
-      {'name': 'Mona Zayed', 'email': 'mona@example.com', 'role': loc.roleVolunteer, 'status': loc.statusSuspended, 'roleKey': 'Volunteer'},
-    ];
+
+    if (_loadingUsers) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_usersError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
+            const SizedBox(height: 12),
+            Text('Error: $_usersError'),
+            TextButton(onPressed: _loadUsers, child: Text(loc.retry)),
+          ],
+        ),
+      );
+    }
+
+    if (_users.isEmpty) {
+      return const Center(child: Text('No users found.'));
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: users.length,
+      itemCount: _users.length,
       itemBuilder: (context, index) {
-        final user = users[index];
+        final user = _users[index];
         return _AdminCard(
-          title: user['name'],
-          subtitle: user['email'],
-          trailingText: user['role'],
-          statusText: user['status'],
-          icon: user['roleKey'] == 'Volunteer' ? Icons.volunteer_activism_rounded : Icons.person_rounded,
+          title: user.name,
+          subtitle: user.email,
+          trailingText: user.role.toUpperCase(),
+          statusText: user.status.toUpperCase(),
+          icon: user.role == 'volunteer' ? Icons.volunteer_activism_rounded : Icons.person_rounded,
           actions: [
             _AdminAction(
               label: loc.actionVerify,
@@ -257,14 +347,14 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.history_rounded, size: 16, color: Theme.of(context).primaryColor),
           ),
           const SizedBox(width: 12),
           Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
-          Text(time, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
+          Text(time, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
         ],
       ),
     );
@@ -315,7 +405,7 @@ class _AdminCard extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -325,13 +415,13 @@ class _AdminCard extends StatelessWidget {
             leading: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: theme.primaryColor.withOpacity(0.1),
+                color: theme.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: theme.primaryColor),
             ),
             title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            subtitle: Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+            subtitle: Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -341,7 +431,7 @@ class _AdminCard extends StatelessWidget {
               ],
             ),
           ),
-          Divider(height: 1, color: theme.dividerColor.withOpacity(0.1)),
+          Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.1)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
@@ -397,13 +487,13 @@ class _ResourceLink extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: theme.primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: theme.primaryColor),
             ),
             const SizedBox(width: 16),
@@ -412,7 +502,7 @@ class _ResourceLink extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5), fontSize: 13)),
+                  Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13)),
                 ],
               ),
             ),
@@ -425,12 +515,12 @@ class _ResourceLink extends StatelessWidget {
 }
 
 class _CustomBarChart extends StatelessWidget {
-  const _CustomBarChart();
+  final List<double> values;
+  const _CustomBarChart({required this.values});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final List<double> values = [0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.3];
     final List<String> days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return Container(
@@ -439,7 +529,7 @@ class _CustomBarChart extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -451,7 +541,7 @@ class _CustomBarChart extends StatelessWidget {
               AnimatedContainer(
                 duration: const Duration(seconds: 1),
                 width: 20,
-                height: 130 * values[index],
+                height: 130 * (index < values.length ? values[index] : 0.0),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
@@ -462,7 +552,8 @@ class _CustomBarChart extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(days[index], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              if (index < days.length)
+                Text(days[index], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
             ],
           );
         }),

@@ -2,21 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:el7a2ny_app/core/localization/app_strings.dart';
 import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
 import 'package:el7a2ny_app/app/main_shell_screen.dart';
-import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
 import 'package:el7a2ny_app/pages/login_screen.dart';
 import 'package:el7a2ny_app/pages/sign_up_screen.dart';
-import 'package:el7a2ny_app/pages/admin_screen.dart';
 import 'package:el7a2ny_app/services/session_service.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({
     super.key,
-    this.onEmergencyReport,
     this.onCreateAccount,
     this.onLogin,
   });
 
-  final VoidCallback? onEmergencyReport;
   final VoidCallback? onCreateAccount;
   final VoidCallback? onLogin;
 
@@ -37,7 +33,7 @@ class LandingScreen extends StatelessWidget {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                  children: [LanguageToggleButton(iconColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))],
+                  children: [LanguageToggleButton(iconColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))],
                 ),
                 _HeaderLogo(brandRed: _kBrandRed(context)),
                 const SizedBox(height: 8),
@@ -57,7 +53,7 @@ class LandingScreen extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 15,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -88,7 +84,7 @@ class LandingScreen extends StatelessWidget {
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _kBrandRed(context),
-                        side: BorderSide(color: _kBrandRed(context).withOpacity(0.4)),
+                        side: BorderSide(color: _kBrandRed(context).withValues(alpha: 0.4)),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -101,7 +97,7 @@ class LandingScreen extends StatelessWidget {
                         SessionService().setRole(UserRole.admin);
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (context) => const AdminScreen(),
+                            builder: (context) => const MainShellScreen(),
                           ),
                         );
                       },
@@ -131,18 +127,6 @@ class LandingScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 32),
-                _EmergencyCard(
-                  brandRed: _kBrandRed(context),
-                  onTap: onEmergencyReport ??
-                      () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (context) => const EmergencyReportScreen(),
-                          ),
-                        );
-                      },
-                ),
-                const SizedBox(height: 16),
                 _CreateAccountCard(
                   cardColor: _kCardColor(context),
                   brandRed: _kBrandRed(context),
@@ -151,6 +135,7 @@ class LandingScreen extends StatelessWidget {
                       () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
+                            settings: const RouteSettings(name: '/signup'),
                             builder: (context) => SignUpScreen(),
                           ),
                         );
@@ -164,6 +149,7 @@ class LandingScreen extends StatelessWidget {
                       () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
+                            settings: const RouteSettings(name: '/login'),
                             builder: (context) => const LoginScreen(),
                           ),
                         );
@@ -212,71 +198,6 @@ class _HeaderLogo extends StatelessWidget {
   }
 }
 
-class _EmergencyCard extends StatelessWidget {
-  const _EmergencyCard({required this.onTap, required this.brandRed});
-
-  final VoidCallback onTap;
-  final Color brandRed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: brandRed,
-      elevation: 4,
-      shadowColor: Colors.black26,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          width: double.infinity,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                  ),
-                  child: Icon(
-                    Icons.priority_high_rounded,
-                    color: brandRed,
-                    size: 36,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  context.loc.landingEmergency,
-                  style: const TextStyle(
-                    fontFamily: 'NotoSansArabic',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  context.loc.landingEmergencyDesc,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'NotoSansArabic',
-                    fontSize: 14,
-                    height: 1.35,
-                    color: Colors.white.withOpacity(0.95),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _CreateAccountCard extends StatelessWidget {
   const _CreateAccountCard({
@@ -331,7 +252,7 @@ class _CreateAccountCard extends StatelessWidget {
                     fontFamily: 'NotoSansArabic',
                     fontSize: 14,
                     height: 1.35,
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],

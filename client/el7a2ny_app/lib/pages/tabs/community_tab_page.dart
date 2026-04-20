@@ -1,59 +1,100 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_strings.dart';
+import '../../services/api_service.dart';
+import '../../models/community_post_model.dart';
 
-class CommunityTabPage extends StatelessWidget {
+class CommunityTabPage extends StatefulWidget {
   const CommunityTabPage({super.key});
+
+  @override
+  State<CommunityTabPage> createState() => _CommunityTabPageState();
+}
+
+class _CommunityTabPageState extends State<CommunityTabPage> {
+  List<CommunityPost> _posts = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      setState(() { _loading = true; _error = null; });
+      final data = await ApiService.fetchCommunityPosts();
+      if (mounted) setState(() { _posts = data; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    }
+  }
+
+  String _formatTime(DateTime dt, AppStrings loc) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 60) return loc.isAr ? 'منذ ${diff.inMinutes} دقيقة' : '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return loc.isAr ? 'منذ ${diff.inHours} ساعة' : '${diff.inHours}h ago';
+    return loc.isAr ? 'أمس' : 'Yesterday';
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isAr = context.loc.isAr;
+    final loc = context.loc;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(context, theme, isAr),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _buildStatsGrid(context, theme),
-                const SizedBox(height: 28),
-                _SectionTitle(title: context.loc.communityPosts),
-                const SizedBox(height: 16),
-                _CommunityPostCard(
-                  name: isAr ? 'أحمد كمال' : 'Ahmed Kamal',
-                  time: isAr ? 'منذ ١٠ دقائق' : '10m ago',
-                  content: isAr 
-                      ? 'شكراً جداً للمسعفين اللي ساعدوا في حادثة طريق الجلاء النهاردة. الاستجابة كانت سريعة جداً.' 
-                      : 'Big thanks to the paramedics who helped at the El Galaa road accident today. Response was very fast.',
-                  isVolunteer: true,
-                ),
-                const SizedBox(height: 16),
-                _CommunityPostCard(
-                  name: isAr ? 'منى السيد' : 'Mona El-Sayed',
-                  time: isAr ? 'منذ ساعة' : '1h ago',
-                  content: isAr 
-                      ? 'متاح أجهزة أكسجين للمساعدة في حالات الطوارئ بمنطقة المعادي. اللي محتاج يتواصل معايا.' 
-                      : 'Oxygen concentrators available for emergency help in Maadi area. Contact me if needed.',
-                  isVolunteer: false,
-                  hasAction: true,
-                ),
-                const SizedBox(height: 16),
-                _CommunityPostCard(
-                  name: isAr ? 'نظام إلحقني' : 'El7a2ny System',
-                  time: isAr ? 'أمس' : 'Yesterday',
-                  content: isAr 
-                      ? 'تم تحديث خريطة وحدات الإسعاف لتشمل المناطق الجديدة في التجمع الخامس.' 
-                      : 'Ambulance unit map updated to include new areas in the 5th Settlement.',
-                  isSystem: true,
-                ),
-                const SizedBox(height: 40),
-              ]),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: theme.primaryColor,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          slivers: [
+            _buildSliverAppBar(context, theme, isAr),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _buildStatsGrid(context, theme),
+                  const SizedBox(height: 28),
+                  _SectionTitle(title: loc.communityPosts),
+                  const SizedBox(height: 16),
+                  if (_loading)
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator()))
+                  else if (_error != null)
+                    Center(
+                      child: Column(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: Colors.orange, size: 48),
+                          const SizedBox(height: 12),
+                          Text(loc.connError, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          TextButton(onPressed: _load, child: Text(loc.retry)),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    ..._posts.map((post) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _CommunityPostCard(
+                        name: post.authorName,
+                        time: _formatTime(post.createdAt, loc),
+                        content: post.content,
+                        isVolunteer: post.authorRole == 'volunteer',
+                        isSystem: post.authorRole == 'system',
+                        hasAction: post.hasAction,
+                        actionLabel: post.actionLabel,
+                      ),
+                    )),
+                  ],
+                  const SizedBox(height: 40),
+                ]),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -95,7 +136,7 @@ class CommunityTabPage extends StatelessWidget {
                   Text(
                     context.loc.communityDesc,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -156,10 +197,10 @@ class _StatBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.15), width: 1.5),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.05),
+            color: color.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -171,7 +212,7 @@ class _StatBox extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -189,7 +230,7 @@ class _StatBox extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -242,7 +283,7 @@ class _CommunityPostCard extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.dividerColor.withOpacity(0.08),
+          color: theme.dividerColor.withValues(alpha: 0.08),
         ),
       ),
       child: Column(
@@ -276,7 +317,7 @@ class _CommunityPostCard extends StatelessWidget {
                       time,
                       style: TextStyle(
                         fontSize: 12,
-                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -286,7 +327,7 @@ class _CommunityPostCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withOpacity(0.1),
+                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
@@ -306,7 +347,7 @@ class _CommunityPostCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               height: 1.5,
-              color: theme.colorScheme.onSurface.withOpacity(0.85),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
             ),
           ),
           if (hasAction) ...[

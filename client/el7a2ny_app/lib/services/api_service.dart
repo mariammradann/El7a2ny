@@ -5,6 +5,9 @@ import '../models/alert_model.dart';
 import '../models/dashboard_model.dart';
 import '../models/sponsor_model.dart';
 import '../data/models/emergency_contact.dart';
+import '../models/user_model.dart';
+import '../models/community_post_model.dart';
+import '../models/admin_stats_model.dart';
 
 // ─────────────────────────────────────────────────────────
 //  API SERVICE
@@ -162,6 +165,54 @@ class ApiService {
   }
 
   // ════════════════════════════════════════════════════════
+  //  COMMUNITY
+  // ════════════════════════════════════════════════════════
+
+  /// GET /api/posts/
+  static Future<List<CommunityPost>> fetchCommunityPosts() async {
+    if (useMock) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      return _mockPosts;
+    }
+    final data = await _get('/posts/') as List;
+    return data.map((e) => CommunityPost.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  // ════════════════════════════════════════════════════════
+  //  PROFILE & USERS
+  // ════════════════════════════════════════════════════════
+
+  /// GET /api/profile/ (Current User)
+  static Future<UserModel> fetchUserProfile() async {
+    if (useMock) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return _mockCurrentUser;
+    }
+    final data = await _get('/profile/');
+    return UserModel.fromJson(data as Map<String, dynamic>);
+  }
+
+  /// GET /api/admin/users/
+  static Future<List<UserModel>> fetchUserList() async {
+    if (useMock) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      return _mockUsers;
+    }
+    final data = await _get('/admin/users/') as List;
+    return data.map((e) => UserModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  /// GET /api/admin/stats/
+  static Future<AdminStats> fetchAdminStats() async {
+    if (useMock) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return _mockAdminStats;
+    }
+    final data = await _get('/admin/stats/');
+    return AdminStats.fromJson(data as Map<String, dynamic>);
+  }
+
+  // ════════════════════════════════════════════════════════
   //  CONTACTS
   // ════════════════════════════════════════════════════════
 
@@ -269,6 +320,45 @@ class ApiService {
     EmergencyContact(name: 'فاطمة (الأم)', phone: '+20 11 987 6543', relationship: 'أم'),
     EmergencyContact(name: 'د. محمد (طبيب العائلة)', phone: '+20 12 555 7777', relationship: 'طبيب'),
   ];
+
+  static final List<CommunityPost> _mockPosts = [
+    CommunityPost(
+      id: 1, authorName: 'Ahmed Kamal', authorRole: 'volunteer',
+      content: 'شكراً جداً للمسعفين اللي ساعدوا في حادثة طريق الجلاء النهاردة. الاستجابة كانت سريعة جداً.',
+      createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
+    ),
+    CommunityPost(
+      id: 2, authorName: 'Mona El-Sayed', authorRole: 'citizen',
+      content: 'متاح أجهزة أكسجين للمساعدة في حالات الطوارئ بمنطقة المعادي. اللي محتاج يتواصل معايا.',
+      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      hasAction: true, actionLabel: 'تواصل الآن',
+    ),
+    CommunityPost(
+      id: 3, authorName: 'El7a2ny System', authorRole: 'system',
+      content: 'تم تحديث خريطة وحدات الإسعاف لتشمل المناطق الجديدة في التجمع الخامس.',
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+  ];
+
+  static final UserModel _mockCurrentUser = UserModel(
+    id: 1, name: 'Adnan El7a2ny', email: 'adnan@el7a2ny.com', phone: '+20 100 000 0000',
+    role: 'admin', status: 'active',
+  );
+
+  static final List<UserModel> _mockUsers = [
+    UserModel(id: 1, name: 'Ahmed Ali', email: 'ahmed@example.com', role: 'citizen', status: 'active', phone: '0101234567'),
+    UserModel(id: 2, name: 'Sara Mohamed', email: 'sara@example.com', role: 'volunteer', status: 'pending', phone: '0111234567'),
+    UserModel(id: 3, name: 'Khaled Omar', email: 'khaled@example.com', role: 'citizen', status: 'active', phone: '0121234567'),
+    UserModel(id: 4, name: 'Mona Zayed', email: 'mona@example.com', role: 'volunteer', status: 'suspended', phone: '0151234567'),
+  ];
+
+  static final AdminStats _mockAdminStats = AdminStats(
+    totalUsers: 1240,
+    activeAlerts: 42,
+    avgResponseTime: "3:45",
+    successRate: 0.98,
+    weeklyEfficiency: [0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.3],
+  );
 }
 
 // ─────────────────────────────────────────────────────────

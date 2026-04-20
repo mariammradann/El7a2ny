@@ -22,9 +22,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _auth = AuthRepository();
 
-  bool _micGranted = false;
-  bool _locationGranted = false;
-  bool _cameraGranted = false;
+  final bool _micGranted = false;
+  final bool _locationGranted = false;
+  final bool _cameraGranted = false;
   bool _submitting = false;
   bool _volunteerEnabled = false;
 
@@ -171,7 +171,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(loc.signUpSubtitle, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontFamily: 'NotoSansArabic')),
+              Text(loc.signUpSubtitle, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontFamily: 'NotoSansArabic')),
               const SizedBox(height: 24),
               
               _PremiumSection(
@@ -303,7 +303,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       contentPadding: EdgeInsets.zero,
                       title: Text(loc.volunteerConsent, style: const TextStyle(fontSize: 14, fontFamily: 'NotoSansArabic')),
                       value: _volunteerEnabled,
-                      activeColor: primary,
+                      activeTrackColor: primary,
                       onChanged: (v) => setState(() => _volunteerEnabled = v),
                     ),
                     if (_volunteerEnabled) ...[
@@ -343,12 +343,13 @@ class _PremiumSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final trailingWidget = trailing;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -357,7 +358,7 @@ class _PremiumSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(title, style: TextStyle(fontWeight: FontWeight.w900, color: theme.primaryColor, fontSize: 16, fontFamily: 'NotoSansArabic')),
-              if (trailing != null) trailing!,
+              trailingWidget ?? const SizedBox.shrink(),
             ],
           ),
           const SizedBox(height: 20),
@@ -434,7 +435,7 @@ class _AppDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       items: items.map((e) => DropdownMenuItem(value: e, child: Text(itemLabel != null ? itemLabel!(e) : e.toString(), style: const TextStyle(fontFamily: 'NotoSansArabic')))).toList(),
       onChanged: onChanged,
       decoration: InputDecoration(
@@ -543,7 +544,7 @@ class _AvatarUploader extends StatelessWidget {
     return Center(
       child: Stack(
         children: [
-          CircleAvatar(radius: 50, backgroundColor: primary.withOpacity(0.1), child: Icon(Icons.person_outline, size: 50, color: primary)),
+          CircleAvatar(radius: 50, backgroundColor: primary.withValues(alpha: 0.1), child: Icon(Icons.person_outline, size: 50, color: primary)),
           Positioned(bottom: 0, right: 0, child: CircleAvatar(radius: 18, backgroundColor: primary, child: const Icon(Icons.camera_alt, size: 18, color: Colors.white))),
         ],
       ),
@@ -568,7 +569,7 @@ class _UploadBox extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isDone ? Colors.green : theme.primaryColor.withOpacity(0.3)),
+          border: Border.all(color: isDone ? Colors.green : theme.primaryColor.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [

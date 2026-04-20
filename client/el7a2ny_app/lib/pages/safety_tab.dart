@@ -76,7 +76,7 @@ class SafetyTab extends StatelessWidget {
                 border: Border.all(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Colors.white10
-                      : Theme.of(context).primaryColor.withOpacity(0.2),
+                      : Theme.of(context).primaryColor.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -93,7 +93,7 @@ class SafetyTab extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF10B981).withOpacity(0.4),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -118,7 +118,7 @@ class SafetyTab extends StatelessWidget {
                         context.loc.safetyTipsDesc,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -155,7 +155,7 @@ class SafetyTab extends StatelessWidget {
                   BoxShadow(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? Colors.black26
-                        : Colors.black.withOpacity(0.05),
+                        : Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -192,7 +192,7 @@ class SafetyTab extends StatelessWidget {
                             horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
                           color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withOpacity(0.05)
+                              ? Colors.white.withValues(alpha: 0.05)
                               : Theme.of(context).colorScheme.surfaceContainer,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
@@ -282,7 +282,7 @@ class _TipCard extends StatelessWidget {
           BoxShadow(
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.black26
-                : Colors.black.withOpacity(0.05),
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -301,7 +301,7 @@ class _TipCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: gradientColors[0].withOpacity(0.35),
+                  color: gradientColors[0].withValues(alpha: 0.35),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -323,7 +323,7 @@ class _TipCard extends StatelessWidget {
                 Text(description,
                     style: TextStyle(
                         fontSize: 13,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
               ],
             ),
           ),

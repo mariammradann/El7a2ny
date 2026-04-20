@@ -46,8 +46,8 @@ class PremiumSubscriptionPage extends StatelessWidget {
                       const SizedBox(height: 14),
                       _FeatureItemCard(
                         icon: Icons.support_agent_rounded,
-                        title: context.loc.support24_7_Title,
-                        subtitle: context.loc.support24_7_Desc,
+                        title: context.loc.support24_7Title,
+                        subtitle: context.loc.support24_7Desc,
                       ),
                       const SizedBox(height: 14),
                       _FeatureItemCard(
@@ -77,7 +77,7 @@ class PremiumSubscriptionPage extends StatelessWidget {
                       
                       _ServiceCategoryCard(
                         icon: Icons.medical_services_rounded,
-                        iconBackground: const Color(0xFFEF4444).withOpacity(0.12),
+                        iconBackground: const Color(0xFFEF4444).withValues(alpha: 0.12),
                         iconColor: const Color(0xFFEF4444),
                         title: context.loc.medicalServicesTitle,
                         features: isAr ? [
@@ -95,7 +95,7 @@ class PremiumSubscriptionPage extends StatelessWidget {
                       const SizedBox(height: 14),
                       _ServiceCategoryCard(
                         icon: Icons.local_airport_rounded,
-                        iconBackground: const Color(0xFF2563EB).withOpacity(0.12),
+                        iconBackground: const Color(0xFF2563EB).withValues(alpha: 0.12),
                         iconColor: const Color(0xFF2563EB),
                         title: context.loc.transportServicesTitle,
                         features: isAr ? [
@@ -109,7 +109,7 @@ class PremiumSubscriptionPage extends StatelessWidget {
                       const SizedBox(height: 14),
                       _ServiceCategoryCard(
                         icon: Icons.gpp_good_rounded,
-                        iconBackground: const Color(0xFF15803D).withOpacity(0.12),
+                        iconBackground: const Color(0xFF15803D).withValues(alpha: 0.12),
                         iconColor: const Color(0xFF15803D),
                         title: context.loc.insuranceCoverageTitle,
                         features: isAr ? [
@@ -127,7 +127,7 @@ class PremiumSubscriptionPage extends StatelessWidget {
                       const SizedBox(height: 14),
                       _ServiceCategoryCard(
                         icon: Icons.headset_mic_rounded,
-                        iconBackground: const Color(0xFF7C3AED).withOpacity(0.12),
+                        iconBackground: const Color(0xFF7C3AED).withValues(alpha: 0.12),
                         iconColor: const Color(0xFF7C3AED),
                         title: context.loc.supportServicesTitle,
                         features: isAr ? [
@@ -225,7 +225,7 @@ class _PremiumHeader extends StatelessWidget {
                           fontFamily: 'NotoSansArabic',
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white.withOpacity(0.85),
+                          color: Colors.white.withValues(alpha: 0.85),
                         ),
                       ),
                     ],
@@ -358,7 +358,7 @@ class _PriceDetailsEn extends StatelessWidget {
             fontFamily: 'NotoSansArabic',
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
           ),
         ),
       ],
@@ -390,7 +390,7 @@ class _PriceDetailsAr extends StatelessWidget {
             fontFamily: 'NotoSansArabic',
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
           ),
         ),
       ],
@@ -459,7 +459,7 @@ class _SectionIcon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF9500).withOpacity(0.12),
+        color: const Color(0xFFFF9500).withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(icon, size: 20, color: const Color(0xFFFF9500)),
@@ -487,10 +487,10 @@ class _FeatureItemCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.2 : 0.04),
+            color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.2 : 0.04),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -525,7 +525,7 @@ class _FeatureItemCard extends StatelessWidget {
                     fontFamily: 'NotoSansArabic',
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.onSurface.withOpacity(0.65),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                     height: 1.5,
                   ),
                 ),
@@ -550,7 +550,7 @@ class _FeatureIcon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF9500).withOpacity(0.1),
+        color: const Color(0xFFFF9500).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Icon(icon, size: 24, color: const Color(0xFFFF9500)),
@@ -582,10 +582,10 @@ class _ServiceCategoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -637,7 +637,7 @@ class _ServiceCategoryCard extends StatelessWidget {
                         fontFamily: 'NotoSansArabic',
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                         height: 1.4,
                       ),
                     ),
@@ -701,7 +701,7 @@ class _TestimonialCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEFCF3),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.1)),
+        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.1)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
       child: Column(
@@ -721,7 +721,7 @@ class _TestimonialCard extends StatelessWidget {
               fontFamily: 'NotoSansArabic',
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface.withOpacity(0.9),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
               fontStyle: FontStyle.italic,
               height: 1.8,
             ),
@@ -744,7 +744,7 @@ class _StickyFooter extends StatelessWidget {
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(theme.brightness == Brightness.dark ? 0.4 : 0.08),
+            color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.4 : 0.08),
             blurRadius: 24,
             offset: const Offset(0, -6),
           ),
@@ -763,7 +763,7 @@ class _StickyFooter extends StatelessWidget {
                   backgroundColor: const Color(0xFFFF9500),
                   foregroundColor: Colors.white,
                   elevation: 6,
-                  shadowColor: const Color(0xFFFF9500).withOpacity(0.4),
+                  shadowColor: const Color(0xFFFF9500).withValues(alpha: 0.4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
@@ -797,8 +797,8 @@ class _StickyFooter extends StatelessWidget {
               height: 52,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  backgroundColor: theme.brightness == Brightness.dark ? Colors.white.withOpacity(0.05) : const Color(0xFFF3F4F6),
-                  side: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+                  backgroundColor: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF3F4F6),
+                  side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -810,7 +810,7 @@ class _StickyFooter extends StatelessWidget {
                     fontFamily: 'NotoSansArabic',
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ),
@@ -823,7 +823,7 @@ class _StickyFooter extends StatelessWidget {
                 fontFamily: 'NotoSansArabic',
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface.withOpacity(0.4),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 letterSpacing: 0.2,
               ),
             ),

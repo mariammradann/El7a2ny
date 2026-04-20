@@ -148,7 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: context.loc.language,
                 trailing: Text(
                   context.loc.isAr ? 'العربية' : 'English',
-                  style: TextStyle(fontFamily: 'NotoSansArabic', color: colorScheme.onSurface.withOpacity(0.6)),
+                  style: TextStyle(fontFamily: 'NotoSansArabic', color: colorScheme.onSurface.withValues(alpha: 0.6)),
                 ),
                 onTap: () {
                   AppConfigProvider.of(context).toggleLanguage();
@@ -195,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           fontFamily: 'NotoSansArabic',
           fontSize: 15,
           fontWeight: FontWeight.w700,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
         ),
       ),
     );
@@ -221,7 +221,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: theme.colorScheme.onSurface,
           ),
         ),
-        trailing: trailing ?? Icon(Icons.arrow_forward_ios_rounded, color: theme.colorScheme.onSurface.withOpacity(0.3), size: 16),
+        trailing: trailing ?? Icon(Icons.arrow_forward_ios_rounded, color: theme.colorScheme.onSurface.withValues(alpha: 0.3), size: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
@@ -238,7 +238,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: SwitchListTile.adaptive(
         value: value,
         onChanged: onChanged,
-        activeColor: theme.primaryColor,
+        activeThumbColor: theme.primaryColor,
+        activeTrackColor: theme.primaryColor.withValues(alpha: 0.5),
         secondary: Icon(icon, color: theme.primaryColor),
         title: Text(
           title,

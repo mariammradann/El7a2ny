@@ -29,12 +29,12 @@ class ServiceCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
-        color: cardBgColor.withOpacity(0.95),
+        color: cardBgColor.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withOpacity(0.05), width: 1),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -55,7 +55,7 @@ class ServiceCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(22),
               boxShadow: [
                 BoxShadow(
-                  color: primaryColor.withOpacity(0.5),
+                  color: primaryColor.withValues(alpha: 0.5),
                   blurRadius: 20,
                   spreadRadius: -2,
                   offset: const Offset(0, 4),
@@ -107,7 +107,7 @@ class ServiceCard extends StatelessWidget {
                   color: const Color(0xFF10B981), // Emerald Green
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
-                    BoxShadow(color: const Color(0xFF10B981).withOpacity(0.3), blurRadius: 8)
+                    BoxShadow(color: const Color(0xFF10B981).withValues(alpha: 0.3), blurRadius: 8)
                   ]
                 ),
                 child: const Row(
@@ -160,7 +160,7 @@ class ServiceCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryColor.withOpacity(0.4),
+                        color: primaryColor.withValues(alpha: 0.4),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),

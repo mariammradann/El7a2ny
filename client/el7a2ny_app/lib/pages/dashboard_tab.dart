@@ -172,7 +172,7 @@ class _ErrorView extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Icon(Icons.wifi_off_rounded, size: 56, color: Color(0xFF94A3B8)),
         const SizedBox(height: 12),
-        Text(context.loc.cannotReachServer, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 16)),
+        Text(context.loc.cannotReachServer, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16)),
         const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: onRetry,

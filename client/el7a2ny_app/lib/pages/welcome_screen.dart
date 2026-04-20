@@ -41,6 +41,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
+            settings: const RouteSettings(name: '/landing'),
             pageBuilder: (_, _, _) => const LandingScreen(),
             transitionsBuilder: (_, anim, _, child) =>
                 FadeTransition(opacity: anim, child: child),
@@ -67,7 +68,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: Theme.of(context).brightness == Brightness.light
-                ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor.withOpacity(0.8)]
+                ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor.withValues(alpha: 0.8)]
                 : [Theme.of(context).colorScheme.primaryContainer, Theme.of(context).primaryColor],
           ),
         ),
@@ -84,7 +85,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     width: 90,
                     height: 90,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(28),
                     ),
                     child: const Icon(

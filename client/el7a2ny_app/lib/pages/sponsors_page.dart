@@ -14,6 +14,25 @@ class SponsorsPage extends StatefulWidget {
 
 class _SponsorsPageState extends State<SponsorsPage> {
   String _selectedCategory = 'all';
+  List<SponsorModel> _sponsors = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      setState(() { _loading = true; _error = null; });
+      final data = await ApiService.fetchSponsors();
+      if (mounted) setState(() { _sponsors = data; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,86 +41,83 @@ class _SponsorsPageState extends State<SponsorsPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 140,
-            pinned: true,
-            backgroundColor: theme.scaffoldBackgroundColor,
-            elevation: 0,
-            centerTitle: true,
-            flexibleSpace: FlexibleSpaceBar(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: theme.primaryColor,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 140,
+              pinned: true,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              elevation: 0,
               centerTitle: true,
-              titlePadding: const EdgeInsets.only(bottom: 16),
-              title: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(loc.trustedSponsors, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, fontFamily: 'NotoSansArabic')),
-                  Text(loc.sponsorsSubtitle, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: theme.colorScheme.onSurface.withOpacity(0.5))),
-                ],
+              flexibleSpace: FlexibleSpaceBar(
+                centerTitle: true,
+                titlePadding: const EdgeInsets.only(bottom: 16),
+                title: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(loc.trustedSponsors, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, fontFamily: 'NotoSansArabic')),
+                    Text(loc.sponsorsSubtitle, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                  ],
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: [
-                   _CategoryChip(label: loc.allSponsors, icon: Icons.all_inclusive, selected: _selectedCategory == 'all', onTap: () => setState(() => _selectedCategory = 'all')),
-                   const SizedBox(width: 12),
-                   _CategoryChip(label: loc.carCenters, icon: Icons.car_repair, selected: _selectedCategory == 'car', onTap: () => setState(() => _selectedCategory = 'car')),
-                   const SizedBox(width: 12),
-                   _CategoryChip(label: loc.insuranceSponsors, icon: Icons.health_and_safety, selected: _selectedCategory == 'insurance', onTap: () => setState(() => _selectedCategory = 'insurance')),
-                ],
+            SliverToBoxAdapter(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    _CategoryChip(label: loc.allSponsors, icon: Icons.all_inclusive, selected: _selectedCategory == 'all', onTap: () => setState(() => _selectedCategory = 'all')),
+                    const SizedBox(width: 12),
+                    _CategoryChip(label: loc.carCenters, icon: Icons.car_repair, selected: _selectedCategory == 'car', onTap: () => setState(() => _selectedCategory = 'car')),
+                    const SizedBox(width: 12),
+                    _CategoryChip(label: loc.insuranceSponsors, icon: Icons.health_and_safety, selected: _selectedCategory == 'insurance', onTap: () => setState(() => _selectedCategory = 'insurance')),
+                  ],
+                ),
               ),
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 120),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                if (_selectedCategory == 'all' || _selectedCategory == 'car') ...[
-                  _SponsorCard(
-                    title: loc.bavarianTitle,
-                    badge: loc.carCenterBadge,
-                    imageUrl: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=128&h=128&auto=format&fit=crop',
-                    services: const ['Diagnostic Scan', 'Brake Repair', 'Oil Change', 'AC Service'],
-                    phone: '19000',
-                  ),
-                  const SizedBox(height: 20),
-                  _SponsorCard(
-                    title: loc.ghabbourTitle,
-                    badge: loc.carCenterBadge,
-                    imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=128&h=128&auto=format&fit=crop',
-                    services: const ['Fleet Maintenance', 'Spare Parts', 'Body Work', 'Paint'],
-                    phone: '16001',
-                  ),
-                ],
-                if (_selectedCategory == 'all' || _selectedCategory == 'insurance') ...[
-                  if (_selectedCategory == 'all') const SizedBox(height: 20),
-                  _SponsorCard(
-                    title: loc.allianzTitle,
-                    badge: loc.insuranceBadge,
-                    imageUrl: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=128&h=128&auto=format&fit=crop',
-                    services: const ['Health Coverage', 'Life Insurance', 'Travel Assist', 'Accident Shield'],
-                    phone: '19999',
-                  ),
-                  const SizedBox(height: 20),
-                  _SponsorCard(
-                    title: loc.egyptInsuranceTitle,
-                    badge: loc.insuranceBadge,
-                    imageUrl: 'https://images.unsplash.com/photo-1547082299-de196ea013d6?w=128&h=128&auto=format&fit=crop',
-                    services: const ['Property Protection', 'Business Liability', 'Casualty insurance'],
-                    phone: '16116',
-                  ),
-                ],
-              ]),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 120),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  if (_loading)
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 80), child: Center(child: CircularProgressIndicator()))
+                  else if (_error != null)
+                    Center(
+                      child: Column(
+                        children: [
+                          const Icon(Icons.error_outline_rounded, color: Colors.orange, size: 48),
+                          const SizedBox(height: 12),
+                          Text(loc.connError, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          TextButton(onPressed: _load, child: Text(loc.retry)),
+                        ],
+                      ),
+                    )
+                  else ...[
+                    ..._sponsors.where((s) {
+                      if (_selectedCategory == 'all') return true;
+                      return s.category.name == _selectedCategory;
+                    }).map((s) => Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: _SponsorCard(
+                        title: s.title,
+                        badge: s.badgeLabel ?? (s.category == SponsorCategory.cars ? loc.carCenterBadge : loc.insuranceBadge),
+                        imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=128&h=128&auto=format&fit=crop', // fallback image
+                        services: s.services,
+                        phone: s.phone,
+                      ),
+                    )),
+                  ],
+                ]),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 20, right: 10),
@@ -154,7 +170,7 @@ class _CategoryChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? theme.primaryColor : theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: selected ? [BoxShadow(color: theme.primaryColor.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))] : [],
+          boxShadow: selected ? [BoxShadow(color: theme.primaryColor.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))] : [],
         ),
         child: Row(
           children: [
@@ -183,7 +199,7 @@ class _SponsorCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -194,14 +210,14 @@ class _SponsorCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.network(imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: theme.primaryColor.withOpacity(0.1), width: 64, height: 64, child: const Icon(Icons.business))),
+                  child: Image.network(imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(color: theme.primaryColor.withValues(alpha: 0.1), width: 64, height: 64, child: const Icon(Icons.business))),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: theme.primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: Text(badge, style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w900, fontSize: 10, fontFamily: 'NotoSansArabic'))),
+                      Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: theme.primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: Text(badge, style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w900, fontSize: 10, fontFamily: 'NotoSansArabic'))),
                       const SizedBox(height: 6),
                       Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, fontFamily: 'NotoSansArabic')),
                     ],
@@ -237,12 +253,12 @@ class _SponsorCard extends StatelessWidget {
               children: [
                 Text(loc.servicesProvided, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, fontFamily: 'NotoSansArabic')),
                 const SizedBox(height: 12),
-                Wrap(spacing: 8, runSpacing: 8, children: services.map((s) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: theme.colorScheme.onSurface.withOpacity(0.04), borderRadius: BorderRadius.circular(12)), child: Text(s, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withOpacity(0.7), fontWeight: FontWeight.bold)))).toList()),
+                Wrap(spacing: 8, runSpacing: 8, children: services.map((s) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: theme.colorScheme.onSurface.withValues(alpha: 0.04), borderRadius: BorderRadius.circular(12)), child: Text(s, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontWeight: FontWeight.bold)))).toList()),
                 const SizedBox(height: 20),
                 GestureDetector(
                   onTap: () {},
                   child: Container(
-                    decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(18), border: Border.all(color: theme.dividerColor.withOpacity(0.1))),
+                    decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(18), border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1))),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     child: Row(
                       children: [

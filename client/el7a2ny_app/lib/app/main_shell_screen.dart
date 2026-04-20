@@ -9,7 +9,8 @@ import '../core/localization/app_strings.dart';
 import '../pages/landing_screen.dart';
 import '../pages/settings_screen.dart';
 import '../widgets/language_toggle_button.dart';
-import '../pages/emergency_chat_screen.dart';
+import '../services/session_service.dart';
+import '../pages/admin_screen.dart';
 
 /// الهيكل الموحد: هيدر ثابت + محتوى + شريط تنقل سفلي.
 /// لا يُستخدم مع شاشات تسجيل الدخول / إنشاء الحساب.
@@ -33,7 +34,8 @@ class _MainShellScreenState extends State<MainShellScreen> {
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex.clamp(0, 3);
+    _index = widget.initialIndex;
+    // Note: index clamping will happen dynamically in build based on isAdmin
   }
 
   Future<void> _onMenu(String value) async {
@@ -67,7 +69,48 @@ class _MainShellScreenState extends State<MainShellScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isAdmin = SessionService().isAdmin;
+    final loc = context.loc;
+
+    final List<Widget> tabs = [
+      const HomeTabPage(),
+      const IstighathaTabPage(),
+      const CommunityTabPage(),
+      const ProfileTabPage(),
+      if (isAdmin) const AdminScreen(isNested: true),
+    ];
+
+    final List<NavigationDestination> destinations = [
+      NavigationDestination(
+        icon: const Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home_rounded, color: theme.primaryColor),
+        label: loc.tabHome,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.warning_amber_rounded),
+        selectedIcon: Icon(Icons.emergency_share_rounded, color: theme.primaryColor),
+        label: loc.tabIstighatha,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.groups_outlined),
+        selectedIcon: Icon(Icons.groups_rounded, color: theme.primaryColor),
+        label: loc.tabCommunity,
+      ),
+      NavigationDestination(
+        icon: const Icon(Icons.person_outline_rounded),
+        selectedIcon: Icon(Icons.person_rounded, color: theme.primaryColor),
+        label: loc.tabProfile,
+      ),
+      if (isAdmin)
+        NavigationDestination(
+          icon: const Icon(Icons.insights_rounded),
+          selectedIcon: Icon(Icons.insights_rounded, color: theme.primaryColor),
+          label: loc.tabInsights,
+        ),
+    ];
+
+    // Ensure index doesn't overflow if isAdmin state changes
+    final safeIndex = _index.clamp(0, destinations.length - 1);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -75,6 +118,10 @@ class _MainShellScreenState extends State<MainShellScreen> {
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        title: (isAdmin && safeIndex == 4) 
+          ? Text(loc.adminDashboard, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, fontFamily: 'NotoSansArabic'))
+          : null,
+        centerTitle: true,
         leading: PopupMenuButton<String>(
           tooltip: context.loc.menu,
           offset: const Offset(0, 48),
@@ -128,55 +175,17 @@ class _MainShellScreenState extends State<MainShellScreen> {
         ],
       ),
       body: IndexedStack(
-        index: _index,
+        index: safeIndex,
         sizing: StackFit.expand,
-        children: const [
-          HomeTabPage(),
-          IstighathaTabPage(),
-          CommunityTabPage(),
-          ProfileTabPage(),
-        ],
+        children: tabs,
       ),
       bottomNavigationBar: NavigationBar(
         height: 70,
         backgroundColor: theme.colorScheme.surface,
-        indicatorColor: theme.primaryColor.withOpacity(0.12),
-        selectedIndex: _index,
+        indicatorColor: theme.primaryColor.withValues(alpha: 0.12),
+        selectedIndex: safeIndex,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded, color: theme.primaryColor),
-            label: context.loc.tabHome,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.warning_amber_rounded),
-            selectedIcon: Icon(Icons.emergency_share_rounded, color: theme.primaryColor),
-            label: context.loc.tabIstighatha,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.groups_outlined),
-            selectedIcon: Icon(Icons.groups_rounded, color: theme.primaryColor),
-            label: context.loc.tabCommunity,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded, color: theme.primaryColor),
-            label: context.loc.tabProfile,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (context) => const EmergencyChatScreen(),
-            ),
-          );
-        },
-        backgroundColor: isDark ? theme.colorScheme.primaryContainer : const Color(0xFF2D3243),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Icon(Icons.forum_rounded, color: isDark ? theme.colorScheme.onPrimaryContainer : Colors.white, size: 28),
+        destinations: destinations,
       ),
     );
   }

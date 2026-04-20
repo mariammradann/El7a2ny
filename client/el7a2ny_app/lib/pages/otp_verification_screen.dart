@@ -30,11 +30,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   Color _kBrandRed(BuildContext context) => Theme.of(context).primaryColor;
   Color _kSectionColor(BuildContext context) => Theme.of(context).brightness == Brightness.light
-      ? Theme.of(context).primaryColor.withOpacity(0.05)
+      ? Theme.of(context).primaryColor.withValues(alpha: 0.05)
       : Theme.of(context).colorScheme.surfaceContainer;
   Color _kIconCircleColor(BuildContext context) => Theme.of(context).brightness == Brightness.light
-      ? Theme.of(context).primaryColor.withOpacity(0.15)
-      : Theme.of(context).colorScheme.primary.withOpacity(0.2);
+      ? Theme.of(context).primaryColor.withValues(alpha: 0.15)
+      : Theme.of(context).colorScheme.primary.withValues(alpha: 0.2);
   Color _kTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
 
   @override
@@ -187,7 +187,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           height: 1.4,
-                          color: textDark.withOpacity(0.7),
+                          color: textDark.withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -227,7 +227,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           hintText: '******',
                           hintStyle: TextStyle(
                             fontFamily: 'NotoSansArabic',
-                            color: textDark.withOpacity(0.3),
+                            color: textDark.withValues(alpha: 0.3),
                             fontSize: 16,
                             letterSpacing: 4,
                           ),
@@ -239,11 +239,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: textDark.withOpacity(0.1)),
+                            borderSide: BorderSide(color: textDark.withValues(alpha: 0.1)),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: textDark.withOpacity(0.1)),
+                            borderSide: BorderSide(color: textDark.withValues(alpha: 0.1)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -300,7 +300,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                             style: TextStyle(
                               fontFamily: 'NotoSansArabic',
                               fontSize: 14,
-                              color: textDark.withOpacity(0.6),
+                              color: textDark.withValues(alpha: 0.6),
                             ),
                           ),
                           InkWell(

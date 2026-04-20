@@ -176,7 +176,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -303,7 +303,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                 bottomLeft: Radius.circular(isBot ? 16 : 0),
                 bottomRight: Radius.circular(isBot ? 0 : 16),
               ),
-              border: isBot ? null : Border.all(color: theme.dividerColor.withOpacity(0.1)),
+              border: isBot ? null : Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,7 +343,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.1))),
+        border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.1))),
       ),
       child: Column(
         children: [
@@ -364,7 +364,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                       hintStyle: TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                     onSubmitted: (_) => _sendMessage(),
@@ -387,7 +387,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
           const SizedBox(height: 8),
           Text(
             context.loc.chatFooterNote,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 10, fontFamily: 'NotoSansArabic'),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 10, fontFamily: 'NotoSansArabic'),
           ),
         ],
       ),

@@ -96,7 +96,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage>
                     context.loc.pressSOSDesc,
                     style: TextStyle(
                       fontSize: 16,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       height: 1.5,
                       fontWeight: FontWeight.w500,
                     ),
@@ -122,7 +122,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage>
                       height: 280,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFEF4444).withOpacity(0.1),
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                       ),
                     ),
                     // Middle Glow
@@ -131,7 +131,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage>
                       height: 240,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFEF4444).withOpacity(0.2),
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.2),
                       ),
                     ),
                     // Main Button
@@ -147,7 +147,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFEF4444).withOpacity(0.5),
+                            color: const Color(0xFFEF4444).withValues(alpha: 0.5),
                             blurRadius: 30,
                             spreadRadius: 5,
                           ),
@@ -180,7 +180,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage>
                 color: theme.colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                  color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
                 ),
               ),
               child: Row(

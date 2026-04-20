@@ -70,7 +70,8 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
     await Future.delayed(const Duration(seconds: 2));
-    if (context.mounted) Navigator.pop(context);
+    if (!mounted) return;
+    Navigator.pop(context);
 
     setState(() {
       _evidenceItems.add({'path': 'mock_audio_$method.mp3', 'type': 'audio'});
@@ -213,7 +214,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: theme.brightness == Brightness.dark ? const Color(0xFF10B981).withOpacity(0.2) : const Color(0xFF10B981).withOpacity(0.1),
+                    color: theme.brightness == Brightness.dark ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFF10B981).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -233,7 +234,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     fontFamily: 'NotoSansArabic',
                   ),
                 ),
@@ -321,12 +322,12 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                           shape: BoxShape.circle,
                           color: isSelected ? theme.primaryColor : cardColor,
                           border: Border.all(
-                            color: isSelected ? theme.primaryColor : theme.dividerColor.withOpacity(0.08),
+                            color: isSelected ? theme.primaryColor : theme.dividerColor.withValues(alpha: 0.08),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: isSelected ? theme.primaryColor.withOpacity(0.3) : Colors.black.withOpacity(0.03),
+                              color: isSelected ? theme.primaryColor.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.03),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -334,7 +335,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                         ),
                         child: Icon(
                           t['icon'] as IconData,
-                          color: isSelected ? Colors.white : onSurface.withOpacity(0.6),
+                          color: isSelected ? Colors.white : onSurface.withValues(alpha: 0.6),
                           size: 28,
                         ),
                       ),
@@ -346,7 +347,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                           fontFamily: 'NotoSansArabic',
                           fontSize: 12,
                           fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                          color: isSelected ? theme.primaryColor : onSurface.withOpacity(0.5),
+                          color: isSelected ? theme.primaryColor : onSurface.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -361,11 +362,11 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                 style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
                   hintText: loc.otherTypeHint,
-                  hintStyle: TextStyle(color: onSurface.withOpacity(0.35)),
+                  hintStyle: TextStyle(color: onSurface.withValues(alpha: 0.35)),
                   filled: true,
                   fillColor: cardColor,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor.withOpacity(0.2))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor.withValues(alpha: 0.2))),
                   focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor, width: 2)),
                 ),
               ),
@@ -381,7 +382,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               decoration: BoxDecoration(
                 color: cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: theme.dividerColor.withOpacity(0.08)),
+                border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
               ),
               child: Row(
                 children: [
@@ -415,12 +416,12 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               style: const TextStyle(fontWeight: FontWeight.w700),
               decoration: InputDecoration(
                 hintText: loc.volunteersNeededHint,
-                hintStyle: TextStyle(color: onSurface.withOpacity(0.35)),
+                hintStyle: TextStyle(color: onSurface.withValues(alpha: 0.35)),
                 filled: true,
                 fillColor: cardColor,
-                prefixIcon: Icon(Icons.people_alt_rounded, color: theme.primaryColor.withOpacity(0.5)),
+                prefixIcon: Icon(Icons.people_alt_rounded, color: theme.primaryColor.withValues(alpha: 0.5)),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1))),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.primaryColor, width: 1.5)),
               ),
             ),
@@ -449,7 +450,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                               : Container(
                                   width: 110,
                                   height: 110,
-                                  color: theme.primaryColor.withOpacity(0.1),
+                                  color: theme.primaryColor.withValues(alpha: 0.1),
                                   child: Icon(item['type'] == 'video' ? Icons.videocam_rounded : Icons.mic_rounded, color: theme.primaryColor, size: 36),
                                 ),
                         ),
@@ -500,7 +501,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                   backgroundColor: theme.primaryColor,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                   elevation: 4,
-                  shadowColor: theme.primaryColor.withOpacity(0.4),
+                  shadowColor: theme.primaryColor.withValues(alpha: 0.4),
                 ),
                 child: Text(
                   loc.reportBtn,
@@ -567,7 +568,9 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
       if (p == LocationPermission.denied) p = await Geolocator.requestPermission();
       if (p == LocationPermission.deniedForever) return;
 
-      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      Position pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
       List<Placemark> pm = await placemarkFromCoordinates(pos.latitude, pos.longitude);
       if (pm.isNotEmpty) {
         final first = pm.first;
@@ -597,14 +600,14 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, -10))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, -10))],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Center(
-            child: Container(width: 48, height: 6, decoration: BoxDecoration(color: theme.dividerColor.withOpacity(0.1), borderRadius: BorderRadius.circular(3))),
+            child: Container(width: 48, height: 6, decoration: BoxDecoration(color: theme.dividerColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(3))),
           ),
           const SizedBox(height: 24),
           Row(
@@ -620,12 +623,12 @@ class _LocationBottomSheetState extends State<_LocationBottomSheet> {
             style: const TextStyle(fontWeight: FontWeight.w600),
             decoration: InputDecoration(
               hintText: loc.searchAddressHint,
-              hintStyle: TextStyle(color: onSurface.withOpacity(0.35)),
-              prefixIcon: Icon(Icons.search_rounded, color: theme.primaryColor.withOpacity(0.5)),
+              hintStyle: TextStyle(color: onSurface.withValues(alpha: 0.35)),
+              prefixIcon: Icon(Icons.search_rounded, color: theme.primaryColor.withValues(alpha: 0.5)),
               filled: true,
               fillColor: cardColor,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1))),
             ),
           ),
           const SizedBox(height: 20),
@@ -701,7 +704,7 @@ class _LocField extends StatelessWidget {
       style: const TextStyle(fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: theme.primaryColor.withOpacity(0.7), fontWeight: FontWeight.bold, fontSize: 13),
+        labelStyle: TextStyle(color: theme.primaryColor.withValues(alpha: 0.7), fontWeight: FontWeight.bold, fontSize: 13),
         filled: true,
         fillColor: theme.colorScheme.surfaceContainer,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -727,8 +730,8 @@ class _EvidenceButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

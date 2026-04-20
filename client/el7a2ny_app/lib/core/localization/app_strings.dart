@@ -86,6 +86,7 @@ class AppStrings {
   String get tabCommunity => isAr ? 'المجتمع' : 'Community';
   String get tabIstighatha => isAr ? 'استغاثة' : 'SOS';
   String get tabProfile => isAr ? 'حسابي' : 'Profile';
+  String get tabInsights => isAr ? 'الإحصائيات' : 'Insights';
 
   // Home Tab Page
   String get connError => isAr ? 'تعذر الاتصال بالخادم.' : 'Connection failed.';
@@ -107,7 +108,7 @@ class AppStrings {
   String get premiumSub => isAr ? 'اشتراك Premium' : 'Premium Subscription';
   String get emergencyDashboard =>
       isAr ? 'لوحة التحكم والطوارئ' : 'Dashboard & Emergency';
-  String get alerts => isAr ? 'التنبيهات' : 'Alerts';
+  String get alerts => isAr ? 'البلاغات' : 'Reports';
   String get allSystemsOperational =>
       isAr ? 'كل الأنظمة شغالة' : 'All systems operational';
 
@@ -630,8 +631,8 @@ class AppStrings {
   String get instantResponseDesc => isAr ? 'توصيل بخدمات الطوارئ أسرع 10 مرات' : 'Connect to emergency services 10x faster';
   String get premiumInsurance => isAr ? 'تأمين مميز' : 'Premium Insurance';
   String get premiumInsuranceDesc => isAr ? 'تغطية موسعة مع أفضل شركات التأمين' : 'Expanded coverage with top partners';
-  String get support24_7_Title => isAr ? 'دعم 24/7' : '24/7 Support';
-  String get support24_7_Desc => isAr ? 'استشارات طبية متاحة على مدار الساعة' : 'Medical consultations available 24/7';
+  String get support24_7Title => isAr ? 'دعم 24/7' : '24/7 Support';
+  String get support24_7Desc => isAr ? 'استشارات طبية متاحة على مدار الساعة' : 'Medical consultations available 24/7';
   String get familyProtection => isAr ? 'حماية العائلة' : 'Family Protection';
   String get familyProtectionDesc => isAr ? 'تغطية تصل لـ 5 أفراد من العائلة' : 'Coverage for up to 5 family members';
   String get liveTrackingTitle => isAr ? 'تتبع مباشر' : 'Live Tracking';
