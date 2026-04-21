@@ -8,6 +8,7 @@ import '../data/models/emergency_contact.dart';
 import '../models/user_model.dart';
 import '../models/community_post_model.dart';
 import '../models/admin_stats_model.dart';
+import '../models/help_initiative_model.dart';
 
 // ─────────────────────────────────────────────────────────
 //  API SERVICE
@@ -178,6 +179,16 @@ class ApiService {
     return data.map((e) => CommunityPost.fromJson(e as Map<String, dynamic>)).toList();
   }
 
+  /// GET /api/help-initiatives/
+  static Future<List<HelpInitiative>> fetchHelpInitiatives() async {
+    if (useMock) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      return _mockHelpInitiatives;
+    }
+    final data = await _get('/help-initiatives/') as List;
+    return data.map((e) => HelpInitiative.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
   // ════════════════════════════════════════════════════════
   //  PROFILE & USERS
   // ════════════════════════════════════════════════════════
@@ -305,6 +316,39 @@ class ApiService {
       branch: 'فرع 200',
       isFeatured: true,
     ),
+    SponsorModel(
+      id: 4,
+      category: SponsorCategory.medical,
+      title: 'مستشفى السلام الدولي',
+      rating: '4.7',
+      badgeLabel: 'رعاية طبية',
+      description: 'خدمات طبية متكاملة واستقبال طوارئ على مدار الساعة',
+      services: ['طوارئ 24/7', 'أشعة وتحاليل', 'عناية مركزة', 'استشارات تخصصية'],
+      phone: '16290',
+      branch: 'فرع 10',
+    ),
+    SponsorModel(
+      id: 5,
+      category: SponsorCategory.medical,
+      title: 'صيدليات العزبي',
+      rating: '4.6',
+      badgeLabel: 'صيدلية',
+      description: 'توفير أدوية وخدمات توصيل سريعة',
+      services: ['توصيل أدوية', 'قياس ضغط وسكر', 'مستلزمات طبية', 'دعم استشارات'],
+      phone: '19600',
+      branch: 'فروع متعددة',
+    ),
+    SponsorModel(
+      id: 6,
+      category: SponsorCategory.insurance,
+      title: 'مصر للتأمين الصحي',
+      rating: '4.5',
+      badgeLabel: 'تأمين',
+      description: 'شركة التأمين المصرية الموثوقة',
+      services: ['تغطية محلية', 'شبكة واسعة', 'مطالبات سريعة', 'خدمة عملاء'],
+      phone: '19033',
+      branch: 'فرع 100',
+    ),
   ];
 
   static const DashboardStats _mockDashboard = DashboardStats(
@@ -359,6 +403,65 @@ class ApiService {
     successRate: 0.98,
     weeklyEfficiency: [0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.3],
   );
+
+  static final List<HelpInitiative> _mockHelpInitiatives = [
+    HelpInitiative(
+      id: 1,
+      title: 'وجبات مجانية للأسر المحتاجة',
+      description: 'نقوم بتوزيع وجبات ساخنة يومياً للأسر المحتاجة في منطقة مدينة نصر. نحتاج متطوعين للمساعدة في الطبخ والتوزيع.',
+      authorName: 'أحمد محمد',
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      authorRole: 'volunteer',
+      category: HelpCategory.food,
+      location: 'مدينة نصر، القاهرة',
+      latitude: 30.0444,
+      longitude: 31.2357,
+      contactInfo: ['01012345678', 'ahmed@help.org'],
+      participantsCount: 15,
+    ),
+    HelpInitiative(
+      id: 2,
+      title: 'ملابس شتوية للأطفال',
+      description: 'جمع تبرعات ملابس شتوية للأطفال في المناطق الشعبية. نقبل التبرعات من جميع الأحجام.',
+      authorName: 'فاطمة أحمد',
+      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
+      authorRole: 'citizen',
+      category: HelpCategory.clothing,
+      location: 'حلوان، القاهرة',
+      latitude: 29.8414,
+      longitude: 31.3008,
+      contactInfo: ['01198765432'],
+      participantsCount: 8,
+    ),
+    HelpInitiative(
+      id: 3,
+      title: 'دعم مالي للطلاب الجامعيين',
+      description: 'صندوق لمساعدة الطلاب الجامعيين من الأسر ذات الدخل المحدود. نساعد في دفع المصاريف الدراسية.',
+      authorName: 'محمد علي',
+      createdAt: DateTime.now().subtract(const Duration(hours: 8)),
+      authorRole: 'volunteer',
+      category: HelpCategory.financial,
+      location: 'الجيزة، القاهرة',
+      latitude: 30.0131,
+      longitude: 31.2089,
+      contactInfo: ['01234567890', 'support@studentshelp.eg'],
+      participantsCount: 23,
+    ),
+    HelpInitiative(
+      id: 4,
+      title: 'عيادة طبية متنقلة',
+      description: 'فريق طبي يقدم خدمات طبية مجانية في القرى النائية. نحتاج أطباء وممرضين متطوعين.',
+      authorName: 'د. سارة محمود',
+      createdAt: DateTime.now().subtract(const Duration(hours: 12)),
+      authorRole: 'volunteer',
+      category: HelpCategory.medical,
+      location: 'بني سويف',
+      latitude: 29.0661,
+      longitude: 31.0994,
+      contactInfo: ['01555555555'],
+      participantsCount: 12,
+    ),
+  ];
 }
 
 // ─────────────────────────────────────────────────────────

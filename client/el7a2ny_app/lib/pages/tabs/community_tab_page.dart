@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_strings.dart';
 import '../../services/api_service.dart';
-import '../../models/community_post_model.dart';
+import '../../models/help_initiative_model.dart';
 
 class CommunityTabPage extends StatefulWidget {
   const CommunityTabPage({super.key});
@@ -11,9 +11,10 @@ class CommunityTabPage extends StatefulWidget {
 }
 
 class _CommunityTabPageState extends State<CommunityTabPage> {
-  List<CommunityPost> _posts = [];
+  List<HelpInitiative> _initiatives = [];
   bool _loading = true;
   String? _error;
+  HelpCategory? _selectedCategory;
 
   @override
   void initState() {
@@ -24,19 +25,44 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
   Future<void> _load() async {
     try {
       setState(() { _loading = true; _error = null; });
-      final data = await ApiService.fetchCommunityPosts();
-      if (mounted) setState(() { _posts = data; _loading = false; });
+      final data = await ApiService.fetchHelpInitiatives();
+      if (mounted) setState(() { _initiatives = data; _loading = false; });
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }
   }
 
-  String _formatTime(DateTime dt, AppStrings loc) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 60) return loc.isAr ? 'منذ ${diff.inMinutes} دقيقة' : '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return loc.isAr ? 'منذ ${diff.inHours} ساعة' : '${diff.inHours}h ago';
-    return loc.isAr ? 'أمس' : 'Yesterday';
+  List<HelpInitiative> _getFilteredInitiatives() {
+    if (_selectedCategory == null) return _initiatives;
+    return _initiatives.where((initiative) => initiative.category == _selectedCategory).toList();
+  }
+
+  Widget _buildCategoryFilters(BuildContext context) {
+    final categories = HelpCategory.values;
+    final loc = context.loc;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _CategoryChip(
+            label: loc.allLabel,
+            icon: Icons.all_inclusive,
+            selected: _selectedCategory == null,
+            onTap: () => setState(() => _selectedCategory = null),
+          ),
+          const SizedBox(width: 12),
+          ...categories.map((category) => Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: _CategoryChip(
+              label: loc.helpCategoryName(category.name),
+              iconText: category.categoryIcon,
+              selected: _selectedCategory == category,
+              onTap: () => setState(() => _selectedCategory = category),
+            ),
+          )),
+        ],
+      ),
+    );
   }
 
   @override
@@ -47,6 +73,13 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // TODO: Navigate to create initiative screen
+        },
+        backgroundColor: theme.primaryColor,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         color: theme.primaryColor,
@@ -60,7 +93,9 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
                 delegate: SliverChildListDelegate([
                   _buildStatsGrid(context, theme),
                   const SizedBox(height: 28),
-                  _SectionTitle(title: loc.communityPosts),
+                  _SectionTitle(title: loc.helpInitiatives),
+                  const SizedBox(height: 16),
+                  _buildCategoryFilters(context),
                   const SizedBox(height: 16),
                   if (_loading)
                     const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator()))
@@ -76,17 +111,9 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
                       ),
                     )
                   else ...[
-                    ..._posts.map((post) => Padding(
+                    ..._getFilteredInitiatives().map((initiative) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: _CommunityPostCard(
-                        name: post.authorName,
-                        time: _formatTime(post.createdAt, loc),
-                        content: post.content,
-                        isVolunteer: post.authorRole == 'volunteer',
-                        isSystem: post.authorRole == 'system',
-                        hasAction: post.hasAction,
-                        actionLabel: post.actionLabel,
-                      ),
+                      child: _HelpInitiativeCard(initiative: initiative),
                     )),
                   ],
                   const SizedBox(height: 40),
@@ -100,6 +127,7 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
   }
 
   SliverAppBar _buildSliverAppBar(BuildContext context, ThemeData theme, bool isAr) {
+    final loc = context.loc;
     return SliverAppBar(
       expandedHeight: 140,
       pinned: true,
@@ -125,7 +153,7 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    context.loc.communityTitle,
+                    loc.helpInitiativesHeaderTitle,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 26,
@@ -134,7 +162,7 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    context.loc.communityDesc,
+                    loc.helpInitiativesHeaderSubtitle,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 14,
@@ -152,6 +180,7 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
 
   Widget _buildStatsGrid(BuildContext context, ThemeData theme) {
     final isAr = context.loc.isAr;
+    final loc = context.loc;
     return Row(
       children: [
         Expanded(
@@ -165,7 +194,7 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
         const SizedBox(width: 12),
         Expanded(
           child: _StatBox(
-            label: isAr ? 'حالات تم حلها' : 'Cases Resolved',
+            label: loc.casesResolved,
             value: isAr ? '٤٥٠' : '450',
             icon: Icons.task_alt_rounded,
             color: const Color(0xFF3B82F6),
@@ -257,26 +286,81 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _CommunityPostCard extends StatelessWidget {
-  final String name;
-  final String time;
-  final String content;
-  final bool isVolunteer;
-  final bool isSystem;
-  final bool hasAction;
+class _CategoryChip extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final String? iconText;
+  final bool selected;
+  final VoidCallback onTap;
 
-  const _CommunityPostCard({
-    required this.name,
-    required this.time,
-    required this.content,
-    this.isVolunteer = false,
-    this.isSystem = false,
-    this.hasAction = false,
+  const _CategoryChip({
+    required this.label,
+    this.icon,
+    this.iconText,
+    required this.selected,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? theme.primaryColor : theme.cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? theme.primaryColor : theme.dividerColor.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 16,
+                color: selected ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+              const SizedBox(width: 6),
+            ] else if (iconText != null) ...[
+              Text(
+                iconText!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: selected ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HelpInitiativeCard extends StatelessWidget {
+  final HelpInitiative initiative;
+
+  const _HelpInitiativeCard({required this.initiative});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final loc = context.loc;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -289,50 +373,139 @@ class _CommunityPostCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header with category and time
           Row(
             children: [
-              CircleAvatar(
-                backgroundColor: isSystem ? theme.primaryColor : (isVolunteer ? const Color(0xFF10B981) : Colors.orange),
-                radius: 18,
-                child: Icon(
-                  isSystem ? Icons.notifications_active : (isVolunteer ? Icons.person : Icons.person_outline),
-                  color: Colors.white,
-                  size: 18,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
                     Text(
-                      name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: theme.colorScheme.onSurface,
-                      ),
+                      initiative.categoryIcon,
+                      style: const TextStyle(fontSize: 12),
                     ),
+                    const SizedBox(width: 4),
                     Text(
-                      time,
+                      loc.helpCategoryDisplayName(initiative.category.name),
                       style: TextStyle(
-                        fontSize: 12,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: theme.primaryColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
               ),
-              if (isVolunteer)
+              const Spacer(),
+              Text(
+                _formatTime(initiative.createdAt, loc),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Title
+          Text(
+            initiative.title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Description
+          Text(
+            initiative.description,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.4,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Location
+          Row(
+            children: [
+              Icon(
+                Icons.location_on,
+                size: 16,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  initiative.location,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Author and participants
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: initiative.authorRole == 'volunteer'
+                    ? const Color(0xFF10B981)
+                    : Colors.orange,
+                radius: 14,
+                child: Text(
+                  initiative.authorName[0],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      initiative.authorName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      '${initiative.participantsCount} ${loc.participantsLabel(initiative.participantsCount)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (initiative.authorRole == 'volunteer')
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    'متطوع',
-                    style: TextStyle(
+                  child: Text(
+                    loc.volunteerLabel,
+                    style: const TextStyle(
                       color: Color(0xFF10B981),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -341,28 +514,29 @@ class _CommunityPostCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            content,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
-            ),
-          ),
-          if (hasAction) ...[
+
+          // Contact button
+          if (initiative.contactInfo.isNotEmpty) ...[
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  side: BorderSide(color: theme.primaryColor),
+              child: ElevatedButton(
+                onPressed: () {
+                  // TODO: Implement contact functionality
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 child: Text(
-                  context.loc.isAr ? 'تواصل الآن' : 'Contact Now',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: theme.primaryColor),
+                  loc.contactNow,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -370,5 +544,13 @@ class _CommunityPostCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatTime(DateTime dt, AppStrings loc) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 60) return loc.isAr ? 'منذ ${diff.inMinutes} دقيقة' : '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return loc.isAr ? 'منذ ${diff.inHours} ساعة' : '${diff.inHours}h ago';
+    return loc.isAr ? 'أمس' : 'Yesterday';
   }
 }

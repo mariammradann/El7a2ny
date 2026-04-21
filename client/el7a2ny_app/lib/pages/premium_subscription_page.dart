@@ -181,7 +181,9 @@ class _PremiumHeader extends StatelessWidget {
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
+      child: Directionality(
+        textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
@@ -199,42 +201,44 @@ class _PremiumHeader extends StatelessWidget {
                   child: const Icon(Icons.close_rounded, size: 24, color: Colors.white),
                 ),
               ),
-              Row(
-                children: [
-                  if (!isAr) ...[
-                    const _PlusIconBadge(),
-                    const SizedBox(width: 14),
-                  ],
-                  Column(
-                    crossAxisAlignment: isAr ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              Expanded(
+                child: Align(
+                  alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        context.loc.premiumPlusTitle,
-                        style: const TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        context.loc.premiumPlusSubtitle,
-                        style: TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.85),
-                        ),
+                      const _PlusIconBadge(),
+                      const SizedBox(width: 14),
+                      Column(
+                        crossAxisAlignment: isAr ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            context.loc.premiumPlusTitle,
+                            textAlign: isAr ? TextAlign.right : TextAlign.left,
+                            style: const TextStyle(
+                              fontFamily: 'NotoSansArabic',
+                              fontSize: 20,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            context.loc.premiumPlusSubtitle,
+                            textAlign: isAr ? TextAlign.right : TextAlign.left,
+                            style: TextStyle(
+                              fontFamily: 'NotoSansArabic',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  if (isAr) ...[
-                    const SizedBox(width: 14),
-                    const _PlusIconBadge(),
-                  ],
-                ],
+                ),
               ),
             ],
           ),
@@ -254,23 +258,26 @@ class _PremiumHeader extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: isAr ? MainAxisAlignment.end : MainAxisAlignment.start,
-            children: [
-              if (!isAr) const _PriceBlock(),
-              if (isAr) ...[
-                const _PriceDetailsAr(),
-                const SizedBox(width: 16),
-                const _LargePriceAr(),
+          Align(
+            alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (isAr) ...[
+                  const _LargePriceAr(),
+                  const SizedBox(width: 16),
+                  const _PriceDetailsAr(),
+                ] else ...[
+                  const _PriceBlock(),
+                  const SizedBox(width: 16),
+                  const _PriceDetailsEn(),
+                ],
               ],
-              if (!isAr) ...[
-                const SizedBox(width: 16),
-                const _PriceDetailsEn(),
-              ],
-            ],
+            ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -386,6 +393,7 @@ class _PriceDetailsAr extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           loc.paymentYearlySavings,
+          textAlign: TextAlign.right,
           style: TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 12,
@@ -404,6 +412,8 @@ class _LargePriceAr extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Text(
       '299 جنيه',
+      textAlign: TextAlign.right,
+      textDirection: TextDirection.rtl,
       style: TextStyle(
         fontFamily: 'NotoSansArabic',
         fontSize: 48,
@@ -697,6 +707,7 @@ class _TestimonialCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isAr = context.loc.isAr;
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEFCF3),
@@ -716,7 +727,7 @@ class _TestimonialCard extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             context.loc.testimonialText,
-            textAlign: TextAlign.center,
+            textAlign: isAr ? TextAlign.right : TextAlign.center,
             style: TextStyle(
               fontFamily: 'NotoSansArabic',
               fontSize: 15,
@@ -738,6 +749,7 @@ class _StickyFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isAr = context.loc.isAr;
 
     return Container(
       decoration: BoxDecoration(
@@ -775,18 +787,23 @@ class _StickyFooter extends StatelessWidget {
                     ),
                   );
                 },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    const Icon(Icons.workspace_premium_rounded, size: 22),
-                    const SizedBox(width: 10),
-                    Text(
-                      context.loc.upgradeToPlus,
-                      style: const TextStyle(
-                        fontFamily: 'NotoSansArabic',
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
+                    Center(
+                      child: Text(
+                        context.loc.upgradeToPlus,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'NotoSansArabic',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
+                    ),
+                    PositionedDirectional(
+                      end: 16,
+                      child: const Icon(Icons.workspace_premium_rounded, size: 22),
                     ),
                   ],
                 ),
@@ -806,6 +823,7 @@ class _StickyFooter extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
                   context.loc.maybeLater,
+                  textAlign: isAr ? TextAlign.right : TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 15,
@@ -818,7 +836,7 @@ class _StickyFooter extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               context.loc.moneyBackGuarantee,
-              textAlign: TextAlign.center,
+              textAlign: isAr ? TextAlign.right : TextAlign.center,
               style: TextStyle(
                 fontFamily: 'NotoSansArabic',
                 fontSize: 11,

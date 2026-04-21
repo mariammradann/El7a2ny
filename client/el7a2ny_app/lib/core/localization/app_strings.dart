@@ -585,10 +585,64 @@ class AppStrings {
       isAr ? 'عرض شركات التأمين' : 'View Insurance Companies';
 
   // Community Tab
+  String get helpInitiativesHeaderTitle =>
+      isAr ? 'مبادرات المساعدة' : 'Help Initiatives';
+  String get helpInitiativesHeaderSubtitle => isAr
+      ? 'شبكة وصل ومساعدة بين أفراد المجتمع بطريقة منظمة ومبنية على الموقع'
+      : 'A network of connection and help between community members in an organized way based on location';
+  String get allLabel => isAr ? 'الكل' : 'All';
+  String get casesResolved => isAr ? 'حالات تم حلها' : 'Cases Resolved';
+  String participantsLabel(int count) => isAr ? 'مشارك' : 'participants';
+  String get contactNow => isAr ? 'تواصل الآن' : 'Contact Now';
+
+  String helpCategoryName(String key) {
+    final k = key.toLowerCase();
+    if (isAr) {
+      return switch (k) {
+        'food' => 'طعام',
+        'clothing' => 'ملابس',
+        'financial' => 'مالي',
+        'medical' => 'طبي',
+        'education' => 'تعليمي',
+        _ => 'أخرى',
+      };
+    }
+    return switch (k) {
+      'food' => 'Food',
+      'clothing' => 'Clothing',
+      'financial' => 'Financial',
+      'medical' => 'Medical',
+      'education' => 'Education',
+      _ => 'Other',
+    };
+  }
+
+  String helpCategoryDisplayName(String key) {
+    final k = key.toLowerCase();
+    if (isAr) {
+      return switch (k) {
+        'food' => 'وجبات مجانية',
+        'clothing' => 'ملابس للمحتاجين',
+        'financial' => 'مساعدة مالية',
+        'medical' => 'مساعدة طبية',
+        'education' => 'مساعدة تعليمية',
+        _ => 'أخرى',
+      };
+    }
+    return switch (k) {
+      'food' => 'Free Meals',
+      'clothing' => 'Clothing Support',
+      'financial' => 'Financial Help',
+      'medical' => 'Medical Help',
+      'education' => 'Education Support',
+      _ => 'Other',
+    };
+  }
   String get communityTitle => isAr ? 'مجتمع إلحقني' : 'El7a2ny Community';
   String get communityDesc => isAr ? 'شارك وساعد في إنقاذ الأرواح' : 'Share and help save lives';
   String get activeVolunteers => isAr ? 'المتطوعون النشطون' : 'Active Volunteers';
   String get communityPosts => isAr ? 'آخر التحديثات' : 'Latest Updates';
+  String get helpInitiatives => isAr ? 'مبادرات المساعدة' : 'Help Initiatives';
 
   // Profile Tab
   String get profileSubtitle => isAr ? 'إدارة حسابك وتفضيلات الأمان' : 'Manage your account and security';
@@ -647,7 +701,7 @@ class AppStrings {
   String get testimonialText => isAr 
       ? '"إلحقني بلس أنقذ حياتي. الاستجابة السريعة وصلتني للمستشفى في وقت قياسي."'
       : '"El7a2ny Plus saved my life. The quick response got me to the hospital in record time."';
-  String get upgradeToPlus => isAr ? 'الترقية لإلحقني بلس' : 'Upgrade to El7a2ny Plus';
+  String get upgradeToPlus => isAr ? 'الترقية لالحقني بلس' : 'Upgrade to El7a2ny Plus';
   String get maybeLater => isAr ? 'ربما لاحقاً' : 'Maybe Later';
   String get moneyBackGuarantee => isAr 
       ? 'ضمان استرجاع المال لمدة 30 يوم • يمكن الإلغاء في أي وقت'

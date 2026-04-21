@@ -1,5 +1,4 @@
-
-enum SponsorCategory { cars, insurance }
+enum SponsorCategory { cars, insurance, medical }
 
 class SponsorModel {
   final int id;
@@ -27,11 +26,16 @@ class SponsorModel {
   });
 
   factory SponsorModel.fromJson(Map<String, dynamic> json) {
+    final rawCategory = (json['category'] ?? '').toString().toLowerCase();
+    final category = switch (rawCategory) {
+      'car' || 'cars' => SponsorCategory.cars,
+      'insurance' => SponsorCategory.insurance,
+      'medical' || 'health' => SponsorCategory.medical,
+      _ => SponsorCategory.cars,
+    };
     return SponsorModel(
       id: json['id'] as int,
-      category: json['category'] == 'insurance' 
-          ? SponsorCategory.insurance 
-          : SponsorCategory.cars,
+      category: category,
       title: json['title'] as String,
       rating: json['rating']?.toString() ?? '0.0',
       badgeLabel: json['badge_label'] as String,
@@ -46,7 +50,11 @@ class SponsorModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'category': category == SponsorCategory.insurance ? 'insurance' : 'cars',
+      'category': switch (category) {
+        SponsorCategory.cars => 'cars',
+        SponsorCategory.insurance => 'insurance',
+        SponsorCategory.medical => 'medical',
+      },
       'title': title,
       'rating': rating,
       'badge_label': badgeLabel,

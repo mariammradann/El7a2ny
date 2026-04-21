@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../core/localization/app_strings.dart';
 import '../services/session_service.dart';
+import '../models/sponsor_model.dart';
+import '../services/api_service.dart';
 
 // ─────────────────────────────────────────────
 //  SPONSORS PAGE
@@ -26,11 +29,24 @@ class _SponsorsPageState extends State<SponsorsPage> {
 
   Future<void> _load() async {
     try {
-      setState(() { _loading = true; _error = null; });
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
       final data = await ApiService.fetchSponsors();
-      if (mounted) setState(() { _sponsors = data; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _sponsors = data;
+          _loading = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -74,9 +90,9 @@ class _SponsorsPageState extends State<SponsorsPage> {
                   children: [
                     _CategoryChip(label: loc.allSponsors, icon: Icons.all_inclusive, selected: _selectedCategory == 'all', onTap: () => setState(() => _selectedCategory = 'all')),
                     const SizedBox(width: 12),
-                    _CategoryChip(label: loc.carCenters, icon: Icons.car_repair, selected: _selectedCategory == 'car', onTap: () => setState(() => _selectedCategory = 'car')),
+                    _CategoryChip(label: loc.carCenters, icon: Icons.car_repair, selected: _selectedCategory == 'cars', onTap: () => setState(() => _selectedCategory = 'cars')),
                     const SizedBox(width: 12),
-                    _CategoryChip(label: loc.insuranceSponsors, icon: Icons.health_and_safety, selected: _selectedCategory == 'insurance', onTap: () => setState(() => _selectedCategory = 'insurance')),
+                    _CategoryChip(label: loc.insuranceSponsors, icon: Icons.health_and_safety, selected: _selectedCategory == 'medical', onTap: () => setState(() => _selectedCategory = 'medical')),
                   ],
                 ),
               ),
@@ -101,17 +117,21 @@ class _SponsorsPageState extends State<SponsorsPage> {
                   else ...[
                     ..._sponsors.where((s) {
                       if (_selectedCategory == 'all') return true;
-                      return s.category.name == _selectedCategory;
+                      if (_selectedCategory == 'cars') return s.category == SponsorCategory.cars;
+                      if (_selectedCategory == 'medical') {
+                        return s.category == SponsorCategory.insurance || s.category == SponsorCategory.medical;
+                      }
+                      return true;
                     }).map((s) => Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: _SponsorCard(
-                        title: s.title,
-                        badge: s.badgeLabel ?? (s.category == SponsorCategory.cars ? loc.carCenterBadge : loc.insuranceBadge),
-                        imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=128&h=128&auto=format&fit=crop', // fallback image
-                        services: s.services,
-                        phone: s.phone,
-                      ),
-                    )),
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: _SponsorCard(
+                            title: s.title,
+                            badge: s.badgeLabel,
+                            imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=128&h=128&auto=format&fit=crop',
+                            services: s.services,
+                            phone: s.phone,
+                          ),
+                        )),
                   ],
                 ]),
               ),
@@ -128,7 +148,7 @@ class _SponsorsPageState extends State<SponsorsPage> {
               FloatingActionButton.extended(
                 heroTag: 'add_sponsor',
                 onPressed: () {
-                   SessionService().logAction('Admin opened Add Sponsor dialog');
+                  SessionService().logAction('Admin opened Add Sponsor dialog');
                 },
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,

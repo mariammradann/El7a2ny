@@ -36,7 +36,6 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isAr = context.loc.isAr;
-    final loc = context.loc;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
