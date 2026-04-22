@@ -24,6 +24,6 @@ abstract final class ApiConfig {
   /// بادئة مسارات الـ REST (مثال: `/api/v1` كما في Django DRF).
   static const String apiPrefix = String.fromEnvironment(
     'API_PREFIX',
-    defaultValue: '/api/v1',
+    defaultValue: '/api',
   );
 }

@@ -1,12 +1,13 @@
 import '../data/models/emergency_contact.dart';
+
 class UserModel {
-  final int id;
+  final String id; // تم التغيير من int لـ String لأن دجانجو بيبعت UUID
   final String firstName;
   final String lastName;
   final String email;
   final String phone;
-  final String role; // 'citizen', 'volunteer', 'admin'
-  final String status; // 'active', 'pending', 'suspended'
+  final String role; 
+  final String status; 
   final String nationalId;
   final String birthDate;
   final String gender;
@@ -44,52 +45,51 @@ class UserModel {
 
   String get name => '$firstName $lastName';
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-        id: json['id'],
-        firstName: json['first_name'] ?? json['name']?.split(' ').first ?? '',
-        lastName: json['last_name'] ?? json['name']?.split(' ').last ?? '',
-        email: json['email'],
-        phone: json['phone'] ?? '',
-        role: json['role'] ?? 'citizen',
-        status: json['status'] ?? 'active',
-        nationalId: json['national_id'] ?? '',
-        birthDate: json['birth_date'] ?? '',
-        gender: json['gender'] ?? 'male',
-        bloodType: json['blood_type'] ?? 'O+',
-        hasVehicle: json['has_vehicle'] ?? false,
-        volunteerEnabled: json['volunteer_enabled'] ?? false,
-        skills: json['skills'],
-        smartWatchModel: json['smart_watch_model'],
-        sensorModel: json['sensor_model'],
-        emergencyContacts: (json['emergency_contacts'] as List?)
-                ?.map((e) => EmergencyContact.fromJson(e))
-                .toList() ??
-            [],
-        certifications: json['certifications'] != null
-            ? List<String>.from(json['certifications'])
-            : null,
-        profileImageUrl: json['profile_image_url'],
-      );
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    // دالة مساعدة للتعامل مع تقسيم الاسم لو دجانجو بعت "name" فقط
+    String full_name = json['name'] ?? '';
+    List<String> nameParts = full_name.split(' ');
+
+    return UserModel(
+      // 1. قراءة الـ ID كـ String والتعامل مع مسمى user_id
+      id: (json['user_id'] ?? json['id']).toString(), 
+      
+      // 2. معالجة الأسماء
+      firstName: json['first_name'] ?? (nameParts.isNotEmpty ? nameParts.first : ''),
+      lastName: json['last_name'] ?? (nameParts.length > 1 ? nameParts.last : ''),
+      
+      email: json['email'] ?? '',
+      phone: json['phone_number'] ?? json['phone'] ?? '',
+      role: json['user_type'] ?? json['role'] ?? 'citizen',
+      status: json['status'] ?? 'active',
+      nationalId: json['national_id'] ?? '',
+      birthDate: json['date_of_birth']?.toString() ?? json['birth_date']?.toString() ?? '',
+      gender: json['gender'] ?? 'male',
+      bloodType: json['blood_type'] ?? 'O+',
+      hasVehicle: json['has_vehicle'] ?? false,
+      volunteerEnabled: json['volunteer_enabled'] ?? false,
+      skills: json['skills'],
+      smartWatchModel: json['smart_watch_model'],
+      sensorModel: json['sensor_model'],
+      emergencyContacts: (json['emergency_contacts'] as List?)
+          ?.map((e) => EmergencyContact.fromJson(e))
+          .toList() ?? [],
+      certifications: json['certifications'] != null ? List<String>.from(json['certifications']) : null,
+      profileImageUrl: json['profile_image_url'],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'first_name': firstName,
-        'last_name': lastName,
+        'user_id': id,
+        'name': '$firstName $lastName',
         'email': email,
-        'phone': phone,
-        'role': role,
+        'phone_number': phone,
+        'user_type': role,
         'status': status,
         'national_id': nationalId,
-        'birth_date': birthDate,
+        'date_of_birth': birthDate,
         'gender': gender,
         'blood_type': bloodType,
-        'has_vehicle': hasVehicle,
-        'volunteer_enabled': volunteerEnabled,
-        'skills': skills,
-        'smart_watch_model': smartWatchModel,
-        'sensor_model': sensorModel,
         'emergency_contacts': emergencyContacts.map((e) => e.toJson()).toList(),
-        'certifications': certifications,
-        'profile_image_url': profileImageUrl,
       };
 }

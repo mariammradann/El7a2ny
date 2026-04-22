@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
+import '../core/auth/auth_token_store.dart'; // تأكد من صحة المسار حسب مشروعك
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({
@@ -146,6 +147,7 @@ class LandingScreen extends StatelessWidget {
                     try {
                       final pos = await Geolocator.getCurrentPosition();
                       await ApiService.sendEmergencyAlert(
+                        userId: AuthTokenStore.userId ?? 'guest',
                         type: 'instant_sos_landing',
                         lat: pos.latitude,
                         lng: pos.longitude,

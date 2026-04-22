@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
@@ -100,32 +100,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Map<String, dynamic> _buildRegistrationBody() {
-    return {
-      'first_name': _firstName.text.trim(),
-      'last_name': _lastName.text.trim(),
-      'email': _email.text.trim(),
-      'phone': _phone.text.trim(),
-      'national_id': _nationalId.text.trim(),
-      'birth_date': '${_year.text.trim()}-${_month.text.trim()}-${_day.text.trim()}',
-      'gender': _gender,
-      'blood_type': _bloodType,
-      'has_vehicle': _hasVehicle == 'yes',
-      'permission_mic': _micGranted,
-      'permission_location': _locationGranted,
-      'permission_camera': _cameraGranted,
-      if (widget.socialProfile == null) 'password': _password.text,
-      if (widget.socialProfile != null) 'social_provider': widget.socialProfile!.provider,
-      'volunteer_enabled': _volunteerEnabled,
-      'skills': _skills.text.trim(),
-      'smart_watch_model': _smartWatch,
-      'sensor_model': _sensor,
-      'emergency_contacts': _contacts.map((c) => {
-        'name': c.name.text.trim(),
-        'relation': c.relation.text.trim(),
-        'phone': c.phone.text.trim(),
-      }).toList(),
-    };
-  }
+  return {
+    // 1. الحقول الأساسية (تأكد من الأسماء)
+    'first_name': _firstName.text.trim(),
+    'last_name': _lastName.text.trim(),
+    'email': _email.text.trim(),
+    'password': _password.text,
+    
+    // 2. تعديل المسميات لتطابق الداتابيز (مهم جداً)
+    'phone_number': _phone.text.trim(),     // كانت 'phone' وغيرناها
+    'national_id': _nationalId.text.trim(),
+    'date_of_birth': '${_year.text.trim()}-${_month.text.trim()}-${_day.text.trim()}', // كانت 'birth_date'
+    
+    // 3. حقول إجبارية في الداتابيز (لازم تتبعت حتى لو قيم افتراضية)
+    'gender': _gender ?? 'male', // تأكد إنها مش null
+    'blood_type': _bloodType ?? 'O+', 
+    'user_type': _volunteerEnabled ? 'volunteer' : 'customer', // 'customer' بدل 'normal'
+    
+    // 4. حقول الـ Permissions (لازم تتبعت Boolean)
+    'mic': _micGranted,
+    'camera': _cameraGranted,
+    'share_location': _locationGranted,
+    
+    // 5. حقول الصور (لو مش هترفع صورة دلوقتي ابعتها String فاضي مش null)
+    'id_card_front': '',
+    'id_card_back': '',
+    'external_certificate': '',
+    
+    // 6. حقول إضافية
+    'status': 'active',
+    'verification_status': 'pending',
+    'field': _skills.text.trim(),
+  };
+}
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
