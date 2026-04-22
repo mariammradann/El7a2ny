@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/localization/app_strings.dart';
 import '../../services/api_service.dart';
 import '../../models/help_initiative_model.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../create_initiative_screen.dart';
 
 class CommunityTabPage extends StatefulWidget {
   const CommunityTabPage({super.key});
@@ -74,8 +76,16 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Navigate to create initiative screen
+        onPressed: () async {
+          final result = await Navigator.of(context).push<bool>(
+            MaterialPageRoute(
+              builder: (context) => const CreateInitiativeScreen(),
+              settings: const RouteSettings(name: '/create-initiative'),
+            ),
+          );
+          if (result == true) {
+            _load();
+          }
         },
         backgroundColor: theme.primaryColor,
         child: const Icon(Icons.add, color: Colors.white),
@@ -521,8 +531,17 @@ class _HelpInitiativeCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Implement contact functionality
+                onPressed: () async {
+                  final contact = initiative.contactInfo.first;
+                  final Uri url;
+                  if (contact.contains('@')) {
+                    url = Uri.parse('mailto:$contact');
+                  } else {
+                    url = Uri.parse('tel:${contact.replaceAll(RegExp(r'[^\d+]'), '')}');
+                  }
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.primaryColor,

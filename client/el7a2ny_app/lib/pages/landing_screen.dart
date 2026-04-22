@@ -5,6 +5,10 @@ import 'package:el7a2ny_app/app/main_shell_screen.dart';
 import 'package:el7a2ny_app/pages/login_screen.dart';
 import 'package:el7a2ny_app/pages/sign_up_screen.dart';
 import 'package:el7a2ny_app/services/session_service.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import '../services/api_service.dart';
+import '../models/user_model.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({
@@ -126,7 +130,52 @@ class LandingScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                _EmergencyReportCard(
+                  brandRed: _kBrandRed(context),
+                  onTap: () async {
+                    // 1. Show feedback
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(context.loc.isAr ? 'بدء إجراءات الاستغاثة الفورية...' : 'Initiating instant SOS...'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+
+                    // 2. Send location
+                    try {
+                      final pos = await Geolocator.getCurrentPosition();
+                      await ApiService.sendEmergencyAlert(
+                        type: 'instant_sos_landing',
+                        lat: pos.latitude,
+                        lng: pos.longitude,
+                        description: 'Instant SOS triggered from landing screen',
+                      );
+                    } catch (_) {}
+
+                    // 3. Fetch contacts
+                    UserModel? user;
+                    try {
+                      user = await ApiService.fetchUserProfile();
+                    } catch (_) {}
+
+                    // 4. Official calls
+                    final officials = ['122', '123', '180'];
+                    for (var num in officials) {
+                      bool? res = await FlutterPhoneDirectCaller.callNumber(num);
+                      if (res == true) await Future.delayed(const Duration(seconds: 10));
+                    }
+
+                    // 5. Emergency contacts
+                    if (user != null && user.emergencyContacts.isNotEmpty) {
+                      for (var contact in user.emergencyContacts) {
+                        bool? res = await FlutterPhoneDirectCaller.callNumber(contact.phone);
+                        if (res == true) await Future.delayed(const Duration(seconds: 10));
+                      }
+                    }
+                  },
+                ),
+                const SizedBox(height: 24),
                 _CreateAccountCard(
                   cardColor: _kCardColor(context),
                   brandRed: _kBrandRed(context),
@@ -303,6 +352,70 @@ class _LoginPrompt extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmergencyReportCard extends StatelessWidget {
+  const _EmergencyReportCard({required this.onTap, required this.brandRed});
+  final VoidCallback onTap;
+  final Color brandRed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: brandRed,
+      elevation: 4,
+      shadowColor: brandRed.withValues(alpha: 0.3),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.emergency_share_rounded,
+                    color: Colors.white,
+                    size: 44,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  context.loc.landingEmergency,
+                  style: const TextStyle(
+                    fontFamily: 'NotoSansArabic',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  context.loc.landingEmergencyDesc,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'NotoSansArabic',
+                    fontSize: 14,
+                    height: 1.35,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

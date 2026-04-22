@@ -11,6 +11,7 @@ import '../pages/settings_screen.dart';
 import '../widgets/language_toggle_button.dart';
 import '../services/session_service.dart';
 import '../pages/admin_screen.dart';
+import '../pages/notifications_page.dart';
 
 /// الهيكل الموحد: هيدر ثابت + محتوى + شريط تنقل سفلي.
 /// لا يُستخدم مع شاشات تسجيل الدخول / إنشاء الحساب.
@@ -170,6 +171,19 @@ class _MainShellScreenState extends State<MainShellScreen> {
           child: Icon(Icons.menu_rounded, color: theme.colorScheme.onSurface),
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+              );
+            },
+            icon: Badge(
+              label: const Text('3', style: TextStyle(fontSize: 10)),
+              backgroundColor: theme.primaryColor,
+              child: Icon(Icons.notifications_outlined, color: theme.colorScheme.onSurface),
+            ),
+          ),
           LanguageToggleButton(iconColor: theme.colorScheme.onSurface),
           const SizedBox(width: 8),
         ],

@@ -778,4 +778,16 @@ class AppStrings {
   String get incidentCancelledMsg => isAr ? 'تم إلغاء البلاغ وتنبيه الجهات المختصة' : 'Incident cancelled and authorities notified';
   String get incidentDeletedMsg => isAr ? 'تم حذف السجل نهائياً' : 'Incident deleted permanently';
   String get monitoringStartedMsg => isAr ? 'جاري المراقبة الحية وتتبع الموقع' : 'Live monitoring and location tracking started';
+
+  // Notifications
+  String get notifWelcome => isAr ? 'أهلاً بك في إلحقني. سلامتك هي أولويتنا.' : 'Welcome to El7a2ny. Your safety is our priority.';
+  String get notifIncidentNearby => isAr ? 'تم الإبلاغ عن حادث طارئ بالقرب منك.' : 'An emergency incident was reported nearby.';
+  String get notifVolunteerOnWay => isAr ? 'هناك متطوع في طريقه لمساعدتك الآن.' : 'A volunteer is on their way to help you now.';
+  String get notifSensorAlertNotif => isAr ? 'تنبيه: تم اكتشاف نشاط غير طبيعي بواسطة الحساس.' : 'Alert: Unusual activity detected by your sensor.';
+  String get notifInitiativeNew => isAr ? 'تمت إضافة مبادرة مساعدة جديدة في منطقتك.' : 'A new help initiative was added in your area.';
+  String get notifAccountSecurity => isAr ? 'تنبيه أمني: تم تسجيل الدخول لحسابك من جهاز جديد.' : 'Security Alert: Your account was accessed from a new device.';
+  String get notifHelpRequestReceived => isAr ? 'تم استلام طلب المساعدة الخاص بك وجاري المعالجة.' : 'Your help request was received and is being processed.';
+  String get notifJustNow => isAr ? 'الآن' : 'Just now';
+  String get notifHoursAgo => isAr ? 'ساعات' : 'hours ago';
+  String get notifDaysAgo => isAr ? 'يوم' : 'day ago';
 }

@@ -105,6 +105,25 @@ class ApiService {
     return EmergencyReportModel.fromJson(data as Map<String, dynamic>);
   }
 
+  /// POST /api/alerts/new/
+  static Future<void> sendEmergencyAlert({
+    required String type,
+    required double lat,
+    required double lng,
+    String? description,
+  }) async {
+    if (useMock) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      return;
+    }
+    await _post('/alerts/new/', {
+      'type': type,
+      'lat': lat,
+      'lng': lng,
+      'description': description,
+    });
+  }
+
   /// POST /api/sensors/{id}/respond/   (user says "I'm safe")
   static Future<void> markSensorSafe(int sensorId) async {
     if (useMock) {
@@ -201,6 +220,15 @@ class ApiService {
     }
     final data = await _get('/profile/');
     return UserModel.fromJson(data as Map<String, dynamic>);
+  }
+
+  /// POST /api/profile/update/
+  static Future<void> updateUserProfile(UserModel user) async {
+    if (useMock) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      return;
+    }
+    await _post('/profile/update/', user.toJson());
   }
 
   /// GET /api/admin/users/
@@ -385,15 +413,56 @@ class ApiService {
   ];
 
   static final UserModel _mockCurrentUser = UserModel(
-    id: 1, name: 'Adnan El7a2ny', email: 'adnan@el7a2ny.com', phone: '+20 100 000 0000',
-    role: 'admin', status: 'active',
+    id: 1,
+    firstName: 'Adnan',
+    lastName: 'El7a2ny',
+    email: 'adnan@el7a2ny.com',
+    phone: '+20 100 000 0000',
+    role: 'citizen',
+    status: 'active',
+    nationalId: '29001011234567',
+    birthDate: '1990-01-01',
+    gender: 'male',
+    bloodType: 'O+',
+    hasVehicle: true,
+    volunteerEnabled: true,
+    skills: 'CPR, First Aid, Firefighting',
+    smartWatchModel: 'Apple Watch Series 9',
+    sensorModel: 'Pulse Oximeter',
+    emergencyContacts: _mockContacts,
   );
 
   static final List<UserModel> _mockUsers = [
-    UserModel(id: 1, name: 'Ahmed Ali', email: 'ahmed@example.com', role: 'citizen', status: 'active', phone: '0101234567'),
-    UserModel(id: 2, name: 'Sara Mohamed', email: 'sara@example.com', role: 'volunteer', status: 'pending', phone: '0111234567'),
-    UserModel(id: 3, name: 'Khaled Omar', email: 'khaled@example.com', role: 'citizen', status: 'active', phone: '0121234567'),
-    UserModel(id: 4, name: 'Mona Zayed', email: 'mona@example.com', role: 'volunteer', status: 'suspended', phone: '0151234567'),
+    UserModel(
+      id: 1,
+      firstName: 'Ahmed',
+      lastName: 'Ali',
+      email: 'ahmed@example.com',
+      role: 'citizen',
+      status: 'active',
+      phone: '0101234567',
+      nationalId: '29501011234567',
+      birthDate: '1995-05-12',
+      gender: 'male',
+      bloodType: 'A+',
+      emergencyContacts: [_mockContacts[0]],
+    ),
+    UserModel(
+      id: 2,
+      firstName: 'Sara',
+      lastName: 'Mohamed',
+      email: 'sara@example.com',
+      role: 'volunteer',
+      status: 'pending',
+      phone: '0111234567',
+      nationalId: '29805051234567',
+      birthDate: '1998-08-20',
+      gender: 'female',
+      bloodType: 'B-',
+      volunteerEnabled: true,
+      skills: 'Nursing, Emergency Response',
+      emergencyContacts: [_mockContacts[1]],
+    ),
   ];
 
   static final AdminStats _mockAdminStats = AdminStats(

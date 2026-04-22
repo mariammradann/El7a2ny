@@ -123,15 +123,15 @@ class _SponsorsPageState extends State<SponsorsPage> {
                       }
                       return true;
                     }).map((s) => Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: _SponsorCard(
-                            title: s.title,
-                            badge: s.badgeLabel,
-                            imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=128&h=128&auto=format&fit=crop',
-                            services: s.services,
-                            phone: s.phone,
-                          ),
-                        )),
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: _SponsorCard(
+                        title: s.title,
+                        badge: s.badgeLabel,
+                        imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=128&h=128&auto=format&fit=crop', // fallback image
+                        services: s.services,
+                        phone: s.phone,
+                      ),
+                    )),
                   ],
                 ]),
               ),

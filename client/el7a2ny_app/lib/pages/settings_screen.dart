@@ -4,6 +4,9 @@ import '../core/localization/locale_provider.dart';
 import '../widgets/language_toggle_button.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'verify_password_screen.dart';
+import 'edit_profile_screen.dart';
+import '../services/api_service.dart';
+import '../models/user_model.dart';
 
 
 class SettingsScreen extends StatefulWidget {
@@ -15,11 +18,23 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifications = false;
+  UserModel? _user;
+  bool _loadingUser = true;
 
   @override
   void initState() {
     super.initState();
     _checkPermissions();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    try {
+      final user = await ApiService.fetchUserProfile();
+      if (mounted) setState(() { _user = user; _loadingUser = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loadingUser = false);
+    }
   }
 
   Future<void> _checkPermissions() async {
@@ -107,8 +122,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 context,
                 icon: Icons.person_outline_rounded,
                 title: context.loc.editProfile,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.loc.comingSoon)));
+                onTap: () async {
+                  if (_loadingUser) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.loc.isAr ? 'جاري تحميل البيانات...' : 'Loading user data...')));
+                    return;
+                  }
+                  if (_user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.loc.isAr ? 'فشل في تحميل البيانات' : 'Failed to load user data')));
+                    return;
+                  }
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => EditProfileScreen(user: _user!)),
+                  );
+                  if (result == true) {
+                    _loadUser(); // Refresh if saved
+                  }
                 },
               ),
               _buildTile(

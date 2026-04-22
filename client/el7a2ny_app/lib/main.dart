@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:el7a2ny_app/core/localization/locale_provider.dart';
 import 'package:el7a2ny_app/core/theme/app_theme.dart';
 import 'package:el7a2ny_app/pages/welcome_screen.dart';
+import 'package:el7a2ny_app/pages/landing_screen.dart';
+import 'package:el7a2ny_app/pages/login_screen.dart';
+import 'package:el7a2ny_app/pages/sign_up_screen.dart';
+import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
+import 'package:el7a2ny_app/pages/create_initiative_screen.dart';
 import 'package:el7a2ny_app/widgets/global_fab_overlay.dart';
 
 void main() {
@@ -40,6 +45,7 @@ class _MyAppState extends State<MyApp> {
           return MaterialApp(
             title: 'El7a2ny App',
             debugShowCheckedModeBanner: false,
+            navigatorKey: GlobalFabController.navigatorKey,
             builder: (context, child) {
               return GlobalFabOverlay(
                 child: Directionality(
@@ -53,6 +59,13 @@ class _MyAppState extends State<MyApp> {
             darkTheme: AppTheme.darkTheme,
             themeMode: config.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             home: const WelcomeScreen(),
+            routes: {
+              '/landing': (context) => const LandingScreen(),
+              '/login': (context) => const LoginScreen(),
+              '/signup': (context) => SignUpScreen(),
+              '/emergency-report': (context) => const EmergencyReportScreen(),
+              '/create-initiative': (context) => const CreateInitiativeScreen(),
+            },
           );
         },
       ),

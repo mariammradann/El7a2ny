@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_strings.dart';
 import '../settings_screen.dart';
+import '../edit_profile_screen.dart';
 import '../../services/api_service.dart';
 import '../../models/user_model.dart';
 
@@ -35,7 +36,8 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isAr = context.loc.isAr;
+    final loc = context.loc;
+    final isAr = loc.isAr;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -48,7 +50,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
             _buildSliverHeader(context, theme, isAr),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -57,48 +59,89 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                     else if (_error != null)
                       _ErrorState(onRetry: _load)
                     else ...[
-                      _SectionTitle(title: context.loc.personalInfo),
-                      const SizedBox(height: 12),
-                      _ProfileMenuTile(
-                        icon: Icons.person_outline_rounded,
-                        title: isAr ? 'تعديل الملف الشخصي' : 'Edit Profile',
-                        onTap: () {},
+                      // 1. Personal Information Section
+                      _SectionHeader(title: loc.personalInfo, icon: Icons.person_rounded),
+                      _InfoCard(
+                        children: [
+                          _InfoRow(label: loc.firstNameLabel, value: _user?.firstName ?? '...', icon: Icons.badge_outlined),
+                          _InfoRow(label: loc.lastNameLabel, value: _user?.lastName ?? '...', icon: Icons.person_outline),
+                          _InfoRow(label: loc.emailLabel, value: _user?.email ?? '...', icon: Icons.email_outlined),
+                          _InfoRow(label: loc.mobileNum, value: _user?.phone ?? '...', icon: Icons.phone_android_rounded),
+                          _InfoRow(label: loc.nationalIdLabel, value: _user?.nationalId ?? '...', icon: Icons.credit_card_rounded),
+                          _InfoRow(label: loc.birthDateLabel, value: _user?.birthDate ?? '...', icon: Icons.cake_outlined),
+                          _InfoRow(
+                            label: loc.genderLabel, 
+                            value: _user?.gender == 'male' ? loc.maleOption : loc.femaleOption, 
+                            icon: Icons.face_outlined
+                          ),
+                          _InfoRow(label: loc.bloodTypeLabel, value: _user?.bloodType ?? '...', icon: Icons.water_drop_outlined, isLast: true),
+                        ],
                       ),
-                      _ProfileMenuTile(
-                        icon: Icons.email_outlined,
-                        title: context.loc.emailLabel,
-                        subtitle: _user?.email ?? '...',
-                        isDetail: true,
-                      ),
-                      _ProfileMenuTile(
-                        icon: Icons.phone_android_rounded,
-                        title: isAr ? 'رقم الهاتف' : 'Phone Number',
-                        subtitle: _user?.phone ?? '...',
-                        isDetail: true,
-                      ),
+                      
                       const SizedBox(height: 24),
-                      _SectionTitle(title: context.loc.securitySettings),
-                      const SizedBox(height: 12),
+
+                      // 2. Emergency Contacts Section
+                      if (_user?.emergencyContacts.isNotEmpty ?? false) ...[
+                        _SectionHeader(title: loc.emergencyContacts, icon: Icons.contact_phone_rounded),
+                        ..._user!.emergencyContacts.map((c) => _ContactCard(
+                          name: c.name,
+                          relation: c.relationship,
+                          phone: c.phone,
+                        )),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // 3. Hardware & Assets Section
+                      _SectionHeader(title: isAr ? 'الأجهزة والوسائل' : 'Hardwares & Assets', icon: Icons.devices_other_rounded),
+                      _InfoCard(
+                        children: [
+                          _InfoRow(
+                            label: loc.hasVehicleLabel, 
+                            value: _user?.hasVehicle ?? false ? loc.yes : loc.no, 
+                            icon: Icons.directions_car_outlined
+                          ),
+                          _InfoRow(
+                            label: loc.smartWatchLabel, 
+                            value: _user?.smartWatchModel ?? (isAr ? 'غير محدد' : 'Not Set'), 
+                            icon: Icons.watch_outlined
+                          ),
+                          _InfoRow(
+                            label: loc.sensorLabel, 
+                            value: _user?.sensorModel ?? (isAr ? 'غير محدد' : 'Not Set'), 
+                            icon: Icons.sensors_outlined,
+                            isLast: true
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // 4. Volunteer Section
+                      if (_user?.volunteerEnabled ?? false) ...[
+                        _SectionHeader(title: loc.volunteerLabel, icon: Icons.volunteer_activism_rounded),
+                        _InfoCard(
+                          children: [
+                            _InfoRow(
+                              label: isAr ? 'المهارات' : 'Skills', 
+                              value: _user?.skills ?? '...', 
+                              icon: Icons.psychology_outlined,
+                              isLast: true
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // 5. Account & Preferences
+                      _SectionHeader(title: loc.appPreferences, icon: Icons.settings_rounded),
                       _ProfileMenuTile(
                         icon: Icons.lock_outline_rounded,
-                        title: context.loc.changePassword,
+                        title: loc.changePassword,
                         onTap: () {},
                       ),
                       _ProfileMenuTile(
-                        icon: Icons.fingerprint_rounded,
-                        title: isAr ? 'بصمة الإصبع' : 'Biometrics',
-                        trailing: CupertinoSwitch(
-                            value: true,
-                            activeColor: theme.primaryColor,
-                            onChanged: (v) {}
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _SectionTitle(title: context.loc.appPreferences),
-                      const SizedBox(height: 12),
-                      _ProfileMenuTile(
                         icon: Icons.settings_outlined,
-                        title: context.loc.settings,
+                        title: loc.settings,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -107,19 +150,12 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         },
                       ),
                       _ProfileMenuTile(
-                        icon: Icons.language_rounded,
-                        title: context.loc.language,
-                        subtitle: context.loc.arabicOrEnglish,
-                      ),
-                      const SizedBox(height: 32),
-                      _ProfileMenuTile(
                         icon: Icons.logout_rounded,
-                        title: context.loc.logout,
+                        title: loc.logout,
                         color: Colors.redAccent,
                         onTap: () {},
                       ),
                     ],
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -179,28 +215,224 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    _user?.name ?? '...',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(width: 40), // Spacing for balance
+                      Text(
+                        _user?.name ?? '...',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          if (_user != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditProfileScreen(user: _user!),
+                              ),
+                            ).then((value) => _load());
+                          }
+                        },
+                        icon: Icon(Icons.edit_rounded, size: 20, color: theme.primaryColor),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
-                  Text(
-                    _user?.role.toUpperCase() ?? '...',
-                    style: TextStyle(
-                      fontSize: 14,
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  if (_user?.role == 'admin')
+                    Text(
+                      _user?.role.toUpperCase() ?? '...',
+                      style: TextStyle(
+                        fontSize: 14,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  const _SectionHeader({required this.title, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, left: 4, right: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.primaryColor),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: theme.primaryColor,
+              letterSpacing: 0.5,
+              fontFamily: 'NotoSansArabic',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  final List<Widget> children;
+  const _InfoCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final bool isLast;
+
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: isLast ? null : Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.05))),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    fontFamily: 'NotoSansArabic',
+                  ),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                    fontFamily: 'NotoSansArabic',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContactCard extends StatelessWidget {
+  final String name;
+  final String relation;
+  final String phone;
+
+  const _ContactCard({required this.name, required this.relation, required this.phone});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.primaryColor.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.primaryColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.emergency_rounded, size: 20, color: theme.primaryColor),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, fontFamily: 'NotoSansArabic'),
+                ),
+                Text(
+                  relation,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    fontFamily: 'NotoSansArabic',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            phone,
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              color: theme.primaryColor,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -225,41 +457,17 @@ class _ErrorState extends StatelessWidget {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  const _SectionTitle({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w800,
-        color: Theme.of(context).primaryColor,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-}
-
 class _ProfileMenuTile extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String? subtitle;
   final VoidCallback? onTap;
-  final Widget? trailing;
   final Color? color;
-  final bool isDetail;
 
   const _ProfileMenuTile({
     required this.icon,
     required this.title,
-    this.subtitle,
     this.onTap,
-    this.trailing,
     this.color,
-    this.isDetail = false,
   });
 
   @override
@@ -291,39 +499,11 @@ class _ProfileMenuTile extends StatelessWidget {
             fontSize: 15,
             fontWeight: FontWeight.w700,
             color: color ?? theme.colorScheme.onSurface,
+            fontFamily: 'NotoSansArabic',
           ),
         ),
-        subtitle: subtitle != null ? Text(
-          subtitle!,
-          style: TextStyle(
-            fontSize: 13,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-          ),
-        ) : null,
-        trailing: trailing ?? (onTap != null && !isDetail ? Icon(Icons.arrow_forward_ios_rounded, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)) : null),
+        trailing: onTap != null ? Icon(Icons.arrow_forward_ios_rounded, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)) : null,
       ),
-    );
-  }
-}
-
-class CupertinoSwitch extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  final Color activeColor;
-
-  const CupertinoSwitch({
-    super.key, 
-    required this.value, 
-    required this.onChanged, 
-    required this.activeColor
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Switch.adaptive(
-      value: value,
-      onChanged: onChanged,
-      activeTrackColor: activeColor,
     );
   }
 }

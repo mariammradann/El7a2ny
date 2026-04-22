@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../core/localization/app_strings.dart';
 import 'alert_details_page.dart';
 import '../services/session_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 class AlertsTab extends StatefulWidget {
   const AlertsTab({super.key});
@@ -19,6 +20,7 @@ class _AlertsTabState extends State<AlertsTab>
   List<AlertModel> _alerts = [];
   bool _loading = true;
   String? _error;
+  Position? _currentPosition;
 
   @override
   void initState() {
@@ -40,11 +42,24 @@ class _AlertsTabState extends State<AlertsTab>
         _error = null;
       });
       final alerts = await ApiService.fetchAlerts();
+      
+      // Get location for filtering
+      Position? pos;
+      try {
+        pos = await _determinePosition();
+      } catch (e) {
+        debugPrint("Location error: $e");
+      }
+
       if (mounted) {
         setState(() {
+          _currentPosition = pos;
           _alerts = alerts;
           _loading = false;
         });
+        
+        // Notify for nearby alerts
+        _checkForNearbyAlerts(alerts, pos);
       }
     } catch (e) {
       if (mounted) {
@@ -54,6 +69,87 @@ class _AlertsTabState extends State<AlertsTab>
         });
       }
     }
+  }
+
+  Future<Position?> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return null;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return null;
+    }
+    
+    if (permission == LocationPermission.deniedForever) return null;
+
+    return await Geolocator.getCurrentPosition();
+  }
+
+  void _checkForNearbyAlerts(List<AlertModel> alerts, Position? userPos) {
+    if (userPos == null) return;
+
+    for (var alert in alerts) {
+      if (alert.isMyAlert) continue;
+      
+      final distance = Geolocator.distanceBetween(
+        userPos.latitude, userPos.longitude,
+        alert.lat, alert.lng
+      );
+
+      // 10 mins ≈ 5km
+      if (distance <= 5000) {
+        _showNearbyNotification(alert);
+        break; // Show one for now to avoid spam
+      }
+    }
+  }
+
+  void _showNearbyNotification(AlertModel alert) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 10),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        content: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.loc.isAr ? 'تنبيه قريب!' : 'Nearby Alert!',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    context.loc.isAr 
+                      ? 'هناك ${alert.getLocalizedType(context.loc)} بالقرب منك (أقل من 10 دقائق)'
+                      : '${alert.getLocalizedType(context.loc)} detected near you (within 10 mins)',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => AlertDetailsPage(alert: alert))
+                );
+              },
+              child: Text(context.loc.isAr ? 'عرض' : 'View', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -144,6 +240,15 @@ class _AlertsTabState extends State<AlertsTab>
 
     final displayAlerts = _alerts
         .where((a) => a.isMyAlert == isMyAlerts)
+        .where((a) {
+          if (isMyAlerts || _currentPosition == null) return true;
+          // Filter for "Active Alerts" tab: only those within 10 mins (5km)
+          final dist = Geolocator.distanceBetween(
+            _currentPosition!.latitude, _currentPosition!.longitude,
+            a.lat, a.lng
+          );
+          return dist <= 5000;
+        })
         .toList();
 
     if (displayAlerts.isEmpty) {

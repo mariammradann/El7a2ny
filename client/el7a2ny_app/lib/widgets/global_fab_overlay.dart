@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../pages/emergency_chat_screen.dart';
+import '../pages/emergency_report_screen.dart';
 import '../core/localization/locale_provider.dart';
 import 'hover_expandable_fab.dart';
 
 /// A global observer to track visibility of the FABs
 class GlobalFabController {
   static final ValueNotifier<bool> isVisible = ValueNotifier<bool>(false);
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   static void show() => isVisible.value = true;
   static void hide() => isVisible.value = false;
@@ -29,14 +31,17 @@ class GlobalFabOverlay extends StatelessWidget {
           builder: (context, visible, _) {
             if (!visible) return const SizedBox.shrink();
 
+            final isAr = AppConfigProvider.of(context).isArabic;
+
             return Positioned(
-              right: 16,
+              left: isAr ? 16 : null,
+              right: isAr ? null : 16,
               bottom: 90, // Adjusted to be above the bottom nav bar area
               child: Material(
                 type: MaterialType.transparency,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: isAr ? CrossAxisAlignment.start : CrossAxisAlignment.end,
                   children: [
                     // SOS Button
                     HoverExpandableFab(
@@ -46,8 +51,10 @@ class GlobalFabOverlay extends StatelessWidget {
                       iconColor: Colors.white,
                       heroTag: 'global_sos_fab',
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('تنبيه الطوارئ — اربطي الـ endpoint')),
+                        GlobalFabController.navigatorKey.currentState?.push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const EmergencyReportScreen(),
+                          ),
                         );
                       },
                     ),
@@ -60,8 +67,7 @@ class GlobalFabOverlay extends StatelessWidget {
                       iconColor: isDark ? theme.colorScheme.onPrimaryContainer : Colors.white,
                       heroTag: 'global_chat_fab',
                       onTap: () {
-                        // Using root navigator to push the chat screen
-                        Navigator.of(context).push(
+                        GlobalFabController.navigatorKey.currentState?.push(
                           MaterialPageRoute<void>(
                             builder: (context) => const EmergencyChatScreen(),
                           ),

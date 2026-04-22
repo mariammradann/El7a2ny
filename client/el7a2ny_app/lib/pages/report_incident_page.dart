@@ -4,6 +4,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import '../core/localization/app_strings.dart';
+import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+import '../services/api_service.dart';
+import '../models/user_model.dart';
 
 class ReportIncidentPage extends StatefulWidget {
   const ReportIncidentPage({super.key});
@@ -265,6 +268,48 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
     );
   }
 
+  Future<void> _triggerEmergencyAutomations() async {
+    // 1. Send location to backend first
+    try {
+      final pos = await Geolocator.getCurrentPosition();
+      // Use standard alert submission with location
+      await ApiService.sendEmergencyAlert(
+        type: _selectedType,
+        lat: pos.latitude,
+        lng: pos.longitude,
+        description: _customTypeCtrl.text,
+      );
+    } catch (e) {
+      debugPrint("Failed to send location: $e");
+    }
+
+    // 2. Fetch emergency contacts
+    UserModel? user;
+    try {
+      user = await ApiService.fetchUserProfile();
+    } catch (_) {}
+
+    // 3. Trigger calls to official services (Direct calls)
+    final officials = ['122', '123', '180'];
+    for (var num in officials) {
+      bool? res = await FlutterPhoneDirectCaller.callNumber(num);
+      if (res == true) {
+        // Wait longer if call was initiated to let the user finish
+        await Future.delayed(const Duration(seconds: 10)); 
+      }
+    }
+
+    // 4. Trigger calls to user's emergency contacts
+    if (user != null && user.emergencyContacts.isNotEmpty) {
+      for (var contact in user.emergencyContacts) {
+        bool? res = await FlutterPhoneDirectCaller.callNumber(contact.phone);
+        if (res == true) {
+          await Future.delayed(const Duration(seconds: 10));
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -490,11 +535,15 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               width: double.infinity,
               height: 60,
               child: FilledButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_selectedType.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.selectProblemFirst)));
                     return;
                   }
+                  
+                  // Start automations in background
+                  _triggerEmergencyAutomations();
+                  
                   _showSuccessDialog();
                 },
                 style: FilledButton.styleFrom(

@@ -3,6 +3,7 @@ import '../core/localization/app_strings.dart';
 import '../data/models/chat_message.dart';
 import '../data/models/emergency_contact.dart';
 import '../services/api_service.dart';
+import '../services/ai_service.dart';
 
 class EmergencyChatScreen extends StatefulWidget {
   const EmergencyChatScreen({super.key});
@@ -62,7 +63,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     if (_messageController.text.trim().isEmpty) return;
     
     final userText = _messageController.text.trim();
@@ -77,20 +78,31 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
     _messageController.clear();
     _scrollToBottom();
 
-    // Simulate Bot Response
-    Future.delayed(const Duration(seconds: 1), () {
-      if (!mounted) return;
-      setState(() {
-        _messages.add(ChatMessage(
-          text: context.loc.isAr 
-              ? 'جاري معالجة طلبك... يرجى البقاء على الخط.' 
-              : 'Processing your request... Please stay on the line.',
-          source: MessageSource.bot,
-          timestamp: DateTime.now(),
-        ));
-      });
-      _scrollToBottom();
+    // Show "Processing" message
+    final botPlaceholder = ChatMessage(
+      text: context.loc.isAr ? 'جاري التفكير...' : 'Thinking...',
+      source: MessageSource.bot,
+      timestamp: DateTime.now(),
+    );
+    
+    setState(() => _messages.add(botPlaceholder));
+    _scrollToBottom();
+
+    // Get real response from Gemini
+    final response = await AiService.getResponse(userText);
+    
+    if (!mounted) return;
+    
+    setState(() {
+      // Replace the last message with the real response
+      _messages.removeLast();
+      _messages.add(ChatMessage(
+        text: response,
+        source: MessageSource.bot,
+        timestamp: DateTime.now(),
+      ));
     });
+    _scrollToBottom();
   }
 
   void _scrollToBottom() {
