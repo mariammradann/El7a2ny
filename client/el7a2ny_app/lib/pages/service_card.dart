@@ -21,31 +21,40 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // We override some properties to match the "Premium Dark" image precisely
+    final theme = Theme.of(context);
+
+    // Adaptive colors for light/dark mode
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = gradientColors[0];
-    const cardBgColor = Color(0xFF0F172A); // Deep charcoal/dark blue from reference
+    final cardBgColor = isDark ? const Color(0xFF0F172A) : theme.cardColor;
+    final nameTextColor = isDark ? Colors.white : theme.colorScheme.onSurface;
+    final numberTextColor = isDark ? Colors.white : primaryColor;
+
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
-        color: cardBgColor.withValues(alpha: 0.95),
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 1),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : theme.dividerColor.withValues(alpha: 0.1), width: 1),
+
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
+            color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
         ],
       ),
+
       child: Row(
         children: [
           // Icon Box with Glow
           Container(
-            width: 72,
-            height: 72,
+            width: 60, // Slightly smaller to give more space for text
+            height: 60,
+
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: gradientColors,
@@ -72,26 +81,30 @@ class ServiceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white, // Standard white for premium dark look
-                    fontFamily: 'NotoSansArabic',
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: nameTextColor,
+                      fontFamily: 'NotoSansArabic',
+                    ),
                   ),
-                ),
+
                 const SizedBox(height: 2),
                 Text(
                   number,
-                  style: const TextStyle(
-                    fontSize: 32,
+                  style: TextStyle(
+                    fontSize: 28, // Slightly smaller to avoid wrapping
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: numberTextColor,
                     fontFamily: 'NotoSansArabic',
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.0,
                   ),
                 ),
+
               ],
             ),
           ),

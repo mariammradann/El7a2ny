@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import '../../core/localization/app_strings.dart';
 import '../settings_screen.dart';
 import '../edit_profile_screen.dart';
+import '../change_password_screen.dart';
+
 import '../../services/api_service.dart';
 import '../../models/user_model.dart';
+import '../../models/activity_history_model.dart';
+import '../history_list_page.dart';
+import 'package:intl/intl.dart';
+
+
 
 class ProfileTabPage extends StatefulWidget {
   const ProfileTabPage({super.key});
@@ -14,8 +21,11 @@ class ProfileTabPage extends StatefulWidget {
 
 class _ProfileTabPageState extends State<ProfileTabPage> {
   UserModel? _user;
+  List<ActivityHistoryModel> _history = [];
   bool _loading = true;
   String? _error;
+  bool? _lastIsAr;
+
 
   @override
   void initState() {
@@ -26,8 +36,20 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
   Future<void> _load() async {
     try {
       setState(() { _loading = true; _error = null; });
+      final isAr = context.loc.isAr;
       final data = await ApiService.fetchUserProfile();
-      if (mounted) setState(() { _user = data; _loading = false; });
+      final historyData = await ApiService.fetchActivityHistory(isArabic: isAr);
+
+      if (mounted) {
+
+        setState(() { 
+          _user = data; 
+          _history = historyData;
+          _loading = false; 
+          _lastIsAr = isAr;
+        });
+      }
+
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }
@@ -38,6 +60,11 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
     final theme = Theme.of(context);
     final loc = context.loc;
     final isAr = loc.isAr;
+
+    // Refresh if language changed
+    if (_lastIsAr != null && _lastIsAr != isAr && !_loading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -131,14 +158,44 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         ),
                         const SizedBox(height: 24),
                       ],
+                      
+                      // 5. History Section
+                      _SectionHeader(title: isAr ? 'السجل' : 'Activity History', icon: Icons.history_rounded),
+                      if (_history.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Center(child: Text(isAr ? 'لا يوجد سجل حالياً' : 'No history available')),
+                        )
+                      else
+                        ..._history.take(3).map((h) => _HistoryTile(history: h)),
+                      if (_history.length > 3)
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => HistoryListPage(history: _history)),
+                            );
+                          },
+                          child: Text(isAr ? 'عرض الكل' : 'View All'),
+                        ),
 
-                      // 5. Account & Preferences
+
+                      const SizedBox(height: 24),
+
+                      // 6. Account & Preferences
+
                       _SectionHeader(title: loc.appPreferences, icon: Icons.settings_rounded),
                       _ProfileMenuTile(
                         icon: Icons.lock_outline_rounded,
                         title: loc.changePassword,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+                          );
+                        },
                       ),
+
                       _ProfileMenuTile(
                         icon: Icons.settings_outlined,
                         title: loc.settings,
@@ -264,7 +321,66 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
   }
 }
 
+class _HistoryTile extends StatelessWidget {
+  final ActivityHistoryModel history;
+  const _HistoryTile({required this.history});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    
+    IconData icon;
+    Color color;
+    switch (history.type) {
+      case 'emergency':
+        icon = Icons.emergency_rounded;
+        color = Colors.redAccent;
+        break;
+      case 'volunteer':
+        icon = Icons.volunteer_activism_rounded;
+        color = Colors.green;
+        break;
+      default:
+        icon = Icons.info_outline_rounded;
+        color = theme.primaryColor;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(
+          history.title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          history.description,
+          style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+        ),
+        trailing: Text(
+          DateFormat(isAr ? 'yyyy/MM/dd' : 'dd MMM').format(history.date),
+          style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionHeader extends StatelessWidget {
+
   final String title;
   final IconData icon;
   const _SectionHeader({required this.title, required this.icon});

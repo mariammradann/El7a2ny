@@ -9,6 +9,8 @@ import '../models/user_model.dart';
 import '../models/community_post_model.dart';
 import '../models/admin_stats_model.dart';
 import '../models/help_initiative_model.dart';
+import '../models/activity_history_model.dart';
+
 
 // ─────────────────────────────────────────────────────────
 //  API SERVICE
@@ -265,8 +267,20 @@ class ApiService {
     return data.map((e) => EmergencyContact.fromJson(e as Map<String, dynamic>)).toList();
   }
 
+  /// GET /api/profile/history/
+  static Future<List<ActivityHistoryModel>> fetchActivityHistory({bool isArabic = false}) async {
+    if (useMock) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      return isArabic ? _mockHistoryAr : _mockHistory;
+    }
+    final data = await _get('/profile/history/') as List;
+    return data.map((e) => ActivityHistoryModel.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+
   // ════════════════════════════════════════════════════════
   //  MOCK DATA  (removed when useMock = false)
+
   // ════════════════════════════════════════════════════════
 
   static final List<SensorModel> _mockSensors = [
@@ -531,7 +545,71 @@ class ApiService {
       participantsCount: 12,
     ),
   ];
+
+  static final List<ActivityHistoryModel> _mockHistory = [
+    ActivityHistoryModel(
+      id: 1,
+      title: 'Emergency Reported',
+      description: 'Reported a Fire Emergency in Downtown.',
+      date: DateTime.now().subtract(const Duration(days: 2)),
+      type: 'emergency',
+    ),
+    ActivityHistoryModel(
+      id: 2,
+      title: 'Volunteer Action',
+      description: 'Joined the Medical Alert response team in Nasr City.',
+      date: DateTime.now().subtract(const Duration(days: 5)),
+      type: 'volunteer',
+    ),
+    ActivityHistoryModel(
+      id: 3,
+      title: 'Profile Updated',
+      description: 'Updated your personal information and emergency contacts.',
+      date: DateTime.now().subtract(const Duration(days: 10)),
+      type: 'account',
+    ),
+    ActivityHistoryModel(
+      id: 4,
+      title: 'Subscription Renewed',
+      description: 'Your Premium Safety plan was successfully renewed.',
+      date: DateTime.now().subtract(const Duration(days: 30)),
+      type: 'account',
+    ),
+  ];
+
+  static final List<ActivityHistoryModel> _mockHistoryAr = [
+    ActivityHistoryModel(
+      id: 1,
+      title: 'تم الإبلاغ عن حالة طوارئ',
+      description: 'تم الإبلاغ عن حريق في وسط المدينة.',
+      date: DateTime.now().subtract(const Duration(days: 2)),
+      type: 'emergency',
+    ),
+    ActivityHistoryModel(
+      id: 2,
+      title: 'مشاركة تطوعية',
+      description: 'انضممت إلى فريق الاستجابة للطوارئ الطبية في مدينة نصر.',
+      date: DateTime.now().subtract(const Duration(days: 5)),
+      type: 'volunteer',
+    ),
+    ActivityHistoryModel(
+      id: 3,
+      title: 'تحديث الملف الشخصي',
+      description: 'قمت بتحديث معلوماتك الشخصية وجهات اتصال الطوارئ.',
+      date: DateTime.now().subtract(const Duration(days: 10)),
+      type: 'account',
+    ),
+    ActivityHistoryModel(
+      id: 4,
+      title: 'تجديد الاشتراك',
+      description: 'تم تجديد خطة الاشتراك المميزة بنجاح.',
+      date: DateTime.now().subtract(const Duration(days: 30)),
+      type: 'account',
+    ),
+  ];
 }
+
+
 
 // ─────────────────────────────────────────────────────────
 //  EXCEPTION

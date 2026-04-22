@@ -7,11 +7,15 @@ import 'hover_expandable_fab.dart';
 /// A global observer to track visibility of the FABs
 class GlobalFabController {
   static final ValueNotifier<bool> isVisible = ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> isChatButtonVisible = ValueNotifier<bool>(true);
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   static void show() => isVisible.value = true;
   static void hide() => isVisible.value = false;
+  static void showChatButton() => isChatButtonVisible.value = true;
+  static void hideChatButton() => isChatButtonVisible.value = false;
 }
+
 
 class GlobalFabOverlay extends StatelessWidget {
   final Widget child;
@@ -60,21 +64,28 @@ class GlobalFabOverlay extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     // Chatbot Button
-                    HoverExpandableFab(
-                      label: AppConfigProvider.of(context).isArabic ? 'مساعد ذكي' : 'Smart Assistant',
-                      icon: Icons.forum_rounded,
-                      backgroundColor: isDark ? theme.colorScheme.primaryContainer : const Color(0xFF2D3243),
-                      iconColor: isDark ? theme.colorScheme.onPrimaryContainer : Colors.white,
-                      heroTag: 'global_chat_fab',
-                      onTap: () {
-                        GlobalFabController.navigatorKey.currentState?.push(
-                          MaterialPageRoute<void>(
-                            builder: (context) => const EmergencyChatScreen(),
-                          ),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: GlobalFabController.isChatButtonVisible,
+                      builder: (context, chatVisible, _) {
+                        if (!chatVisible) return const SizedBox.shrink();
+                        return HoverExpandableFab(
+                          label: AppConfigProvider.of(context).isArabic ? 'مساعد ذكي' : 'Smart Assistant',
+                          icon: Icons.forum_rounded,
+                          backgroundColor: isDark ? theme.colorScheme.primaryContainer : const Color(0xFF2D3243),
+                          iconColor: isDark ? theme.colorScheme.onPrimaryContainer : Colors.white,
+                          heroTag: 'global_chat_fab',
+                          onTap: () {
+                            GlobalFabController.navigatorKey.currentState?.push(
+                              MaterialPageRoute<void>(
+                                builder: (context) => const EmergencyChatScreen(),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
                   ],
+
                 ),
               ),
             );
@@ -101,17 +112,32 @@ class GlobalFabRouteObserver extends NavigatorObserver {
     } else {
       GlobalFabController.show();
     }
+
+    // Hide chatbot button specifically on its own page
+    // We can't always rely on name if it's pushed as a MaterialPageRoute without name
+    // But we can check if the route's widget is EmergencyChatScreen if we have access
+    // For now, let's assume we might need a more robust way or use a custom name
   }
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
     _updateVisibility(route);
+    
+    // Check if the route being pushed is the chat screen
+    // We can check the route settings name if provided, or the widget type
+    if (route.settings.name == '/chat' || route is MaterialPageRoute && route.builder(GlobalFabController.navigatorKey.currentContext!) is EmergencyChatScreen) {
+      GlobalFabController.hideChatButton();
+    } else {
+      GlobalFabController.showChatButton();
+    }
   }
 
   @override
-  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-    _updateVisibility(newRoute);
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    _updateVisibility(previousRoute);
+    GlobalFabController.showChatButton();
   }
+
 }

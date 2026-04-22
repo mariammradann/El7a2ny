@@ -6,8 +6,9 @@ import '../widgets/language_toggle_button.dart';
 
 
 class ChangePasswordScreen extends StatefulWidget {
-  final String oldPassword;
-  const ChangePasswordScreen({super.key, required this.oldPassword});
+  final String? oldPassword;
+  const ChangePasswordScreen({super.key, this.oldPassword});
+
 
   @override
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
@@ -33,9 +34,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     setState(() => _loading = true);
     try {
       await _auth.changePassword(
-        oldPassword: widget.oldPassword,
+        oldPassword: widget.oldPassword ?? '',
         newPassword: _newPassword.text,
       );
+
       if (!mounted) return;
       
       ScaffoldMessenger.of(context).showSnackBar(
