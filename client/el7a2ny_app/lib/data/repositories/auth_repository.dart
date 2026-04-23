@@ -1,10 +1,14 @@
 ﻿import '../../core/api/api_client.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/auth/auth_token_store.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ضيف الـ import ده
+
 
 class AuthRepository {
   AuthRepository({ApiClient? client}) : _client = client ?? ApiClient();
   final ApiClient _client;
+
+// ... باقي الـ imports
 
   Future<void> login({
     required String identifier,
@@ -20,15 +24,20 @@ class AuthRepository {
       throw ApiException(500, 'استجابة غير صالحة من السيرفر');
     }
 
-    // 1. استخراج التوكن (حتى لو فاضية)
     final access = raw['access']?.toString() ?? raw['token']?.toString() ?? "";
     final refresh = raw['refresh']?.toString() ?? "";
     AuthTokenStore.setTokens(access: access, refresh: refresh);
 
-    // 2. استخراج بيانات اليوزر (Django بيبعت user_id)
     if (raw['user_id'] != null) {
+      String userId = raw['user_id'].toString();
+      
+      // ✅ التعديل الجوهري: احفظ الـ user_id في الـ SharedPreferences فوراً
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_id', userId); 
+      print("✅ User ID $userId saved to SharedPreferences");
+
       AuthTokenStore.saveUserData(
-        id: raw['user_id'].toString(),
+        id: userId,
         name: raw['name']?.toString(),
         email: raw['email']?.toString(),
       );

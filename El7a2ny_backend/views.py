@@ -54,9 +54,9 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
     @action(detail=True, methods=['get'])
-    def profile_by_id(self, request, pk=None):
+    def profile_by_id(self, request, user_id=None):
         try:
-            user = User.objects.get(pk=pk)
+            user = User.objects.get(user_id=user_id)
             serializer = UserSerializer(user)
             return Response(serializer.data)
         except User.DoesNotExist:

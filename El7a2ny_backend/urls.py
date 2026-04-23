@@ -13,12 +13,12 @@ router.register(r'incidents', IncidentViewSet, basename='incident')
 
 # 2. المصفوفة النهائية للمسارات
 urlpatterns = [
-    # لوحة تحكم دجانجو
     path('admin/', admin.site.urls),
-    
-    # مسار التسجيل (Register) - يفضل وضعه قبل الـ router urls
     path('api/register/', register_user_api, name='api_register'),
     
-    # مسارات الـ API (تشمل الآن الـ Users والـ Incidents)
+    # الحل الأضمن: هننادي على الـ ViewSet مباشرة بدون Router للمسار ده
+    path('api/profile/<uuid:user_id>/', UserViewSet.as_view({'get': 'profile_by_id'}), name='user-profile-detail'),
+
+    # مسارات الـ Router خليها في الآخر خالص
     path('api/', include(router.urls)),
 ]
