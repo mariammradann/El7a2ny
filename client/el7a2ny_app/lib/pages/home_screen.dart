@@ -5,10 +5,11 @@ import 'emergency_tab.dart';
 import 'safety_tab.dart';
 import 'alerts_tab.dart';
 import 'sensors_page.dart';
-import 'emergency_chat_screen.dart';
+import 'landing_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialTabIndex;
+  const HomeScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -45,7 +46,12 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(
+      length: 5,
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
+    _activeTab = widget.initialTabIndex;
     _tabController.addListener(() {
       setState(() => _activeTab = _tabController.index);
     });
@@ -64,15 +70,6 @@ class _HomeScreenState extends State<HomeScreen>
       textDirection: context.loc.isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => const EmergencyChatScreen()),
-            );
-          },
-          backgroundColor: Theme.of(context).primaryColor,
-          child: const Icon(Icons.chat_bubble_rounded, color: Colors.white),
-        ),
         body: Column(
           children: [
             // ── Header ──────────────────────────────────────────────
@@ -118,9 +115,24 @@ class _HomeScreenState extends State<HomeScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Right side: logo + title
+          // Right side: back arrow + logo + title
           Row(
             children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+                  onPressed: () {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const LandingScreen()),
+                      );
+                    }
+                  },
+                ),
+              ),
               Container(
                 width: 48,
                 height: 48,

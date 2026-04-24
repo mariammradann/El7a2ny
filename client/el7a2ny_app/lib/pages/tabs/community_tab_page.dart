@@ -3,7 +3,6 @@ import '../../core/localization/app_strings.dart';
 import '../../services/api_service.dart';
 import '../../models/help_initiative_model.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../create_initiative_screen.dart';
 
 class CommunityTabPage extends StatefulWidget {
   const CommunityTabPage({super.key});
@@ -75,21 +74,6 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.of(context).push<bool>(
-            MaterialPageRoute(
-              builder: (context) => const CreateInitiativeScreen(),
-              settings: const RouteSettings(name: '/create-initiative'),
-            ),
-          );
-          if (result == true) {
-            _load();
-          }
-        },
-        backgroundColor: theme.primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
       body: RefreshIndicator(
         onRefresh: _load,
         color: theme.primaryColor,

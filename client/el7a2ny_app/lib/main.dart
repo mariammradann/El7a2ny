@@ -6,7 +6,6 @@ import 'package:el7a2ny_app/pages/landing_screen.dart';
 import 'package:el7a2ny_app/pages/login_screen.dart';
 import 'package:el7a2ny_app/pages/sign_up_screen.dart';
 import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
-import 'package:el7a2ny_app/pages/create_initiative_screen.dart';
 import 'package:el7a2ny_app/widgets/global_fab_overlay.dart';
 
 void main() {
@@ -64,7 +63,6 @@ class _MyAppState extends State<MyApp> {
               '/login': (context) => const LoginScreen(),
               '/signup': (context) => SignUpScreen(),
               '/emergency-report': (context) => const EmergencyReportScreen(),
-              '/create-initiative': (context) => const CreateInitiativeScreen(),
             },
           );
         },
