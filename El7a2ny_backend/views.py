@@ -103,15 +103,22 @@ class IncidentViewSet(viewsets.ModelViewSet):
                 return self.queryset.filter(user_id=user_id)
             return self.queryset
 
-# 4. دالة التسجيل (خارج الـ ViewSet)
+# في ملف views.py
 @api_view(['POST'])
 def register_user_api(request):
     serializer = UserRegistrationSerializer(data=request.data)
+    
     if serializer.is_valid():
         user = serializer.save()
-        return Response({
-            "message": "User registered successfully",
-            "user_id": user.user_id,
-            "status": "success"
-        }, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Success"}, status=201)
+    else:
+        # 🚨 السطر ده هو "المخبر" اللي هيقولك الحقل اللي ناقص إيه
+        print("🚨 VALIDATION ERRORS:", serializer.errors) 
+        return Response(serializer.errors, status=400)
+    
+@api_view(['GET'])
+def get_device_status(request):
+    return Response({
+        "smartwatchConnected": True,
+        "homeSensorConnected": False
+    })

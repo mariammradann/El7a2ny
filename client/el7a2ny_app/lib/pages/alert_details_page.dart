@@ -38,7 +38,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
     if (_joined) return;
     
     try {
-      await ApiService.respondToAlert(widget.alert.id);
+      await ApiService.respondToAlert(int.parse(widget.alert.id));
       if (!mounted) return;
       
       setState(() {

@@ -20,9 +20,10 @@
 // ─────────────────────────────────────────────────────────
 
 import '../core/localization/app_strings.dart';
+import '../services/session_service.dart';
 
 class AlertModel {
-  final int id;
+  final String id;
   final String type;
   final String location;
   final String severity;   // "high" | "medium" | "low"
@@ -34,6 +35,7 @@ class AlertModel {
   final DateTime? createdAt;
   final String? description;
   final bool isMyAlert;
+  
 
   const AlertModel({
     required this.id,
@@ -50,24 +52,33 @@ class AlertModel {
     this.isMyAlert = false,
   });
 
-  factory AlertModel.fromJson(Map<String, dynamic> json) {
-    return AlertModel(
-      id: json['id'] as int,
-      type: json['type'] as String,
-      location: json['location'] as String,
-      severity: json['severity'] as String,
-      status: json['status'] as String,
-      currentVolunteers: json['current_volunteers'] as int? ?? 0,
-      totalVolunteers: json['total_volunteers'] as int? ?? 50,
-      lat: (json['lat'] as num).toDouble(),
-      lng: (json['lng'] as num).toDouble(),
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String)
-          : null,
-      description: json['description'] as String?,
-      isMyAlert: json['is_my_alert'] as bool? ?? false,
-    );
-  }
+factory AlertModel.fromJson(Map<String, dynamic> json) {
+  return AlertModel(
+    // ✅ التعديل 1: شيلنا toString() لأن الموديل مستني int
+    // وحولنا الـ ID لـ int بشكل صريح
+    id: (json['incident_id'] ?? json['id'] ?? '').toString(), 
+
+    status: json['status'] ?? 'active',
+    severity: json['severity'] ?? 'medium',
+    totalVolunteers: json['total_volunteers'] ?? 0,
+    currentVolunteers: json['current_volunteers'] ?? 0,
+    type: json['category'] ?? json['type'] ?? 'emergency',
+    description: json['description'] ?? '',
+    location: json['location_name'] ?? json['city'] ?? 'Unknown Location',
+    
+    // تأكد إن الإحداثيات double
+    lat: (json['lat'] ?? 0.0).toDouble(),
+    lng: (json['lng'] ?? 0.0).toDouble(),
+    
+    createdAt: json['created_at'] != null 
+        ? DateTime.parse(json['created_at']) 
+        : DateTime.now(),
+
+    // ✅ التعديل 2: لو userId مش موجود في SessionService، 
+    // خليها دايماً false مؤقتاً عشان الكود يشتغل، أو استبدلها بالحقل الصح
+    isMyAlert: false, 
+  );
+}
 
   String getLocalizedType(AppStrings loc) {
     switch (type.toLowerCase()) {

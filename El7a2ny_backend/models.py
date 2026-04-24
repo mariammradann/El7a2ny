@@ -38,8 +38,8 @@ class User(models.Model):
     external_certificates = models.JSONField(default=list, null=True, blank=True)
     
     # مسارات الصور (Strings)
-    id_card_front = models.CharField(max_length=500, null=True, blank=True)
-    id_card_back = models.CharField(max_length=500, null=True, blank=True)
+    # id_card_front = models.CharField(max_length=500, null=True, blank=True)
+    # id_card_back = models.CharField(max_length=500, null=True, blank=True)
     class Meta:
         managed = False
         db_table = 'ems_schema"."users' # تأكد من كتابتها كده عشان الـ schema

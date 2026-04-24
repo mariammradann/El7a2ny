@@ -2,6 +2,7 @@
 import '../../core/api/api_exception.dart';
 import '../../core/auth/auth_token_store.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // ضيف الـ import ده
+import 'dart:convert'; // <--- السطر ده هو اللي ناقصك
 
 
 class AuthRepository {
@@ -46,9 +47,19 @@ class AuthRepository {
     }
   }
 
-  Future<void> register(Map<String, dynamic> body) async {
-    await _client.post('users/', body);
+Future<void> register(Map<String, dynamic> body) async {
+  try {
+    // تأكد إن الـ body مطبوع هنا عشان تشوفه في الـ Console قبل ما يتبعت
+    print("Sending Body: ${jsonEncode(body)}"); 
+    
+    final response = await _client.post('register/', body);
+    print("✅ Register Success: $response");
+  } on ApiException catch (e) {
+    // لو الـ e.message لسه غامضة، اطبع الـ e نفسه
+    print("🚨 Register Error: ${e.message}");
+    rethrow;
   }
+}
 
   Future<void> logout() async {
     AuthTokenStore.clear();

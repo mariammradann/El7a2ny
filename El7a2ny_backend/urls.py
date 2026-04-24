@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 # ضيف IncidentViewSet هنا
-from .views import UserViewSet, IncidentViewSet, register_user_api 
+from .views import UserViewSet, IncidentViewSet, register_user_api , get_device_status 
 
 # 1. إعداد الـ Router
 router = DefaultRouter()
@@ -21,4 +21,5 @@ urlpatterns = [
 
     # مسارات الـ Router خليها في الآخر خالص
     path('api/', include(router.urls)),
+    path('api/devices/status/', get_device_status),
 ]

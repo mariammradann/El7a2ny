@@ -80,7 +80,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       case 'incident':
         // Navigate to a mock alert details page
         final mockAlert = AlertModel(
-          id: n['id'] as int,
+          id: n['id'].toString(),
           type: type == 'volunteer' ? 'Medical' : 'Fire',
           severity: 'High',
           location: 'Downtown',

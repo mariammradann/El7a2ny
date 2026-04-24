@@ -13,6 +13,8 @@ class LocationSerializer(serializers.ModelSerializer):
 class IncidentSerializer(serializers.ModelSerializer):
     # السطر ده هو اللي بيربط الـ Object اللي جاي من Flutter
     location_data = LocationSerializer(write_only=True)
+    lat = serializers.ReadOnlyField(source='location.latitude', default=0.0)
+    lng = serializers.ReadOnlyField(source='location.longitude', default=0.0)
     
     # تأكد إن اليوزر بيتقري كـ UUID بشكل سليم
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
@@ -23,7 +25,8 @@ class IncidentSerializer(serializers.ModelSerializer):
         fields = [
             'incident_id', 'user', 'location_data', 'category', 
             'description', 'media', 'status', 'created_at', 
-            'admin_id', 'daleel_id'
+            'admin_id', 'daleel_id','lat',  
+            'lng'
         ]
         # جعل بعض الحقول اختيارية عشان متعملش Bad Request لو متبعتتش
         extra_kwargs = {
@@ -43,24 +46,35 @@ class IncidentSerializer(serializers.ModelSerializer):
 
 # 3. Serializer الخاص بتسجيل اليوزر
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    first_name = serializers.CharField(write_only=True)
-    last_name = serializers.CharField(write_only=True)
+    first_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    last_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    
 
     class Meta:
         model = User
         fields = '__all__'
+        # 🚨 ضيف السطر ده عشان تضمن إن الحقول دي ما توقفش التسجيل
         extra_kwargs = {
-            'name': {'required': False},
-            'password': {'write_only': True}
+            'name': {'required': False, 'allow_null': True},
+            'password': {'write_only': True},
+            'user_id': {'read_only': True},
+            'admin_id': {'required': False, 'allow_null': True},
+            'emergency_contacts': {'required': False},
+            'connected_devices': {'required': False},
+            'external_certificates': {'required': False},
+            'field': {'required': False, 'allow_null': True},
         }
 
     def create(self, validated_data):
+        print("Hi2")
         fname = validated_data.pop('first_name', '')
         lname = validated_data.pop('last_name', '')
         validated_data['name'] = f"{fname} {lname}".strip()
-        # تشفير الباسورد قبل الحفظ
-        validated_data['password'] = make_password(validated_data['password'])
-        return super().create(validated_data)
+        
+        if 'password' in validated_data:
+            validated_data['password'] = make_password(validated_data['password'])
+            
+        return User.objects.create(**validated_data)
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

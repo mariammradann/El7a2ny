@@ -42,6 +42,10 @@ class _AlertsTabState extends State<AlertsTab>
         _error = null;
       });
       final alerts = await ApiService.fetchAlerts();
+      print("Fetched ${alerts.length} alerts from server");
+      for (var a in alerts) {
+        print("Alert: ${a.type}, Lat: ${a.lat}, Lng: ${a.lng}");
+}
       
       // Get location for filtering
       Position? pos;
