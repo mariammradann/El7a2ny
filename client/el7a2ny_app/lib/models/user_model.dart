@@ -17,6 +17,10 @@ class UserModel {
   final String? smartWatchModel;
   final String? sensorModel;
   final List<EmergencyContact> emergencyContacts;
+  final bool isPlus;
+  final String? planType; // 'monthly', 'yearly'
+  final DateTime? subscriptionDate;
+  final DateTime? renewalDate;
   final List<String>? certifications;
   final String? profileImageUrl;
 
@@ -40,6 +44,10 @@ class UserModel {
     this.emergencyContacts = const [],
     this.certifications,
     this.profileImageUrl,
+    this.isPlus = false,
+    this.planType,
+    this.subscriptionDate,
+    this.renewalDate,
   });
 
   String get name => '$firstName $lastName';
@@ -69,6 +77,10 @@ class UserModel {
             ? List<String>.from(json['certifications'])
             : null,
         profileImageUrl: json['profile_image_url'],
+        isPlus: json['is_plus'] ?? false,
+        planType: json['plan_type'],
+        subscriptionDate: json['subscription_date'] != null ? DateTime.parse(json['subscription_date']) : null,
+        renewalDate: json['renewal_date'] != null ? DateTime.parse(json['renewal_date']) : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -91,5 +103,9 @@ class UserModel {
         'emergency_contacts': emergencyContacts.map((e) => e.toJson()).toList(),
         'certifications': certifications,
         'profile_image_url': profileImageUrl,
+        'is_plus': isPlus,
+        'plan_type': planType,
+        'subscription_date': subscriptionDate?.toIso8601String(),
+        'renewal_date': renewalDate?.toIso8601String(),
       };
 }

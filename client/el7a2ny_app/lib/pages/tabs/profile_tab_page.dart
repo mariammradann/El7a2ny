@@ -9,6 +9,8 @@ import '../../models/user_model.dart';
 import '../../models/activity_history_model.dart';
 import '../history_list_page.dart';
 import 'package:intl/intl.dart';
+import '../../services/session_service.dart';
+import '../subscription_details_page.dart';
 
 
 
@@ -41,7 +43,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
       final historyData = await ApiService.fetchActivityHistory(isArabic: isAr);
 
       if (mounted) {
-
+        SessionService().initFromUser(data);
         setState(() { 
           _user = data; 
           _history = historyData;
@@ -86,6 +88,96 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                     else if (_error != null)
                       _ErrorState(onRetry: _load)
                     else ...[
+                      // 0. Subscription Plan Section
+                      ListenableBuilder(
+                        listenable: SessionService(),
+                        builder: (context, _) {
+                          final isPlus = SessionService().isPlus;
+                          final isYearly = SessionService().isYearlyPlan;
+                          if (!isPlus) return const SizedBox.shrink();
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _SectionHeader(
+                                title: isAr ? 'خطة الاشتراك' : 'Subscription Plan', 
+                                icon: Icons.stars_rounded
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const SubscriptionDetailsPage()),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.3)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.2),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFFD700).withValues(alpha: 0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFFD700), size: 28),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'إلحقني بلس',
+                                              style: TextStyle(
+                                                fontFamily: 'NotoSansArabic',
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFFFFD700),
+                                              ),
+                                            ),
+                                            Text(
+                                              isYearly 
+                                                ? (isAr ? 'الخطة السنوية - نشط' : 'Yearly Plan - Active')
+                                                : (isAr ? 'الخطة الشهرية - نشط' : 'Monthly Plan - Active'),
+                                              style: TextStyle(
+                                                fontFamily: 'NotoSansArabic',
+                                                fontSize: 13,
+                                                color: Colors.white.withValues(alpha: 0.7),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFFFD700), size: 16),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                          );
+                        },
+                      ),
+
                       // 1. Personal Information Section
                       _SectionHeader(title: loc.personalInfo, icon: Icons.person_rounded),
                       _InfoCard(

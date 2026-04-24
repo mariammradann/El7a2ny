@@ -7,6 +7,7 @@ import 'package:el7a2ny_app/pages/login_screen.dart';
 import 'package:el7a2ny_app/pages/sign_up_screen.dart';
 import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
 import 'package:el7a2ny_app/widgets/global_fab_overlay.dart';
+import 'package:el7a2ny_app/services/session_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -45,18 +46,27 @@ class _MyAppState extends State<MyApp> {
             title: 'El7a2ny App',
             debugShowCheckedModeBanner: false,
             navigatorKey: GlobalFabController.navigatorKey,
-            builder: (context, child) {
-              return GlobalFabOverlay(
-                child: Directionality(
-                  textDirection: config.isArabic ? TextDirection.rtl : TextDirection.ltr,
-                  child: child!,
-                ),
-              );
-            },
             navigatorObservers: [GlobalFabRouteObserver()],
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: config.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            builder: (context, child) {
+              return ListenableBuilder(
+                listenable: SessionService(),
+                builder: (context, _) {
+                  final isPlus = SessionService().isPlus;
+                  return Theme(
+                    data: isPlus ? AppTheme.premiumTheme : Theme.of(context),
+                    child: GlobalFabOverlay(
+                      child: Directionality(
+                        textDirection: config.isArabic ? TextDirection.rtl : TextDirection.ltr,
+                        child: child!,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
             home: const WelcomeScreen(),
             routes: {
               '/landing': (context) => const LandingScreen(),

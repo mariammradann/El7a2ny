@@ -444,6 +444,10 @@ class ApiService {
     smartWatchModel: 'Apple Watch Series 9',
     sensorModel: 'Pulse Oximeter',
     emergencyContacts: _mockContacts,
+    isPlus: false,
+    planType: null,
+    subscriptionDate: null,
+    renewalDate: null,
   );
 
   static final List<UserModel> _mockUsers = [

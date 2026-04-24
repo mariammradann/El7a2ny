@@ -6,6 +6,7 @@ import 'safety_tab.dart';
 import 'alerts_tab.dart';
 import 'sensors_page.dart';
 import 'landing_screen.dart';
+import '../services/session_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -98,86 +99,128 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E3A8A), Color(0xFF3730A3)],
-          begin: Alignment.centerRight,
-          end: Alignment.centerLeft,
-        ),
-      ),
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 16,
-        bottom: 20,
-        right: 20,
-        left: 20,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Right side: back arrow + logo + title
-          Row(
+    return ListenableBuilder(
+      listenable: SessionService(),
+      builder: (context, _) {
+        final isPlus = SessionService().isPlus;
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isPlus 
+                ? [const Color(0xFF0F172A), const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                : [const Color(0xFF0F172A), const Color(0xFF1E3A8A), const Color(0xFF3730A3)],
+              begin: Alignment.centerRight,
+              end: Alignment.centerLeft,
+            ),
+            border: isPlus 
+              ? Border(bottom: BorderSide(color: const Color(0xFFFFD700).withOpacity(0.2), width: 1))
+              : null,
+          ),
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 16,
+            bottom: 20,
+            right: 20,
+            left: 20,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
-                  onPressed: () {
-                    if (Navigator.of(context).canPop()) {
-                      Navigator.of(context).pop();
-                    } else {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const LandingScreen()),
-                      );
-                    }
-                  },
-                ),
-              ),
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFEF4444), Color(0xFFF97316)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.warning_amber_rounded,
-                    color: Colors.white, size: 26),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // Right side: back arrow + logo + title
+              Row(
                 children: [
-                  Text(
-                    context.loc.emergencySystemTitle,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+                      onPressed: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (_) => const LandingScreen()),
+                          );
+                        }
+                      },
                     ),
                   ),
-                  Text(
-                    context.loc.emergencyServices24_7,
-                    style: const TextStyle(color: Color(0xFF93C5FD), fontSize: 12),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        colors: isPlus 
+                          ? [const Color(0xFFFFD700), const Color(0xFFB8860B)]
+                          : [const Color(0xFFEF4444), const Color(0xFFF97316)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      isPlus ? Icons.workspace_premium_rounded : Icons.warning_amber_rounded,
+                      color: isPlus ? const Color(0xFF0F172A) : Colors.white, 
+                      size: 26
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            context.loc.emergencySystemTitle,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (isPlus) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFD700),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'PLUS',
+                                style: TextStyle(
+                                  color: Color(0xFF0F172A),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      Text(
+                        isPlus ? 'إلحقني بلس مفعل' : context.loc.emergencyServices24_7,
+                        style: TextStyle(
+                          color: isPlus ? const Color(0xFFFFD700).withValues(alpha: 0.8) : const Color(0xFF93C5FD), 
+                          fontSize: 12
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
+              // Left side: status badge
+              _PulseBadge(),
             ],
           ),
-          // Left side: status badge
-          _PulseBadge(),
-        ],
-      ),
+        );
+      },
     );
   }
 

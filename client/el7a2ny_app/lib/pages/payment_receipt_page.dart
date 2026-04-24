@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'payment_types.dart';
 import 'home_screen.dart';
+import '../services/session_service.dart';
 
 
 const _kOrange = Color(0xFFFF6B00);
@@ -38,6 +39,10 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
   @override
   void initState() {
     super.initState();
+    
+    // Activate Premium Status with plan type
+    SessionService().setPlus(true, isYearly: widget.isYearly);
+
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),

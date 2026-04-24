@@ -181,20 +181,23 @@ class _PremiumHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isAr = context.loc.isAr;
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFFF9500), Color(0xFFFF6B35), Color(0xFFF92E1C)],
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x40FF6B35),
+            color: Colors.black.withOpacity(0.5),
             blurRadius: 20,
-            offset: Offset(0, 10),
+            offset: const Offset(0, 10),
           ),
         ],
+        border: Border(
+          bottom: BorderSide(color: const Color(0xFFFFD700).withOpacity(0.2), width: 1),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Directionality(
@@ -211,8 +214,9 @@ class _PremiumHeader extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: Colors.white10,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
                   ),
                   child: const Icon(Icons.close_rounded, size: 24, color: Colors.white),
                 ),
@@ -228,15 +232,20 @@ class _PremiumHeader extends StatelessWidget {
                       Column(
                         crossAxisAlignment: isAr ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            context.loc.premiumPlusTitle,
-                            textAlign: isAr ? TextAlign.right : TextAlign.left,
-                            style: const TextStyle(
-                              fontFamily: 'NotoSansArabic',
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                            ).createShader(bounds),
+                            child: Text(
+                              context.loc.premiumPlusTitle,
+                              textAlign: isAr ? TextAlign.right : TextAlign.left,
+                              style: const TextStyle(
+                                fontFamily: 'NotoSansArabic',
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 1.0,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -247,7 +256,7 @@ class _PremiumHeader extends StatelessWidget {
                               fontFamily: 'NotoSansArabic',
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.85),
+                              color: Colors.white.withOpacity(0.6),
                             ),
                           ),
                         ],
@@ -298,7 +307,7 @@ class _PremiumHeader extends StatelessWidget {
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: !isYearly ? const Color(0xFFFF6B35) : Colors.white,
+                          color: !isYearly ? const Color(0xFFFFD700) : Colors.white,
                         ),
                       ),
                     ),
@@ -308,7 +317,7 @@ class _PremiumHeader extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isYearly ? Colors.white : Colors.transparent,
+                        color: isYearly ? const Color(0xFFFFD700) : Colors.transparent,
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Text(
@@ -317,7 +326,7 @@ class _PremiumHeader extends StatelessWidget {
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: isYearly ? const Color(0xFFFF6B35) : Colors.white,
+                          color: isYearly ? const Color(0xFF0F172A) : Colors.white,
                         ),
                       ),
                     ),
@@ -359,11 +368,12 @@ class _PlusIconBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
         boxShadow: const [
           BoxShadow(
-            color: Colors.black12,
+            color: Colors.black26,
             blurRadius: 10,
           ),
         ],
@@ -371,7 +381,7 @@ class _PlusIconBadge extends StatelessWidget {
       child: const Icon(
         Icons.auto_awesome_rounded,
         size: 24,
-        color: Color(0xFFFF6B35),
+        color: Color(0xFFFFD700),
       ),
     );
   }
@@ -542,10 +552,11 @@ class _SectionIcon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF9500).withValues(alpha: 0.12),
+        color: const Color(0xFFFFD700).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.2)),
       ),
-      child: Icon(icon, size: 20, color: const Color(0xFFFF9500)),
+      child: Icon(icon, size: 20, color: const Color(0xFFFFD700)),
     );
   }
 }
@@ -633,10 +644,11 @@ class _FeatureIcon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF9500).withValues(alpha: 0.1),
+        color: const Color(0xFFFFD700).withOpacity(0.08),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.1)),
       ),
-      child: Icon(icon, size: 24, color: const Color(0xFFFF9500)),
+      child: Icon(icon, size: 24, color: const Color(0xFFFFD700)),
     );
   }
 }
@@ -881,10 +893,10 @@ class _StickyFooter extends StatelessWidget {
               height: 58,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF9500),
-                  foregroundColor: Colors.white,
+                  backgroundColor: const Color(0xFFFFD700),
+                  foregroundColor: const Color(0xFF0F172A),
                   elevation: 6,
-                  shadowColor: const Color(0xFFFF9500).withValues(alpha: 0.4),
+                  shadowColor: const Color(0xFFFFD700).withOpacity(0.4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
