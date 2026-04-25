@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../data/models/emergency_contact.dart';
 
 class UserModel {
@@ -50,6 +51,17 @@ class UserModel {
     String full_name = json['name'] ?? '';
     List<String> nameParts = full_name.split(' ');
 
+    // Handle potential stringified JSON for emergency_contacts
+    List<dynamic> emergencyList = [];
+    if (json['emergency_contacts'] is String) {
+      try {
+        final decoded = jsonDecode(json['emergency_contacts']);
+        if (decoded is List) emergencyList = decoded;
+      } catch (_) {}
+    } else if (json['emergency_contacts'] is List) {
+      emergencyList = json['emergency_contacts'];
+    }
+
     return UserModel(
       // 1. قراءة الـ ID كـ String والتعامل مع مسمى user_id
       id: (json['user_id'] ?? json['id']).toString(), 
@@ -71,9 +83,7 @@ class UserModel {
       skills: json['skills'],
       smartWatchModel: json['smart_watch_model'],
       sensorModel: json['sensor_model'],
-      emergencyContacts: (json['emergency_contacts'] as List?)
-          ?.map((e) => EmergencyContact.fromJson(e))
-          .toList() ?? [],
+      emergencyContacts: emergencyList.map((e) => EmergencyContact.fromJson(e as Map<String, dynamic>)).toList(),
       certifications: json['certifications'] != null ? List<String>.from(json['certifications']) : null,
       profileImageUrl: json['profile_image_url'],
     );
@@ -91,5 +101,10 @@ class UserModel {
         'gender': gender,
         'blood_type': bloodType,
         'emergency_contacts': emergencyContacts.map((e) => e.toJson()).toList(),
+        'has_vehicle': hasVehicle,
+        'volunteer_enabled': volunteerEnabled,
+        'skills': skills,
+        'smart_watch_model': smartWatchModel,
+        'sensor_model': sensorModel,
       };
 }

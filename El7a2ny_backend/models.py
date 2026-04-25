@@ -40,6 +40,13 @@ class User(models.Model):
     # مسارات الصور (Strings)
     # id_card_front = models.CharField(max_length=500, null=True, blank=True)
     # id_card_back = models.CharField(max_length=500, null=True, blank=True)
+    
+    has_vehicle = models.BooleanField(default=False)
+    volunteer_enabled = models.BooleanField(default=False)
+    skills = models.TextField(null=True, blank=True)
+    smart_watch_model = models.CharField(max_length=255, null=True, blank=True)
+    sensor_model = models.CharField(max_length=255, null=True, blank=True)
+
     class Meta:
         managed = False
         db_table = 'ems_schema"."users' # تأكد من كتابتها كده عشان الـ schema

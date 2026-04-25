@@ -18,6 +18,7 @@ urlpatterns = [
     
     # الحل الأضمن: هننادي على الـ ViewSet مباشرة بدون Router للمسار ده
     path('api/profile/<uuid:user_id>/', UserViewSet.as_view({'get': 'profile_by_id'}), name='user-profile-detail'),
+    path('api/profile/update/', UserViewSet.as_view({'put': 'update_profile'}), name='update-profile'),
 
     # مسارات الـ Router خليها في الآخر خالص
     path('api/', include(router.urls)),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
@@ -131,6 +131,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
     'status': 'active',
     'verification_status': 'pending',
     'field': _skills.text.trim(),
+    
+    // 7. الحقول الجديدة
+    'has_vehicle': _hasVehicle == 'yes',
+    'volunteer_enabled': _volunteerEnabled,
+    'skills': _skills.text.trim(),
+    'smart_watch_model': _smartWatch,
+    'sensor_model': _sensor,
+    'emergency_contacts': _contacts
+        .where((c) => c.name.text.trim().isNotEmpty && c.phone.text.trim().isNotEmpty)
+        .map((c) => {
+              'name': c.name.text.trim(),
+              'phone': c.phone.text.trim(),
+              'relationship': c.relation.text.trim(),
+            })
+        .toList(),
   };
 }
 

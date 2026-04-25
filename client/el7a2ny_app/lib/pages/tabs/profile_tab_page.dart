@@ -25,11 +25,22 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
 
   Future<void> _load() async {
     try {
-      setState(() { _loading = true; _error = null; });
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
       final data = await ApiService.fetchUserProfile();
-      if (mounted) setState(() { _user = data; _loading = false; });
+      if (mounted)
+        setState(() {
+          _user = data;
+          _loading = false;
+        });
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted)
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
     }
   }
 
@@ -45,7 +56,9 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
         onRefresh: _load,
         color: theme.primaryColor,
         child: CustomScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
           slivers: [
             _buildSliverHeader(context, theme, isAr),
             SliverToBoxAdapter(
@@ -55,61 +68,112 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (_loading)
-                      const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator()))
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
                     else if (_error != null)
                       _ErrorState(onRetry: _load)
                     else ...[
                       // 1. Personal Information Section
-                      _SectionHeader(title: loc.personalInfo, icon: Icons.person_rounded),
+                      _SectionHeader(
+                        title: loc.personalInfo,
+                        icon: Icons.person_rounded,
+                      ),
                       _InfoCard(
                         children: [
-                          _InfoRow(label: loc.firstNameLabel, value: _user?.firstName ?? '...', icon: Icons.badge_outlined),
-                          _InfoRow(label: loc.lastNameLabel, value: _user?.lastName ?? '...', icon: Icons.person_outline),
-                          _InfoRow(label: loc.emailLabel, value: _user?.email ?? '...', icon: Icons.email_outlined),
-                          _InfoRow(label: loc.mobileNum, value: _user?.phone ?? '...', icon: Icons.phone_android_rounded),
-                          _InfoRow(label: loc.nationalIdLabel, value: _user?.nationalId ?? '...', icon: Icons.credit_card_rounded),
-                          _InfoRow(label: loc.birthDateLabel, value: _user?.birthDate ?? '...', icon: Icons.cake_outlined),
                           _InfoRow(
-                            label: loc.genderLabel, 
-                            value: _user?.gender == 'male' ? loc.maleOption : loc.femaleOption, 
-                            icon: Icons.face_outlined
+                            label: loc.firstNameLabel,
+                            value: _user?.firstName ?? '...',
+                            icon: Icons.badge_outlined,
                           ),
-                          _InfoRow(label: loc.bloodTypeLabel, value: _user?.bloodType ?? '...', icon: Icons.water_drop_outlined, isLast: true),
+                          _InfoRow(
+                            label: loc.lastNameLabel,
+                            value: _user?.lastName ?? '...',
+                            icon: Icons.person_outline,
+                          ),
+                          _InfoRow(
+                            label: loc.emailLabel,
+                            value: _user?.email ?? '...',
+                            icon: Icons.email_outlined,
+                          ),
+                          _InfoRow(
+                            label: loc.mobileNum,
+                            value: _user?.phone ?? '...',
+                            icon: Icons.phone_android_rounded,
+                          ),
+                          _InfoRow(
+                            label: loc.nationalIdLabel,
+                            value: _user?.nationalId ?? '...',
+                            icon: Icons.credit_card_rounded,
+                          ),
+                          _InfoRow(
+                            label: loc.birthDateLabel,
+                            value: _user?.birthDate ?? '...',
+                            icon: Icons.cake_outlined,
+                          ),
+                          _InfoRow(
+                            label: loc.genderLabel,
+                            value: _user?.gender == 'male'
+                                ? loc.maleOption
+                                : loc.femaleOption,
+                            icon: Icons.face_outlined,
+                          ),
+                          _InfoRow(
+                            label: loc.bloodTypeLabel,
+                            value: _user?.bloodType ?? '...',
+                            icon: Icons.water_drop_outlined,
+                            isLast: true,
+                          ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 24),
 
                       // 2. Emergency Contacts Section
                       if (_user?.emergencyContacts.isNotEmpty ?? false) ...[
-                        _SectionHeader(title: loc.emergencyContacts, icon: Icons.contact_phone_rounded),
-                        ..._user!.emergencyContacts.map((c) => _ContactCard(
-                          name: c.name,
-                          relation: c.relationship,
-                          phone: c.phone,
-                        )),
+                        _SectionHeader(
+                          title: loc.emergencyContacts,
+                          icon: Icons.contact_phone_rounded,
+                        ),
+                        ..._user!.emergencyContacts.map(
+                          (c) => _ContactCard(
+                            name: c.name,
+                            relation: c.relationship,
+                            phone: c.phone,
+                          ),
+                        ),
                         const SizedBox(height: 24),
                       ],
 
                       // 3. Hardware & Assets Section
-                      _SectionHeader(title: isAr ? 'الأجهزة والوسائل' : 'Hardwares & Assets', icon: Icons.devices_other_rounded),
+                      _SectionHeader(
+                        title: isAr ? 'الأجهزة والوسائل' : 'Hardwares & Assets',
+                        icon: Icons.devices_other_rounded,
+                      ),
                       _InfoCard(
                         children: [
                           _InfoRow(
-                            label: loc.hasVehicleLabel, 
-                            value: _user?.hasVehicle ?? false ? loc.yes : loc.no, 
-                            icon: Icons.directions_car_outlined
+                            label: loc.hasVehicleLabel,
+                            value: _user?.hasVehicle ?? false
+                                ? loc.yes
+                                : loc.no,
+                            icon: Icons.directions_car_outlined,
                           ),
                           _InfoRow(
-                            label: loc.smartWatchLabel, 
-                            value: _user?.smartWatchModel ?? (isAr ? 'غير محدد' : 'Not Set'), 
-                            icon: Icons.watch_outlined
+                            label: loc.smartWatchLabel,
+                            value:
+                                _user?.smartWatchModel ??
+                                (isAr ? 'غير محدد' : 'Not Set'),
+                            icon: Icons.watch_outlined,
                           ),
                           _InfoRow(
-                            label: loc.sensorLabel, 
-                            value: _user?.sensorModel ?? (isAr ? 'غير محدد' : 'Not Set'), 
+                            label: loc.sensorLabel,
+                            value:
+                                _user?.sensorModel ??
+                                (isAr ? 'غير محدد' : 'Not Set'),
                             icon: Icons.sensors_outlined,
-                            isLast: true
+                            isLast: true,
                           ),
                         ],
                       ),
@@ -118,14 +182,17 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
 
                       // 4. Volunteer Section
                       if (_user?.volunteerEnabled ?? false) ...[
-                        _SectionHeader(title: loc.volunteerLabel, icon: Icons.volunteer_activism_rounded),
+                        _SectionHeader(
+                          title: loc.volunteerLabel,
+                          icon: Icons.volunteer_activism_rounded,
+                        ),
                         _InfoCard(
                           children: [
                             _InfoRow(
-                              label: isAr ? 'المهارات' : 'Skills', 
-                              value: _user?.skills ?? '...', 
+                              label: isAr ? 'المهارات' : 'Skills',
+                              value: _user?.skills ?? '...',
                               icon: Icons.psychology_outlined,
-                              isLast: true
+                              isLast: true,
                             ),
                           ],
                         ),
@@ -133,7 +200,10 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                       ],
 
                       // 5. Account & Preferences
-                      _SectionHeader(title: loc.appPreferences, icon: Icons.settings_rounded),
+                      _SectionHeader(
+                        title: loc.appPreferences,
+                        icon: Icons.settings_rounded,
+                      ),
                       _ProfileMenuTile(
                         icon: Icons.lock_outline_rounded,
                         title: loc.changePassword,
@@ -145,7 +215,9 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const SettingsScreen(),
+                            ),
                           );
                         },
                       ),
@@ -179,7 +251,10 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
               height: 180,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [theme.primaryColor, theme.primaryColor.withValues(alpha: 0.7)],
+                  colors: [
+                    theme.primaryColor,
+                    theme.primaryColor.withValues(alpha: 0.7),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -198,7 +273,10 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: theme.scaffoldBackgroundColor, width: 4),
+                      border: Border.all(
+                        color: theme.scaffoldBackgroundColor,
+                        width: 4,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.1),
@@ -210,8 +288,16 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                     child: CircleAvatar(
                       radius: 56,
                       backgroundColor: theme.colorScheme.surface,
-                      backgroundImage: _user?.profileImageUrl != null ? NetworkImage(_user!.profileImageUrl!) : null,
-                      child: _user?.profileImageUrl == null ? Icon(Icons.person, color: theme.primaryColor, size: 56) : null,
+                      backgroundImage: _user?.profileImageUrl != null
+                          ? NetworkImage(_user!.profileImageUrl!)
+                          : null,
+                      child: _user?.profileImageUrl == null
+                          ? Icon(
+                              Icons.person,
+                              color: theme.primaryColor,
+                              size: 56,
+                            )
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -233,12 +319,17 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => EditProfileScreen(user: _user!),
+                                builder: (context) =>
+                                    EditProfileScreen(user: _user!),
                               ),
                             ).then((value) => _load());
                           }
                         },
-                        icon: Icon(Icons.edit_rounded, size: 20, color: theme.primaryColor),
+                        icon: Icon(
+                          Icons.edit_rounded,
+                          size: 20,
+                          color: theme.primaryColor,
+                        ),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
@@ -251,7 +342,9 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         fontSize: 14,
                         letterSpacing: 1.2,
                         fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                     ),
                 ],
@@ -338,11 +431,21 @@ class _InfoRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: isLast ? null : Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.05))),
+        border: isLast
+            ? null
+            : Border(
+                bottom: BorderSide(
+                  color: theme.dividerColor.withValues(alpha: 0.05),
+                ),
+              ),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+          Icon(
+            icon,
+            size: 20,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -380,7 +483,11 @@ class _ContactCard extends StatelessWidget {
   final String relation;
   final String phone;
 
-  const _ContactCard({required this.name, required this.relation, required this.phone});
+  const _ContactCard({
+    required this.name,
+    required this.relation,
+    required this.phone,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -401,7 +508,11 @@ class _ContactCard extends StatelessWidget {
               color: theme.primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.emergency_rounded, size: 20, color: theme.primaryColor),
+            child: Icon(
+              Icons.emergency_rounded,
+              size: 20,
+              color: theme.primaryColor,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -410,7 +521,11 @@ class _ContactCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, fontFamily: 'NotoSansArabic'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                    fontFamily: 'NotoSansArabic',
+                  ),
                 ),
                 Text(
                   relation,
@@ -449,7 +564,10 @@ class _ErrorState extends StatelessWidget {
         children: [
           const Icon(Icons.cloud_off_rounded, color: Colors.orange, size: 48),
           const SizedBox(height: 12),
-          const Text('Unable to load profile', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'Unable to load profile',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           TextButton(onPressed: onRetry, child: Text(context.loc.retry)),
         ],
       ),
@@ -480,7 +598,9 @@ class _ProfileMenuTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: isDark ? 0.05 : 0.08)),
+        border: Border.all(
+          color: theme.dividerColor.withValues(alpha: isDark ? 0.05 : 0.08),
+        ),
       ),
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -502,7 +622,13 @@ class _ProfileMenuTile extends StatelessWidget {
             fontFamily: 'NotoSansArabic',
           ),
         ),
-        trailing: onTap != null ? Icon(Icons.arrow_forward_ios_rounded, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)) : null,
+        trailing: onTap != null
+            ? Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+              )
+            : null,
       ),
     );
   }
