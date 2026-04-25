@@ -1,3 +1,4 @@
+import 'package:el7a2ny_app/core/auth/auth_token_store.dart';
 import 'package:flutter/material.dart';
 import 'package:el7a2ny_app/core/localization/locale_provider.dart';
 import 'package:el7a2ny_app/core/theme/app_theme.dart';
@@ -9,7 +10,9 @@ import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
 import 'package:el7a2ny_app/pages/create_initiative_screen.dart';
 import 'package:el7a2ny_app/widgets/global_fab_overlay.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AuthTokenStore.init();
   runApp(const MyApp());
 }
 

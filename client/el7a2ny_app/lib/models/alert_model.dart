@@ -21,6 +21,7 @@
 
 import '../core/localization/app_strings.dart';
 import '../services/session_service.dart';
+import '../core/auth/auth_token_store.dart';
 
 class AlertModel {
   final String id;
@@ -74,9 +75,8 @@ factory AlertModel.fromJson(Map<String, dynamic> json) {
         ? DateTime.parse(json['created_at']) 
         : DateTime.now(),
 
-    // ✅ التعديل 2: لو userId مش موجود في SessionService، 
-    // خليها دايماً false مؤقتاً عشان الكود يشتغل، أو استبدلها بالحقل الصح
-    isMyAlert: false, 
+    // ✅ التعديل 2: قارن الـ user_id بتاع البلاغ مع الـ user_id بتاع اليوزر اللي مسجل دخول
+    isMyAlert: (json['user']?.toString() == AuthTokenStore.userId), 
   );
 }
 

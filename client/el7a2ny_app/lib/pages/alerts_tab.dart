@@ -243,7 +243,16 @@ class _AlertsTabState extends State<AlertsTab>
     }
 
     final displayAlerts = _alerts
-        .where((a) => a.isMyAlert == isMyAlerts)
+        .where((a) {
+          if (isMyAlerts) {
+            // "My Alerts" tab: Show ONLY my alerts (any status)
+            return a.isMyAlert;
+          } else {
+            // "Active Alerts" tab: Show ALL active alerts (mine or others)
+            final s = a.status.toLowerCase();
+            return s != 'resolved' && s != 'completed' && s != 'solved';
+          }
+        })
         .where((a) {
           if (isMyAlerts || _currentPosition == null) return true;
           // Filter for "Active Alerts" tab: only those within 10 mins (5km)
@@ -373,30 +382,31 @@ class _AlertCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Completed Pill (if my alerts && completed)
-                  if (isMyAlerts)
-                    Positioned(
-                      top: 16,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          context.loc.completed,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  // Status Pill
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: (alert.status.toLowerCase() == 'resolved' || alert.status.toLowerCase() == 'completed' || alert.status.toLowerCase() == 'solved')
+                            ? const Color(0xFF22C55E)
+                            : const Color(0xFFF97316),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        alert.getLocalizedStatus(context.loc),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
+                  ),
 
                   // Orange/Red Percentage Bubble
                   Positioned(
