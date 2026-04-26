@@ -48,7 +48,7 @@ class User(models.Model):
     sensor_model = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'ems_schema"."users' # تأكد من كتابتها كده عشان الـ schema
 
     def __str__(self):
