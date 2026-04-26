@@ -8,6 +8,9 @@ import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
 import 'package:el7a2ny_app/core/localization/app_strings.dart';
 import 'package:el7a2ny_app/pages/forgot_password_screen.dart';
 import 'package:el7a2ny_app/pages/sign_up_screen.dart';
+import '../widgets/language_toggle_button.dart';
+import '../services/session_service.dart';
+import '../widgets/global_fab_overlay.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _password = TextEditingController();
   bool _rememberMe = true;
   bool _loading = false;
+  bool _obscurePassword = true;
 
   final _auth = AuthRepository();
 
@@ -66,6 +70,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.hide();
+    });
+
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -154,9 +162,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _password,
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   style: const TextStyle(fontFamily: 'NotoSansArabic'),
-                  decoration: _fieldDecoration(context, hint: context.loc.passwordHint),
+                  decoration: _fieldDecoration(context, hint: context.loc.passwordHint).copyWith(
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: _kPlaceholderGrey(context),
+                        size: 22,
+                      ),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
                   validator: (v) => (v == null || v.isEmpty) ? context.loc.requiredField : null,
                 ),
                 const SizedBox(height: 16),

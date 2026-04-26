@@ -5,11 +5,8 @@ import 'package:el7a2ny_app/app/main_shell_screen.dart';
 import 'package:el7a2ny_app/pages/login_screen.dart';
 import 'package:el7a2ny_app/pages/sign_up_screen.dart';
 import 'package:el7a2ny_app/services/session_service.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
-import '../services/api_service.dart';
-import '../models/user_model.dart';
-import '../core/auth/auth_token_store.dart'; // تأكد من صحة المسار حسب مشروعك
+import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
+import 'package:el7a2ny_app/widgets/global_fab_overlay.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({
@@ -27,6 +24,10 @@ class LandingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.hide();
+    });
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -134,47 +135,8 @@ class LandingScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 _EmergencyReportCard(
                   brandRed: _kBrandRed(context),
-                  onTap: () async {
-                    // 1. Show feedback
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(context.loc.isAr ? 'بدء إجراءات الاستغاثة الفورية...' : 'Initiating instant SOS...'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-
-                    // 2. Send location
-                    try {
-                      final pos = await Geolocator.getCurrentPosition();
-                      await ApiService.sendEmergencyAlert(
-                        userId: AuthTokenStore.userId ?? 'guest',
-                        type: 'instant_sos_landing',
-                        lat: pos.latitude,
-                        lng: pos.longitude,
-                        description: 'Instant SOS triggered from landing screen',
-                      );
-                    } catch (_) {}
-
-                    // 3. Fetch contacts
-                    UserModel? user;
-                    try {
-                      user = await ApiService.fetchUserProfile();
-                    } catch (_) {}
-
-                    // 4. Official calls
-                    final officials = ['122', '123', '180'];
-                    for (var num in officials) {
-                      bool? res = await FlutterPhoneDirectCaller.callNumber(num);
-                      if (res == true) await Future.delayed(const Duration(seconds: 10));
-                    }
-
-                    // 5. Emergency contacts
-                    if (user != null && user.emergencyContacts.isNotEmpty) {
-                      for (var contact in user.emergencyContacts) {
-                        bool? res = await FlutterPhoneDirectCaller.callNumber(contact.phone);
-                        if (res == true) await Future.delayed(const Duration(seconds: 10));
-                      }
-                    }
+                  onTap: () {
+                    Navigator.of(context).pushNamed('/emergency-report');
                   },
                 ),
                 const SizedBox(height: 24),
@@ -184,12 +146,7 @@ class LandingScreen extends StatelessWidget {
                   textColor: _kTextDark(context),
                   onTap: onCreateAccount ??
                       () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            settings: const RouteSettings(name: '/signup'),
-                            builder: (context) => SignUpScreen(),
-                          ),
-                        );
+                        Navigator.of(context).pushNamed('/signup');
                       },
                 ),
                 const SizedBox(height: 32),
@@ -198,12 +155,7 @@ class LandingScreen extends StatelessWidget {
                   textColor: _kTextDark(context),
                   onLogin: onLogin ??
                       () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            settings: const RouteSettings(name: '/login'),
-                            builder: (context) => const LoginScreen(),
-                          ),
-                        );
+                        Navigator.of(context).pushNamed('/login');
                       },
                 ),
                 const SizedBox(height: 24),

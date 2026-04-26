@@ -281,7 +281,7 @@ class _AlertsTabState extends State<AlertsTab>
         itemCount: displayAlerts.length,
         separatorBuilder: (_, _) => const SizedBox(height: 24),
         itemBuilder: (context, i) =>
-            _AlertCard(alert: displayAlerts[i], isMyAlerts: isMyAlerts),
+            _AlertCard(alert: displayAlerts[i], isMyAlerts: isMyAlerts, onRefresh: _load),
       ),
     );
   }
@@ -290,8 +290,9 @@ class _AlertsTabState extends State<AlertsTab>
 class _AlertCard extends StatelessWidget {
   final AlertModel alert;
   final bool isMyAlerts;
+  final VoidCallback onRefresh;
 
-  const _AlertCard({required this.alert, required this.isMyAlerts});
+  const _AlertCard({required this.alert, required this.isMyAlerts, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -331,13 +332,16 @@ class _AlertCard extends StatelessWidget {
     final timeColor = Theme.of(context).primaryColor;
 
     return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
+      onTap: () async {
+        final result = await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) =>
                 AlertDetailsPage(alert: alert, isMyAlerts: isMyAlerts),
           ),
         );
+        if (result == true) {
+          onRefresh();
+        }
       },
       child: Container(
         decoration: BoxDecoration(

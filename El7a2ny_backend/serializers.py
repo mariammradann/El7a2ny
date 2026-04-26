@@ -65,6 +65,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'field': {'required': False, 'allow_null': True},
         }
 
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already in use by another user.")
+        return value
+
+    def validate_phone_number(self, value):
+        if User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError("This phone number is already registered.")
+        return value
+
     def create(self, validated_data):
         print("Hi2")
         fname = validated_data.pop('first_name', '')

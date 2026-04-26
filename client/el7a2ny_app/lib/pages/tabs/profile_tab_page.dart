@@ -4,6 +4,10 @@ import '../settings_screen.dart';
 import '../edit_profile_screen.dart';
 import '../../services/api_service.dart';
 import '../../models/user_model.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../verify_password_screen.dart';
+import '../login_screen.dart';
+import '../user_history_page.dart';
 
 class ProfileTabPage extends StatefulWidget {
   const ProfileTabPage({super.key});
@@ -207,7 +211,14 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                       _ProfileMenuTile(
                         icon: Icons.lock_outline_rounded,
                         title: loc.changePassword,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const VerifyCurrentPasswordScreen(),
+                            ),
+                          );
+                        },
                       ),
                       _ProfileMenuTile(
                         icon: Icons.settings_outlined,
@@ -222,10 +233,52 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         },
                       ),
                       _ProfileMenuTile(
+                        icon: Icons.history_rounded,
+                        title: loc.isAr ? 'سجل النشاطات' : 'Activity History',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const UserHistoryPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      _ProfileMenuTile(
                         icon: Icons.logout_rounded,
                         title: loc.logout,
                         color: Colors.redAccent,
-                        onTap: () {},
+                        onTap: () async {
+                          // إظهار Dialog تأكيد لو حابب
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text(loc.logout, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                              content: Text(loc.isAr ? 'هل أنت متأكد أنك تريد تسجيل الخروج؟' : 'Are you sure you want to log out?', style: const TextStyle(fontFamily: 'NotoSansArabic')),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: Text(loc.isAr ? 'إلغاء' : 'Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                  child: Text(loc.logout),
+                                ),
+                              ],
+                            ),
+                          );
+                          
+                          if (confirm == true && mounted) {
+                            await AuthRepository().logout();
+                            if (mounted) {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                (route) => false,
+                              );
+                            }
+                          }
+                        },
                       ),
                     ],
                   ],

@@ -171,4 +171,15 @@ class ApiService {
     final response = await http.post(Uri.parse("$baseUrl/api/alerts/$alertId/respond/"));
     if (response.statusCode != 200) throw Exception("Failed to respond");
   }
+
+  static Future<void> updateAlertStatus(String alertId, String newStatus) async {
+    final response = await http.patch(
+      Uri.parse("$baseUrl/api/incidents/$alertId/"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"status": newStatus}),
+    );
+    if (response.statusCode != 200 && response.statusCode != 204 && response.statusCode != 201) {
+      throw Exception("Failed to update alert status");
+    }
+  }
 }

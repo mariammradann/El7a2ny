@@ -29,6 +29,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   String _selectedType = '';
   final TextEditingController _customTypeCtrl = TextEditingController();
   final TextEditingController _volunteersNeededCtrl = TextEditingController();
+  final TextEditingController _descriptionCtrl = TextEditingController();
   String _locationText = '';
   final List<Map<String, String>> _evidenceItems = [];
   final ImagePicker _picker = ImagePicker();
@@ -97,6 +98,19 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
 
   // --- الإرسال لـ Django ---
   Future<void> _triggerEmergencyAutomations() async {
+    if (_evidenceItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.loc.isAr ? 'يجب إضافة دليل (صورة/فيديو/صوت)' : 'Evidence is required')),
+      );
+      return;
+    }
+    if (_volunteersNeededCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.loc.isAr ? 'عدد المتطوعين مطلوب' : 'Volunteers needed is required')),
+      );
+      return;
+    }
+    
     setState(() => _isSubmitting = true);
     try {
       await ApiService.sendEmergencyAlert(
@@ -104,7 +118,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
         type: _selectedType == 'other' ? _customTypeCtrl.text : _selectedType,
         lat: widget.latitude,
         lng: widget.longitude,
-        description: "Volunteers: ${_volunteersNeededCtrl.text}",
+        description: "Desc: ${_descriptionCtrl.text}\nVolunteers: ${_volunteersNeededCtrl.text}",
       );
       _makeEmergencyCalls();
       if (mounted) _showSuccessDialog();
@@ -203,6 +217,16 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               controller: _volunteersNeededCtrl,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(hintText: loc.volunteersNeededHint, filled: true, fillColor: cardColor, border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none)),
+            ),
+
+            const SizedBox(height: 30),
+            _SectionLabel(label: context.loc.isAr ? 'وصف إضافي (اختياري)' : 'Additional Description (Optional)'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _descriptionCtrl,
+              minLines: 3,
+              maxLines: 5,
+              decoration: InputDecoration(hintText: context.loc.isAr ? 'تفاصيل إضافية...' : 'More details...', filled: true, fillColor: cardColor, border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none)),
             ),
 
             const SizedBox(height: 40),

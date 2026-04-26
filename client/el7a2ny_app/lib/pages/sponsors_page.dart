@@ -4,6 +4,8 @@ import '../core/localization/app_strings.dart';
 import '../services/session_service.dart';
 import '../models/sponsor_model.dart';
 import '../services/api_service.dart';
+import 'add_sponsor_page.dart';
+import 'become_partner_page.dart';
 
 // ─────────────────────────────────────────────
 //  SPONSORS PAGE
@@ -80,6 +82,63 @@ class _SponsorsPageState extends State<SponsorsPage> {
                   ],
                 ),
               ),
+              actions: [
+                if (SessionService().isAdmin)
+                  IconButton(
+                    icon: const Icon(Icons.add_business_rounded, color: Colors.blue),
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddSponsorPage()));
+                    },
+                  ),
+                IconButton(
+                  icon: Icon(Icons.handshake_rounded, color: theme.primaryColor),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BecomePartnerPage()));
+                  },
+                ),
+              ],
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                child: Row(
+                  children: [
+                    if (SessionService().isAdmin) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddSponsorPage()));
+                          },
+                          icon: const Icon(Icons.add_business_rounded, size: 18),
+                          label: Text(loc.addSponsor, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'NotoSansArabic')),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.blue,
+                            side: const BorderSide(color: Colors.blue),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BecomePartnerPage()));
+                        },
+                        icon: const Icon(Icons.handshake_rounded, size: 18),
+                        label: Text(loc.becomePartner, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'NotoSansArabic')),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             SliverToBoxAdapter(
               child: SingleChildScrollView(
@@ -135,34 +194,6 @@ class _SponsorsPageState extends State<SponsorsPage> {
                   ],
                 ]),
               ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 20, right: 10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (SessionService().isAdmin)
-              FloatingActionButton.extended(
-                heroTag: 'add_sponsor',
-                onPressed: () {
-                  SessionService().logAction('Admin opened Add Sponsor dialog');
-                },
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                icon: const Icon(Icons.add_business_rounded),
-                label: const Text('Add Sponsor', style: TextStyle(fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
-              ),
-            const SizedBox(height: 12),
-            FloatingActionButton.extended(
-              heroTag: 'become_partner',
-              onPressed: () {},
-              backgroundColor: theme.primaryColor,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.handshake_rounded),
-              label: Text(loc.becomePartner, style: const TextStyle(fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
             ),
           ],
         ),

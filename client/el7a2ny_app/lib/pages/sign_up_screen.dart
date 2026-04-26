@@ -9,6 +9,8 @@ import 'package:el7a2ny_app/core/services/social_auth_service.dart';
 import 'package:el7a2ny_app/data/repositories/auth_repository.dart';
 import 'package:el7a2ny_app/core/localization/app_strings.dart';
 import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
+import '../services/api_service.dart';
+import '../widgets/global_fab_overlay.dart';
 
 class SignUpScreen extends StatefulWidget {
   final SocialProfile? socialProfile;
@@ -169,6 +171,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.hide();
+    });
+
     final theme = Theme.of(context);
     final loc = context.loc;
     final primary = theme.primaryColor;
@@ -391,7 +397,7 @@ class _PremiumSection extends StatelessWidget {
   }
 }
 
-class _AppField extends StatelessWidget {
+class _AppField extends StatefulWidget {
   final TextEditingController controller;
   final String label;
   final bool obscure;
@@ -415,22 +421,45 @@ class _AppField extends StatelessWidget {
   });
 
   @override
+  State<_AppField> createState() => _AppFieldState();
+}
+
+class _AppFieldState extends State<_AppField> {
+  late bool _obscureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.obscure;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
-      obscureText: obscure,
-      keyboardType: keyboardType,
-      inputFormatters: formatters,
-      maxLines: obscure ? 1 : maxLines,
+      controller: widget.controller,
+      obscureText: _obscureText,
+      keyboardType: widget.keyboardType,
+      inputFormatters: widget.formatters,
+      maxLines: _obscureText ? 1 : widget.maxLines,
       style: const TextStyle(fontFamily: 'NotoSansArabic'),
       decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: prefix != null ? Icon(prefix, size: 20) : null,
+        labelText: widget.label,
+        prefixIcon: widget.prefix != null ? Icon(widget.prefix, size: 20) : null,
+        suffixIcon: widget.obscure
+            ? IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  size: 22,
+                ),
+                onPressed: () => setState(() => _obscureText = !_obscureText),
+              )
+            : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
         filled: true,
         fillColor: Theme.of(context).colorScheme.surface,
       ),
-      validator: validator ?? (isRequired 
+      validator: widget.validator ?? (widget.isRequired
           ? (v) => (v == null || v.isEmpty) ? context.loc.requiredField : null
           : null),
     );

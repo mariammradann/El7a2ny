@@ -21,9 +21,13 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // We override some properties to match the "Premium Dark" image precisely
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    // We override some properties to match the theme
     final primaryColor = gradientColors[0];
-    const cardBgColor = Color(0xFF0F172A); // Deep charcoal/dark blue from reference
+    final cardBgColor = isDark ? const Color(0xFF0F172A) : theme.cardColor;
+    final contentColor = isDark ? Colors.white : theme.colorScheme.onSurface;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -31,10 +35,10 @@ class ServiceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBgColor.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 1),
+        border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : theme.dividerColor.withValues(alpha: 0.1), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
+            color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -74,20 +78,20 @@ class ServiceCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white, // Standard white for premium dark look
+                    color: contentColor, 
                     fontFamily: 'NotoSansArabic',
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   number,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: contentColor,
                     fontFamily: 'NotoSansArabic',
                     letterSpacing: 1.2,
                   ),

@@ -75,21 +75,6 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.of(context).push<bool>(
-            MaterialPageRoute(
-              builder: (context) => const CreateInitiativeScreen(),
-              settings: const RouteSettings(name: '/create-initiative'),
-            ),
-          );
-          if (result == true) {
-            _load();
-          }
-        },
-        backgroundColor: theme.primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
       body: RefreshIndicator(
         onRefresh: _load,
         color: theme.primaryColor,
@@ -143,6 +128,23 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
       pinned: true,
       backgroundColor: theme.primaryColor,
       automaticallyImplyLeading: false,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white, size: 28),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          onPressed: () async {
+            final result = await Navigator.of(context).push<bool>(
+              MaterialPageRoute(
+                builder: (context) => const CreateInitiativeScreen(),
+                settings: const RouteSettings(name: '/create-initiative'),
+              ),
+            );
+            if (result == true) {
+              _load();
+            }
+          },
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(

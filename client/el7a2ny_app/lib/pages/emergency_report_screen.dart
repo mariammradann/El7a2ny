@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import '../core/api/api_exception.dart';
 import '../core/localization/app_strings.dart';
 import '../data/repositories/emergency_report_repository.dart';
+import '../widgets/global_fab_overlay.dart';
 
 /// أحمر العنوان والزر الرئيسي.
 Color _kEmergencyRed(BuildContext context) => Theme.of(context).primaryColor;
@@ -98,6 +99,12 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
       return;
     }
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_selectedMedia == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.loc.isAr ? 'الصورة/الفيديو مطلوبة' : 'Media is required')),
+      );
+      return;
+    }
     setState(() => _submitting = true);
     try {
       await _reports.submitReport(_buildReportBody());
@@ -157,6 +164,10 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.hide();
+    });
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
@@ -242,6 +253,12 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _name,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return context.loc.requiredField;
+                          }
+                          return null;
+                        },
                         style: const TextStyle(fontFamily: 'NotoSansArabic'),
                         decoration: _inputDecoration(hint: context.loc.typeNameHint),
                       ),
@@ -279,10 +296,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                         minLines: 5,
                         maxLines: 8,
                         validator: (v) {
-                          if (v == null || v.trim().length < 8) {
-                            return context.loc.describeMin8;
-                          }
-                          return null;
+                          return null; // Description is optional
                         },
                         style: const TextStyle(fontFamily: 'NotoSansArabic'),
                         decoration: _inputDecoration(

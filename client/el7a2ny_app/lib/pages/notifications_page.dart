@@ -14,47 +14,7 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  // We store only IDs, times, and types. Content is localized in build.
-  final List<Map<String, dynamic>> _notificationData = [
-    {
-      'id': 1,
-      'type': 'sensor',
-      'timeKey': 'justNow',
-      'isUnread': true,
-    },
-    {
-      'id': 2,
-      'type': 'volunteer',
-      'timeValue': '2',
-      'timeKey': 'hoursAgo',
-      'isUnread': true,
-    },
-    {
-      'id': 3,
-      'type': 'incident',
-      'timeValue': '5',
-      'timeKey': 'hoursAgo',
-      'isUnread': false,
-    },
-    {
-      'id': 4,
-      'type': 'initiative',
-      'timeKey': 'daysAgo',
-      'isUnread': false,
-    },
-    {
-      'id': 5,
-      'type': 'security',
-      'timeKey': 'daysAgo',
-      'isUnread': false,
-    },
-    {
-      'id': 6,
-      'type': 'system',
-      'timeKey': 'daysAgo',
-      'isUnread': false,
-    },
-  ];
+  final List<Map<String, dynamic>> _notificationData = [];
 
   void _markAllAsRead() {
     setState(() {
@@ -166,25 +126,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextButton.icon(
-              onPressed: _markAllAsRead,
-              style: TextButton.styleFrom(
-                backgroundColor: theme.colorScheme.onSurface,
-                foregroundColor: theme.colorScheme.surface,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              icon: const Icon(Icons.check_circle_outline, size: 18),
-              label: Text(
-                isAr ? 'مقروء' : 'Mark all',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'NotoSansArabic'),
-              ),
-            ),
-          ),
-        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

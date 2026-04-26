@@ -18,6 +18,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _newPassword = TextEditingController();
   final _confirmPassword = TextEditingController();
   bool _loading = false;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
   final _auth = AuthRepository();
 
   @override
@@ -154,7 +156,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _newPassword,
-                        obscureText: true,
+                        obscureText: _obscureNew,
                         style: TextStyle(fontFamily: 'NotoSansArabic', color: onSurface),
                         validator: (v) {
                           if (v == null || v.trim().length < 6) return context.loc.min6Chars;
@@ -166,6 +168,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           onSurface: onSurface,
                           primaryRed: primaryRed,
                           surfaceColor: surfaceColor,
+                        ).copyWith(
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              color: onSurface.withValues(alpha: 0.5),
+                              size: 22,
+                            ),
+                            onPressed: () => setState(() => _obscureNew = !_obscureNew),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -181,7 +192,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _confirmPassword,
-                        obscureText: true,
+                        obscureText: _obscureConfirm,
                         style: TextStyle(fontFamily: 'NotoSansArabic', color: onSurface),
                         validator: (v) {
                           if (v != _newPassword.text) return context.loc.noMatch;
@@ -193,6 +204,15 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           onSurface: onSurface,
                           primaryRed: primaryRed,
                           surfaceColor: surfaceColor,
+                        ).copyWith(
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              color: onSurface.withValues(alpha: 0.5),
+                              size: 22,
+                            ),
+                            onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 32),

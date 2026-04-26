@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'payment_page.dart';
 import '../core/localization/app_strings.dart';
 import '../services/session_service.dart';
+import 'edit_plan_page.dart';
 
 class PremiumSubscriptionPage extends StatelessWidget {
   const PremiumSubscriptionPage({super.key});
@@ -248,8 +249,7 @@ class _PremiumHeader extends StatelessWidget {
               alignment: isAr ? Alignment.centerLeft : Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: () {
-                   SessionService().logAction('Admin entered Edit Pricing mode for Plans');
-                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Pricing Mode Active')));
+                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => const EditPlanPage()));
                 },
                 icon: const Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 18),
                 label: const Text('Edit Plan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'landing_screen.dart';
 import '../core/localization/app_strings.dart';
+import '../widgets/global_fab_overlay.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -60,6 +61,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.hide();
+    });
+
     const arLoc = AppStrings(true);
     return Scaffold(
       body: Container(

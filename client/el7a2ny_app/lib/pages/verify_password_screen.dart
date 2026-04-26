@@ -19,6 +19,7 @@ class _VerifyCurrentPasswordScreenState extends State<VerifyCurrentPasswordScree
   final _formKey = GlobalKey<FormState>();
   final _password = TextEditingController();
   bool _loading = false;
+  bool _obscurePassword = true;
   final _auth = AuthRepository();
 
   Color _kBrandRed(BuildContext context) => Theme.of(context).primaryColor;
@@ -148,7 +149,7 @@ class _VerifyCurrentPasswordScreenState extends State<VerifyCurrentPasswordScree
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _password,
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                         style: const TextStyle(fontFamily: 'NotoSansArabic'),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) return context.loc.requiredField;
@@ -159,6 +160,15 @@ class _VerifyCurrentPasswordScreenState extends State<VerifyCurrentPasswordScree
                           textDark: textDark,
                           brandRed: brandRed,
                           fillColor: theme.colorScheme.surface,
+                        ).copyWith(
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              color: textDark.withValues(alpha: 0.5),
+                              size: 22,
+                            ),
+                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),

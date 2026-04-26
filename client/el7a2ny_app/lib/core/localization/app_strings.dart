@@ -28,7 +28,7 @@ class AppStrings {
   String get landingAppName => 'الحقني';
   String get landingAppDesc =>
       isAr ? 'تطبيق الاستجابة للطوارئ' : 'Emergency Response App';
-  String get landingEmergency => isAr ? 'بلاغ طوارئ' : 'Emergency Report';
+  String get landingEmergency => isAr ? 'بلاغ لمرة واحدة' : 'One Time Report';
   String get landingEmergencyDesc => isAr
       ? 'بلاغ طوارئ سريع من غير تسجيل'
       : 'Quick emergency report without registration';
@@ -579,10 +579,47 @@ class AppStrings {
       isAr ? 'التقدم للشراكة' : 'Apply for Partnership';
   String get viewAllPartners =>
       isAr ? 'عرض جميع الشركاء الموثوقين' : 'View all trusted partners';
-  String get viewCarCentersCount =>
-      isAr ? 'عرض مراكز السيارات' : 'View Car Centers';
   String get viewInsuranceCount =>
       isAr ? 'عرض شركات التأمين' : 'View Insurance Companies';
+
+  String get addSponsor => isAr ? 'إضافة راعي' : 'Add Sponsor';
+  String get addSponsorTitle => isAr ? 'إضافة راعي جديد' : 'Add New Sponsor';
+  String get sponsorName => isAr ? 'اسم الراعي' : 'Sponsor Name';
+  String get sponsorCategory => isAr ? 'الفئة' : 'Category';
+  String get sponsorPhone => isAr ? 'رقم الهاتف' : 'Phone Number';
+  String get sponsorServices => isAr ? 'الخدمات (افصل بينها بفاصلة)' : 'Services (comma separated)';
+  String get submitSponsor => isAr ? 'حفظ الراعي' : 'Save Sponsor';
+  String get partnershipForm => isAr ? 'طلب شراكة' : 'Partnership Request';
+  String get companyName => isAr ? 'اسم الشركة' : 'Company Name';
+  String get contactPerson => isAr ? 'اسم مسؤول التواصل' : 'Contact Person';
+  String get partnershipMessage => isAr ? 'رسالة طلب الشراكة' : 'Partnership Message';
+  String get sendApplication => isAr ? 'إرسال الطلب' : 'Send Application';
+  String get resources => isAr ? 'الموارد' : 'Resources';
+  String get adminLogs => isAr ? 'سجل العمليات' : 'Admin Logs';
+  String get responseEfficiency => isAr ? 'كفاءة الاستجابة (الاتجاه اليومي)' : 'Response Efficiency (Daily Trend)';
+  String get recentActivity => isAr ? 'النشاط الأخير' : 'Recent Activity';
+  String get noRecentActivity => isAr ? 'لا توجد نشاطات مسجلة حالياً' : 'No recent actions recorded';
+  String get sponsorManagement => isAr ? 'إدارة الرعاة' : 'Sponsor Management';
+  String get addEditRemoveSponsor => isAr ? 'إضافة، تعديل أو حذف الرعاة' : 'Add, edit, or remove app sponsors';
+  String get subscriptionPlans => isAr ? 'خطط الاشتراك' : 'Subscription Plans';
+  String get modifyPricing => isAr ? 'تعديل الأسعار والمميزات' : 'Modify pricing and premium features';
+  String get incidentAnalysis => isAr ? 'تحليل البلاغات' : 'Incident Analysis';
+  String get viewHeatmaps => isAr ? 'عرض الخرائط الحرارية والبيانات' : 'View heatmaps and historical data';
+  String get noUsersFound => isAr ? 'لم يتم العور على مستخدمين.' : 'No users found.';
+
+  String get editPlanTitle => isAr ? 'تعديل خطة الاشتراك' : 'Edit Subscription Plan';
+  String get planPrice => isAr ? 'سعر الخطة' : 'Plan Price';
+  String get saveChanges => isAr ? 'حفظ التعديلات' : 'Save Changes';
+  String get analysisTitle => isAr ? 'تحليل البلاغات' : 'Incident Analysis';
+  String get totalIncidents => isAr ? 'إجمالي البلاغات' : 'Total Incidents';
+  String get heatMapTitle => isAr ? 'خريطة توزيع البلاغات' : 'Incident Distribution Heatmap';
+  String get monthlyTrend => isAr ? 'الاتجاه الشهري' : 'Monthly Trend';
+  String get incidentsPerCategory => isAr ? 'البلاغات حسب الفئة' : 'Incidents per Category';
+
+  String get regionalInsights => isAr ? 'نظرة عامة على المناطق' : 'Regional Insights';
+  String get inactiveAreas => isAr ? 'مناطق غير نشطة' : 'Inactive Areas';
+  String get lowVolunteeringAreas => isAr ? 'تطوع منخفض' : 'Low Volunteering';
+  String get activeVolunteeringAreas => isAr ? 'تطوع نشط' : 'Active Volunteering';
 
   // Community Tab
   String get helpInitiativesHeaderTitle =>

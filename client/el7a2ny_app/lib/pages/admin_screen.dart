@@ -4,6 +4,7 @@ import '../services/session_service.dart';
 import 'sponsors_page.dart';
 import 'premium_subscription_page.dart';
 import 'stat_card.dart';
+import 'incident_analysis_page.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
 import '../models/admin_stats_model.dart';
@@ -79,8 +80,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             tabs: [
               Tab(text: loc.dashboard),
               Tab(text: loc.userManagement),
-              const Tab(text: 'Resources'),
-              const Tab(text: 'Admin Logs'),
+              Tab(text: loc.resources),
+              Tab(text: loc.adminLogs),
             ],
           ),
           Expanded(
@@ -113,8 +114,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           tabs: [
             Tab(text: loc.dashboard),
             Tab(text: loc.userManagement),
-            const Tab(text: 'Resources'),
-            const Tab(text: 'Admin Logs'),
+            Tab(text: loc.resources),
+            Tab(text: loc.adminLogs),
           ],
         ),
       ),
@@ -196,37 +197,71 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
               ],
             ),
             const SizedBox(height: 32),
-            _SectionHeader(title: 'Response Efficiency (Daily Trend)'),
+            _SectionHeader(title: loc.responseEfficiency),
             const SizedBox(height: 20),
             _CustomBarChart(values: _stats?.weeklyEfficiency ?? []),
           ],
           const SizedBox(height: 32),
-          _SectionHeader(title: 'Recent Activity Snippet'),
+          _SectionHeader(title: loc.recentActivity),
           const SizedBox(height: 16),
           ListenableBuilder(
             listenable: SessionService(),
             builder: (context, _) {
               final logs = SessionService().activityLog;
               if (logs.isEmpty) {
-                return const Text('No recent actions recorded', style: TextStyle(color: Colors.grey, fontSize: 13));
+                return Text(loc.noRecentActivity, style: const TextStyle(color: Colors.grey, fontSize: 13));
               }
               return Column(
                 children: logs.take(3).map((log) => _buildActivityItem(log, '')).toList(),
               );
             },
           ),
+          const SizedBox(height: 32),
+          _buildRegionalInsights(context),
         ],
       ),
     );
   }
 
+  Widget _buildRegionalInsights(BuildContext context) {
+    final loc = context.loc;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(title: loc.regionalInsights),
+        const SizedBox(height: 16),
+        _AreaStatusCard(
+          title: loc.inactiveAreas,
+          areas: const ['Suez', 'Fayoum', 'Beni Suef'],
+          color: Colors.red,
+          icon: Icons.location_off_rounded,
+        ),
+        const SizedBox(height: 12),
+        _AreaStatusCard(
+          title: loc.lowVolunteeringAreas,
+          areas: const ['Alexandria (West)', 'Ismailia'],
+          color: Colors.orange,
+          icon: Icons.person_search_rounded,
+        ),
+        const SizedBox(height: 12),
+        _AreaStatusCard(
+          title: loc.activeVolunteeringAreas,
+          areas: const ['Cairo (Central)', 'Giza', 'Mansoura'],
+          color: Colors.green,
+          icon: Icons.volunteer_activism_rounded,
+        ),
+      ],
+    );
+  }
+
   Widget _buildLogsTab(BuildContext context) {
+    final loc = context.loc;
     return ListenableBuilder(
       listenable: SessionService(),
       builder: (context, _) {
         final logs = SessionService().activityLog;
         if (logs.isEmpty) {
-          return const Center(child: Text('No activity logs yet.'));
+          return Center(child: Text(loc.noRecentActivity));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(20),
@@ -240,12 +275,13 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   }
 
   Widget _buildResourcesTab(BuildContext context) {
+    final loc = context.loc;
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
         _ResourceLink(
-          title: 'Sponsor Management',
-          subtitle: 'Add, edit, or remove app sponsors',
+          title: loc.sponsorManagement,
+          subtitle: loc.addEditRemoveSponsor,
           icon: Icons.handshake_rounded,
           onTap: () {
             Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SponsorsPage()));
@@ -253,8 +289,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         ),
         const SizedBox(height: 16),
         _ResourceLink(
-          title: 'Subscription Plans',
-          subtitle: 'Modify pricing and premium features',
+          title: loc.subscriptionPlans,
+          subtitle: loc.modifyPricing,
           icon: Icons.card_membership_rounded,
           onTap: () {
              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PremiumSubscriptionPage()));
@@ -262,10 +298,12 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         ),
         const SizedBox(height: 16),
         _ResourceLink(
-          title: 'Incident Analysis',
-          subtitle: 'View heatmaps and historical data',
+          title: loc.incidentAnalysis,
+          subtitle: loc.viewHeatmaps,
           icon: Icons.analytics_rounded,
-          onTap: () {},
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const IncidentAnalysisPage()));
+          },
         ),
       ],
     );
@@ -293,7 +331,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     }
 
     if (_users.isEmpty) {
-      return const Center(child: Text('No users found.'));
+      return Center(child: Text(loc.noUsersFound));
     }
 
     return ListView.builder(
@@ -355,6 +393,61 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           const SizedBox(width: 12),
           Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
           Text(time, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
+        ],
+      ),
+    );
+  }
+}
+
+class _AreaStatusCard extends StatelessWidget {
+  final String title;
+  final List<String> areas;
+  final Color color;
+  final IconData icon;
+
+  const _AreaStatusCard({required this.title, required this.areas, required this.color, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: color, fontFamily: 'NotoSansArabic')),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: areas.map((area) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+                    ),
+                    child: Text(area, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  )).toList(),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

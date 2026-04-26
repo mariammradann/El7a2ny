@@ -24,12 +24,20 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Future<void> _load() async {
-    try {
-      setState(() { _loading = true; _error = null; });
-      final stats = await ApiService.fetchDashboardStats();
-      if (mounted) setState(() { _stats = stats; _loading = false; });
-    } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    setState(() { _loading = true; _error = null; });
+    // Using static data as requested
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      setState(() {
+        _stats = const DashboardStats(
+          responseTimeMinutes: 4,
+          responseTimeSeconds: 23,
+          successRate: 97,
+          activeUnits: 142,
+          systemHealthy: true,
+        );
+        _loading = false;
+      });
     }
   }
 

@@ -8,7 +8,8 @@ import '../../core/auth/auth_token_store.dart';
 import '../report_incident_page.dart'; // تأكد أن المسار صحيح
 
 class IstighathaTabPage extends StatefulWidget {
-  const IstighathaTabPage({super.key});
+  final VoidCallback? onProfileTap;
+  const IstighathaTabPage({super.key, this.onProfileTap});
 
   @override
   State<IstighathaTabPage> createState() => _IstighathaTabPageState();
@@ -122,7 +123,10 @@ class _IstighathaTabPageState extends State<IstighathaTabPage> with SingleTicker
         children: [
           const SizedBox(width: 40),
           Text(context.loc.tabIstighatha, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-          CircleAvatar(radius: 20, child: const Icon(Icons.person)),
+          GestureDetector(
+            onTap: widget.onProfileTap,
+            child: const CircleAvatar(radius: 20, child: Icon(Icons.person)),
+          ),
         ],
       ),
     );

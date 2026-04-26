@@ -34,6 +34,31 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
     _progress = (_totalVols > 0) ? (_currVols / _totalVols * 100).round() : 0;
   }
 
+  bool _updatingStatus = false;
+
+  Future<void> _updateAlertStatus(String newStatus) async {
+    setState(() => _updatingStatus = true);
+    try {
+      await ApiService.updateAlertStatus(widget.alert.id, newStatus);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.loc.isAr ? 'تم تحديث حالة البلاغ بنجاح' : 'Alert status updated successfully'),
+          backgroundColor: Colors.green,
+        ));
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.loc.isAr ? 'حدث خطأ أثناء التحديث' : 'Error updating status'),
+          backgroundColor: Colors.red,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _updatingStatus = false);
+    }
+  }
+
   Future<void> _joinVolunteers() async {
     if (_joined) return;
     
@@ -614,7 +639,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
             ),
 
             // Bottom Action Button
-            if (!widget.isMyAlerts)
+            if (!(widget.isMyAlerts || widget.alert.isMyAlert))
               Positioned(
                 bottom: 24,
                 left: 20,
@@ -658,6 +683,67 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                       ],
                     ),
                   ),
+                ),
+              )
+            else if (widget.alert.status.toLowerCase() != 'resolved' && widget.alert.status.toLowerCase() != 'cancelled')
+              Positioned(
+                bottom: 24,
+                left: 20,
+                right: 20,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _updatingStatus ? null : () => _updateAlertStatus('cancelled'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade300,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          isAr ? 'إلغاء البلاغ' : 'Cancel Report',
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: _updatingStatus ? null : () => _updateAlertStatus('resolved'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: _updatingStatus
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isAr ? 'انتهى الخطر' : 'Danger Ended',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],
