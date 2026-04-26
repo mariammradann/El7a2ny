@@ -19,12 +19,9 @@
 //  ]
 // ─────────────────────────────────────────────────────────
 
-<<<<<<< Updated upstream
-=======
 import '../core/localization/app_strings.dart';
 import '../core/auth/auth_token_store.dart';
 
->>>>>>> Stashed changes
 class AlertModel {
   final int id;
   final String type;
