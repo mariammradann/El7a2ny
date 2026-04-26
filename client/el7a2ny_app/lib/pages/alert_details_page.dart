@@ -2,7 +2,9 @@ import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import '../core/localization/app_strings.dart';
 import '../models/alert_model.dart';
+import '../services/api_service.dart';
 
 class AlertDetailsPage extends StatefulWidget {
   final AlertModel alert;
@@ -29,60 +31,94 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
     super.initState();
     _totalVols = widget.alert.totalVolunteers;
     _currVols = widget.alert.currentVolunteers;
-    _progress = (_currVols / _totalVols * 100).round();
+    _progress = (_totalVols > 0) ? (_currVols / _totalVols * 100).round() : 0;
   }
 
-  void _joinVolunteers() {
+  bool _updatingStatus = false;
+
+  Future<void> _updateAlertStatus(String newStatus) async {
+    setState(() => _updatingStatus = true);
+    try {
+      await ApiService.updateAlertStatus(widget.alert.id, newStatus);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.loc.isAr ? 'تم تحديث حالة البلاغ بنجاح' : 'Alert status updated successfully'),
+          backgroundColor: Colors.green,
+        ));
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.loc.isAr ? 'حدث خطأ أثناء التحديث' : 'Error updating status'),
+          backgroundColor: Colors.red,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _updatingStatus = false);
+    }
+  }
+
+  Future<void> _joinVolunteers() async {
     if (_joined) return;
-    setState(() {
-      _joined = true;
-      _currVols++;
-      _progress = min(100, (_currVols / _totalVols * 100).round());
-    });
     
-    // Show a quick success snackbar
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('تم تسجيل تطوعك! المساعدة في الطريق.'),
-      backgroundColor: Color(0xFF10B981),
-      behavior: SnackBarBehavior.floating,
-    ));
+    try {
+      await ApiService.respondToAlert(int.parse(widget.alert.id));
+      if (!mounted) return;
+      
+      setState(() {
+        _joined = true;
+        _currVols++;
+        _progress = min(100, (_currVols / _totalVols * 100).round());
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(context.loc.isAr ? 'تم تسجيل تطوعك! المساعدة في الطريق.' : 'Successfully registered! Help is on the way.'),
+        backgroundColor: const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+      ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(context.loc.isAr ? 'عذراً، حدث خطأ أثناء التسجيل.' : 'Error registering for alert.'),
+        backgroundColor: Colors.red,
+      ));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.loc.isAr;
     Color bannerColor;
     IconData largeIcon;
-    if (widget.alert.type.contains('حريق') || widget.alert.type.contains('نار')) {
+
+    final typeLower = widget.alert.type.toLowerCase();
+    if (typeLower.contains('fire') || typeLower.contains('حريق')) {
       bannerColor = const Color(0xFFEF4444);
       largeIcon = Icons.fire_extinguisher_rounded;
-    } else if (widget.alert.type.contains('طب') || widget.alert.type.contains('اسعاف')) {
+    } else if (typeLower.contains('medical') || typeLower.contains('طب')) {
       bannerColor = const Color(0xFFD97706);
       largeIcon = Icons.medical_services_rounded;
-    } else if (widget.alert.type.contains('مرور') ||
-        widget.alert.type.contains('سير') ||
-        widget.alert.type.contains('حادث')) {
+    } else if (typeLower.contains('security') || typeLower.contains('أمن')) {
       bannerColor = const Color(0xFFB45309);
-      largeIcon = Icons.car_crash_rounded;
-    } else if (widget.alert.type.contains('فيضان') || widget.alert.type.contains('كوارث')) {
-      bannerColor = const Color(0xFFEA580C);
-      largeIcon = Icons.flood_rounded;
+      largeIcon = Icons.shield_rounded;
     } else {
       bannerColor = const Color(0xFF6366F1);
       largeIcon = Icons.emergency_rounded;
     }
 
-    final mockDesc = widget.isMyAlerts
-        ? 'تم التعامل مع البلاغ وإخماده بنجاح بمساعدة $_currVols متطوع واستقرار الأوضاع.'
-        : '${widget.alert.type} في المنطقة، يوجد أشخاص عالقون داخل المبنى ونحتاج متطوعين للمساعدة في الإخلاء وتقديم الإسعافات الأولية. تم الاتصال بالدفاع المدني وهم في الطريق. نحتاج مساعدة عاجلة للمساعدة في إخلاء المبنى المجاور كإجراء احترازي.';
-
     final dateStr = widget.alert.createdAt != null
         ? DateFormat('dd/MM/yyyy').format(widget.alert.createdAt!)
         : DateFormat('dd/MM/yyyy').format(DateTime.now());
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final onSurface = theme.colorScheme.onSurface;
+
     return Directionality(
-      textDirection: ui.TextDirection.rtl,
+      textDirection: isAr ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Stack(
           children: [
             SingleChildScrollView(
@@ -100,7 +136,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                bannerColor.withOpacity(0.9),
+                                bannerColor.withValues(alpha: 0.9),
                                 bannerColor,
                               ],
                               begin: Alignment.topCenter,
@@ -109,54 +145,57 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           ),
                         ),
                         Positioned(
-                          right: -30,
+                          right: isAr ? -30 : null,
+                          left: isAr ? null : -30,
                           bottom: -30,
                           child: Icon(
                             largeIcon,
                             size: 200,
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                           ),
                         ),
                         // Back Button
                         Positioned(
                           top: 40,
-                          right: 16,
+                          right: isAr ? 16 : null,
+                          left: isAr ? null : 16,
                           child: GestureDetector(
                             onTap: () => Navigator.pop(context),
                             child: Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: Colors.white24,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
-                                Icons.arrow_forward_rounded,
+                              child: Icon(
+                                isAr ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
                                 color: Colors.white,
                               ),
                             ),
                           ),
                         ),
-                        // Active Pill (Visual Left)
+                        // Active Pill
                         Positioned(
                           top: 45,
-                          left: 16,
+                          left: isAr ? 16 : null,
+                          right: isAr ? null : 16,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: theme.colorScheme.surface,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               children: [
                                 Text(
-                                  widget.isMyAlerts ? 'مكتمل' : 'نشط الآن',
-                                  style: const TextStyle(
+                                  widget.isMyAlerts ? context.loc.completed : context.loc.activeStatusNow,
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 13,
-                                    color: Color(0xFF0F172A),
+                                    color: onSurface,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -174,10 +213,11 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             ),
                           ),
                         ),
-                        // Percentage Box (Visual Right, under back button)
+                        // Percentage Box
                         Positioned(
                           top: 100,
-                          left: 16,
+                          left: isAr ? 16 : null,
+                          right: isAr ? null : 16,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -186,9 +226,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             decoration: BoxDecoration(
                               color: widget.isMyAlerts
                                   ? const Color(0xFFF97316)
-                                  : const Color(
-                                      0xFFFF0000,
-                                    ), // Pure red for active
+                                  : const Color(0xFFFF0000), 
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Column(
@@ -201,9 +239,9 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                     fontSize: 24,
                                   ),
                                 ),
-                                const Text(
-                                  'نسبة التطوع',
-                                  style: TextStyle(
+                                Text(
+                                  context.loc.volunteeringRate,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
@@ -236,7 +274,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Text(
-                                widget.alert.type,
+                                widget.alert.getLocalizedType(context.loc),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -251,7 +289,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                                color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Row(
@@ -263,13 +301,9 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    widget.alert.severity == 'high'
-                                        ? 'حرجة جداً'
-                                        : widget.alert.severity == 'medium'
-                                        ? 'عاجلة'
-                                        : 'عادية',
-                                    style: const TextStyle(
-                                      color: Color(0xFF475569),
+                                    widget.alert.getLocalizedSeverity(context.loc),
+                                    style: TextStyle(
+                                      color: onSurface.withValues(alpha: 0.7),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
@@ -283,11 +317,11 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
 
                         // Title
                         Text(
-                          widget.alert.type + (widget.isMyAlerts ? ' - بلاغ سابق' : ' نشط'),
-                          style: const TextStyle(
+                          widget.alert.getLocalizedType(context.loc) + (widget.isMyAlerts ? context.loc.pastAlert : context.loc.activeStatus),
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF0F172A),
+                            color: onSurface,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -302,27 +336,27 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   horizontal: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEFF6FF),
+                                  color: isDark ? theme.colorScheme.surface : theme.primaryColor.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFBFDBFE),
+                                    color: theme.dividerColor.withValues(alpha: 0.1),
                                   ),
                                 ),
                                 child: Column(
                                   children: [
-                                    const Row(
+                                    Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Icon(
+                                        const Icon(
                                           Icons.location_on_outlined,
                                           size: 16,
                                           color: Color(0xFF3B82F6),
                                         ),
-                                        SizedBox(width: 6),
+                                        const SizedBox(width: 6),
                                         Text(
-                                          'الموقع',
-                                          style: TextStyle(
+                                          context.loc.locationLabel,
+                                          style: const TextStyle(
                                             color: Color(0xFF3B82F6),
                                             fontWeight: FontWeight.bold,
                                             fontSize: 12,
@@ -332,10 +366,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      widget.alert.location,
+                                      widget.alert.getLocalizedLocation(context.loc),
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Color(0xFF1E3A8A),
+                                      style: TextStyle(
+                                        color: onSurface,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
                                         height: 1.4,
@@ -353,27 +387,27 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   horizontal: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFAF5FF),
+                                  color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFE9D5FF),
+                                    color: theme.dividerColor.withValues(alpha: 0.1),
                                   ),
                                 ),
                                 child: Column(
                                   children: [
-                                    const Row(
+                                    Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Icon(
+                                        const Icon(
                                           Icons.access_time_rounded,
                                           size: 16,
                                           color: Color(0xFFA855F7),
                                         ),
-                                        SizedBox(width: 6),
+                                        const SizedBox(width: 6),
                                         Text(
-                                          'الوقت',
-                                          style: TextStyle(
+                                          context.loc.timeLabel,
+                                          style: const TextStyle(
                                             color: Color(0xFFA855F7),
                                             fontWeight: FontWeight.bold,
                                             fontSize: 12,
@@ -383,12 +417,12 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      widget.alert.timeAgo.isEmpty
-                                          ? 'الآن'
-                                          : widget.alert.timeAgo,
+                                      widget.alert.timeAgoLocalized(context.loc).isEmpty
+                                          ? context.loc.justNow
+                                          : widget.alert.timeAgoLocalized(context.loc),
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Color(0xFF581C87),
+                                      style: TextStyle(
+                                        color: onSurface,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
                                         height: 1.4,
@@ -406,9 +440,9 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0FDF4),
+                            color: isDark ? theme.colorScheme.surface : const Color(0xFFF0FDF4),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                            border: Border.all(color: isDark ? theme.dividerColor.withValues(alpha: 0.1) : const Color(0xFFBBF7D0)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -432,10 +466,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      const Text(
-                                        'المتطوعون',
+                                      Text(
+                                        context.loc.volunteers,
                                         style: TextStyle(
-                                          color: Color(0xFF166534),
+                                          color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF166534),
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
                                         ),
@@ -457,20 +491,20 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 crossAxisAlignment: CrossAxisAlignment.baseline,
                                 textBaseline: TextBaseline.alphabetic,
                                 children: [
-                                  Text(
-                                    '$_currVols',
-                                    style: const TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF0F172A),
+                                    Text(
+                                      '$_currVols',
+                                      style: TextStyle(
+                                        fontSize: 40,
+                                        fontWeight: FontWeight.w900,
+                                        color: onSurface,
+                                      ),
                                     ),
-                                  ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'من $_totalVols',
-                                    style: const TextStyle(
+                                    '${context.loc.outOfLabel} $_totalVols',
+                                    style: TextStyle(
                                       fontSize: 16,
-                                      color: Color(0xFF475569),
+                                      color: onSurface.withValues(alpha: 0.6),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -480,10 +514,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                               // Progress bar
                               Container(
                                 height: 8,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE2E8F0),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
                                 child: Row(
                                   children: [
                                     Expanded(
@@ -513,9 +547,9 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: theme.colorScheme.surfaceContainer,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -528,10 +562,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                     size: 18,
                                   ),
                                   const SizedBox(width: 8),
-                                  const Text(
-                                    'تفاصيل البلاغ',
+                                  Text(
+                                    context.loc.alertDetails,
                                     style: TextStyle(
-                                      color: Color(0xFF0F172A),
+                                      color: onSurface,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                     ),
@@ -539,14 +573,15 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              Text(
-                                mockDesc,
-                                style: const TextStyle(
-                                  color: Color(0xFF475569),
-                                  height: 1.7,
-                                  fontSize: 13,
+                              if (widget.alert.description != null)
+                                Text(
+                                  widget.alert.description!,
+                                  style: TextStyle(
+                                    color: onSurface.withValues(alpha: 0.7),
+                                    height: 1.7,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ),
@@ -559,26 +594,26 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             horizontal: 20,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Column(
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'للاستفسار والتواصل',
+                                    context.loc.contactForInquiry,
                                     style: TextStyle(
-                                      color: Color(0xFF1E3A8A),
+                                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
                                   ),
-                                  SizedBox(height: 4),
-                                  Text(
+                                  const SizedBox(height: 4),
+                                  const Text(
                                     '0501234567',
                                     style: TextStyle(
                                       color: Color(0xFF2563EB),
@@ -604,7 +639,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
             ),
 
             // Bottom Action Button
-            if (!widget.isMyAlerts)
+            if (!(widget.isMyAlerts || widget.alert.isMyAlert))
               Positioned(
                 bottom: 24,
                 left: 20,
@@ -613,7 +648,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                   decoration: BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: _joined ? Colors.grey.withOpacity(0.4) : const Color(0xFF10B981).withOpacity(0.4),
+                        color: _joined ? Colors.grey.withValues(alpha: 0.4) : const Color(0xFF10B981).withValues(alpha: 0.4),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -638,7 +673,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          _joined ? 'تم التسجيل' : ' انا جي ',
+                          _joined ? context.loc.joinedBtn : (isAr ? ' انا جي ' : 'I am coming'),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -648,6 +683,67 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                       ],
                     ),
                   ),
+                ),
+              )
+            else if (widget.alert.status.toLowerCase() != 'resolved' && widget.alert.status.toLowerCase() != 'cancelled')
+              Positioned(
+                bottom: 24,
+                left: 20,
+                right: 20,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _updatingStatus ? null : () => _updateAlertStatus('cancelled'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey.shade300,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          isAr ? 'إلغاء البلاغ' : 'Cancel Report',
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: _updatingStatus ? null : () => _updateAlertStatus('resolved'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: _updatingStatus
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isAr ? 'انتهى الخطر' : 'Danger Ended',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],

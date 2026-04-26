@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
 import '../services/api_service.dart';
+import '../core/localization/app_strings.dart';
 import 'stat_card.dart';
 import 'service_card.dart';
 
@@ -23,27 +24,65 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Future<void> _load() async {
-    try {
-      setState(() { _loading = true; _error = null; });
-      final stats = await ApiService.fetchDashboardStats();
-      if (mounted) setState(() { _stats = stats; _loading = false; });
-    } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    setState(() { _loading = true; _error = null; });
+    // Using static data as requested
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      setState(() {
+        _stats = const DashboardStats(
+          responseTimeMinutes: 4,
+          responseTimeSeconds: 23,
+          successRate: 97,
+          activeUnits: 142,
+          systemHealthy: true,
+        );
+        _loading = false;
+      });
     }
   }
 
-  // Emergency numbers — static (official Egyptian numbers, never change)
-  static const List<Map<String, dynamic>> _services = [
-    {'name': 'الشرطة',  'number': '122', 'icon': Icons.shield_rounded,
-     'gradientColors': [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-     'bgColor': Color(0xFFEFF6FF), 'textColor': Color(0xFF1D4ED8)},
-    {'name': 'الإسعاف', 'number': '123', 'icon': Icons.local_hospital_rounded,
-     'gradientColors': [Color(0xFFDC2626), Color(0xFFB91C1C)],
-     'bgColor': Color(0xFFFFF1F2), 'textColor': Color(0xFFB91C1C)},
-    {'name': 'المطافي', 'number': '180', 'icon': Icons.local_fire_department_rounded,
-     'gradientColors': [Color(0xFFEA580C), Color(0xFFC2410C)],
-     'bgColor': Color(0xFFFFF7ED), 'textColor': Color(0xFFC2410C)},
-  ];
+  /// Emergency services — expanded to 6 numbers with image-accurate color palettes
+  List<Map<String, dynamic>> _getServices(BuildContext context) {
+    final loc = context.loc;
+    return [
+      {
+        'name': loc.police,
+        'number': '122',
+        'icon': Icons.shield_rounded,
+        'gradientColors': const [Color(0xFF2563EB), Color(0xFF1D4ED8)], // Blue
+      },
+      {
+        'name': loc.ambulance,
+        'number': '123',
+        'icon': Icons.local_hospital_rounded,
+        'gradientColors': const [Color(0xFFDC2626), Color(0xFF7F1D1D)], // Maroon/Red
+      },
+      {
+        'name': loc.fireDept,
+        'number': '180',
+        'icon': Icons.local_fire_department_rounded,
+        'gradientColors': const [Color(0xFFEA580C), Color(0xFF9A3412)], // Orange/Brown
+      },
+      {
+        'name': loc.rescue,
+        'number': '122',
+        'icon': Icons.crisis_alert_rounded,
+        'gradientColors': const [Color(0xFF1E40AF), Color(0xFF1E3A8A)], // Navy/Deep Blue
+      },
+      {
+        'name': loc.civilDefense,
+        'number': '180',
+        'icon': Icons.health_and_safety_rounded,
+        'gradientColors': const [Color(0xFF059669), Color(0xFF064E3B)], // Dark Green
+      },
+      {
+        'name': loc.antiDrugs,
+        'number': '109',
+        'icon': Icons.block_rounded,
+        'gradientColors': const [Color(0xFF475569), Color(0xFF1E293B)], // Slate/Charcoal
+      },
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,62 +94,76 @@ class _DashboardTabState extends State<DashboardTab> {
     }
 
     final stats = _stats!;
+    final loc = context.loc;
     final statCards = [
-      {'label': 'وقت الاستجابة', 'value': stats.responseTimeDisplay, 'unit': 'دقيقة',
-       'gradientColors': [const Color(0xFF10B981), const Color(0xFF14B8A6)],
+      {'label': loc.responseTime, 'value': stats.responseTimeDisplay, 'unit': loc.minute,
+       'gradientColors': const [Color(0xFF10B981), Color(0xFF14B8A6)],
        'icon': Icons.access_time_rounded},
-      {'label': 'معدل النجاح',   'value': stats.successRate.toString(), 'unit': '%',
-       'gradientColors': [const Color(0xFF3B82F6), const Color(0xFF6366F1)],
+      {'label': loc.successRate,   'value': stats.successRate.toString(), 'unit': '%',
+       'gradientColors': const [Color(0xFF3B82F6), Color(0xFF6366F1)],
        'icon': Icons.show_chart_rounded},
-      {'label': 'الوحدات النشطة','value': stats.activeUnits.toString(), 'unit': '',
-       'gradientColors': [const Color(0xFF8B5CF6), const Color(0xFFA855F7)],
+      {'label': loc.activeUnits,'value': stats.activeUnits.toString(), 'unit': '',
+       'gradientColors': const [Color(0xFF8B5CF6), Color(0xFFA855F7)],
        'icon': Icons.people_alt_rounded},
     ];
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: statCards
-                  .map((s) => Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: StatCard(
-                            label: s['label'] as String,
-                            value: s['value'] as String,
-                            unit: s['unit'] as String,
-                            gradientColors: s['gradientColors'] as List<Color>,
-                            icon: s['icon'] as IconData,
+    return Directionality(
+      textDirection: loc.isAr ? TextDirection.rtl : TextDirection.ltr,
+      child: RefreshIndicator(
+        onRefresh: _load,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Stats Cards Row
+              Row(
+                children: statCards
+                    .map((s) => Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: StatCard(
+                              label: s['label'] as String,
+                              value: s['value'] as String,
+                              unit: s['unit'] as String,
+                              gradientColors: s['gradientColors'] as List<Color>,
+                              icon: s['icon'] as IconData,
+                            ),
                           ),
-                        ),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 24),
-            const Text('خدمات الطوارئ',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-            const SizedBox(height: 12),
-            Column(
-              children: _services
-                  .map((s) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: ServiceCard(
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 32),
+              
+              // Emergency Services Heading
+              Text(loc.emergencyServices,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontFamily: 'NotoSansArabic',
+                  )),
+              const SizedBox(height: 16),
+              
+              // Exactly 6 Premium Service Cards
+              Column(
+                children: _getServices(context)
+                    .map((s) => ServiceCard(
                           name: s['name'] as String,
                           number: s['number'] as String,
                           icon: s['icon'] as IconData,
                           gradientColors: s['gradientColors'] as List<Color>,
-                          bgColor: s['bgColor'] as Color,
-                          textColor: s['textColor'] as Color,
-                        ),
-                      ))
-                  .toList(),
-            ),
-          ],
+                          bgColor: Colors.transparent, // Overridden in ServiceCard
+                          textColor: Colors.white, // Overridden in ServiceCard
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 20),
+              
+              // Note: Safety Tips and Additional Numbers Grid have been removed per user request
+            ],
+          ),
         ),
       ),
     );
@@ -127,12 +180,12 @@ class _ErrorView extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Icon(Icons.wifi_off_rounded, size: 56, color: Color(0xFF94A3B8)),
         const SizedBox(height: 12),
-        const Text('مش قادر يوصل للسيرفر', style: TextStyle(color: Color(0xFF64748B), fontSize: 16)),
+        Text(context.loc.cannotReachServer, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16)),
         const SizedBox(height: 16),
         ElevatedButton.icon(
           onPressed: onRetry,
           icon: const Icon(Icons.refresh),
-          label: const Text('حاول تاني'),
+          label: Text(context.loc.tryAgain),
         ),
       ]),
     );

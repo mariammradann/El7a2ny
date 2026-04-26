@@ -39,6 +39,13 @@ dependencies:
   geolocator: ^14.0.2
   geocoding: ^4.0.0
   file_picker: ^11.0.2
+  permission_handler: ^12.0.1
+  flutter_contacts: ^2.0.2
+  url_launcher: ^6.3.2
+  flutter_phone_direct_caller: ^2.1.1
+  google_generative_ai: ^0.4.0
+  vibration: ^3.1.8
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -66,15 +73,6 @@ flutter:
     - family: NotoSansArabic
       fonts:
         - asset: assets/fonts/font/NotoSansArabic-VariableFont_wdth,wght.ttf
-    - family: Unixel
-      fonts:
-        - asset: assets/fonts/font/unixel-Regular.ttf
-    - family: Trox
-      fonts:
-        - asset: assets/fonts/font/TROX.ttf
-    - family: UnixelWoff2
-      fonts:
-        - asset: assets/fonts/font/unixel-Regular.woff2
 
   # To add assets to your application, add an assets section, like this:
   # assets:

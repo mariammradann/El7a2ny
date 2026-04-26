@@ -1,20 +1,53 @@
-﻿/// تخزين مؤقت لرمز الجلسة بعد تسجيل الدخول.
-/// لاحقاً: استبدل بـ `flutter_secure_storage` أو `shared_preferences`.
+﻿import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class AuthTokenStore {
-  AuthTokenStore._();
+  static String? _userId;
+  static String? _accessToken;
 
-  static String? accessToken;
-  static String? refreshToken;
+  // --- Getters عشان الصفحات التانية تشوف المتغيرات ---
+  static String? get userId => _userId;
+  static String? get accessToken => _accessToken;
 
-  static void setTokens({String? access, String? refresh}) {
-    accessToken = access;
-    refreshToken = refresh;
+  // دالة لتحميل البيانات من الذاكرة عند بداية تشغيل التطبيق (مهمة جداً)
+  static Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userId = prefs.getString('user_id');
+    _accessToken = prefs.getString('access_token');
+    debugPrint("📥 AuthTokenStore Initialized: ID=$_userId");
   }
 
-  static void clear() {
-    accessToken = null;
-    refreshToken = null;
+  // حفظ بيانات اليوزر بشكل دائم
+  static Future<void> saveUserData({
+    required String id,
+    String? name,
+    String? email,
+  }) async {
+    _userId = id;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_id', id);
+    if (name != null) await prefs.setString('user_name', name);
+    if (email != null) await prefs.setString('user_email', email);
+    
+    debugPrint("✅ User Data Persisted: ID=$id");
   }
 
-  static bool get isAuthenticated => accessToken != null && accessToken!.isNotEmpty;
+  // حفظ التوكنز بشكل دائم
+  static Future<void> setTokens({required String access, required String refresh}) async {
+    _accessToken = access;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('access_token', access);
+    await prefs.setString('refresh_token', refresh);
+    
+    debugPrint("✅ Tokens Persisted: Access Present");
+  }
+
+  // مسح البيانات عند تسجيل الخروج
+  static Future<void> clear() async {
+    _userId = null;
+    _accessToken = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    debugPrint("🗑️ Auth Store Cleared");
+  }
 }

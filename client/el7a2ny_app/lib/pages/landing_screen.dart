@@ -1,126 +1,161 @@
-﻿import 'package:flutter/material.dart';
-
-import '../app/main_shell_screen.dart';
-import 'emergency_report_screen.dart';
-import 'login_screen.dart';
-import 'sign_up_screen.dart';
-
-/// Primary brand red — urgent / emergency actions.
-const Color _kBrandRed = Color(0xFFE44646);
-
-/// Light surface for the secondary card (off-white).
-const Color _kCardGrey = Color(0xFFF5F5F5);
-
-/// Body text on light backgrounds.
-const Color _kTextDark = Color(0xFF424242);
+import 'package:flutter/material.dart';
+import 'package:el7a2ny_app/core/localization/app_strings.dart';
+import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
+import 'package:el7a2ny_app/app/main_shell_screen.dart';
+import 'package:el7a2ny_app/pages/login_screen.dart';
+import 'package:el7a2ny_app/pages/sign_up_screen.dart';
+import 'package:el7a2ny_app/services/session_service.dart';
+import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
+import 'package:el7a2ny_app/widgets/global_fab_overlay.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({
     super.key,
-    this.onEmergencyReport,
     this.onCreateAccount,
     this.onLogin,
   });
 
-  final VoidCallback? onEmergencyReport;
   final VoidCallback? onCreateAccount;
   final VoidCallback? onLogin;
 
+  Color _kBrandRed(BuildContext context) => Theme.of(context).primaryColor;
+  Color _kCardColor(BuildContext context) => Theme.of(context).colorScheme.surfaceContainerHighest;
+  Color _kTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
+
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.hide();
+    });
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                const SizedBox(height: 24),
-                _HeaderLogo(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [LanguageToggleButton(iconColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))],
+                ),
+                _HeaderLogo(brandRed: _kBrandRed(context)),
                 const SizedBox(height: 8),
                 Text(
-                  'الحقني',
+                  context.loc.landingAppName,
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    color: _kBrandRed,
+                    color: _kBrandRed(context),
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'تطبيق الاستجابة للطوارئ',
+                  context.loc.landingAppDesc,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 15,
-                    color: Colors.grey.shade600,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 18),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (context) => const MainShellScreen(),
-                      ),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.dashboard_rounded,
-                    color: _kBrandRed,
-                    size: 22,
-                  ),
-                  label: Text(
-                    'demo',
-                    style: TextStyle(
-                      fontFamily: 'NotoSansArabic',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: _kBrandRed,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: _kBrandRed.withValues(alpha: 0.55)),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                _EmergencyCard(
-                  onTap: onEmergencyReport ??
-                      () {
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        SessionService().setRole(UserRole.citizen);
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (context) => const EmergencyReportScreen(),
+                            builder: (context) => const MainShellScreen(),
                           ),
                         );
                       },
+                      icon: Icon(
+                        Icons.dashboard_rounded,
+                        color: _kBrandRed(context),
+                        size: 20,
+                      ),
+                      label: const Text(
+                        'demo',
+                        style: TextStyle(
+                          fontFamily: 'NotoSansArabic',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _kBrandRed(context),
+                        side: BorderSide(color: _kBrandRed(context).withValues(alpha: 0.4)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        SessionService().setRole(UserRole.admin);
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const MainShellScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.admin_panel_settings_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      label: Text(
+                        context.loc.adminAuthTitle,
+                        style: const TextStyle(
+                          fontFamily: 'NotoSansArabic',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBrandRed(context),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
+                _EmergencyReportCard(
+                  brandRed: _kBrandRed(context),
+                  onTap: () {
+                    Navigator.of(context).pushNamed('/emergency-report');
+                  },
+                ),
+                const SizedBox(height: 24),
                 _CreateAccountCard(
+                  cardColor: _kCardColor(context),
+                  brandRed: _kBrandRed(context),
+                  textColor: _kTextDark(context),
                   onTap: onCreateAccount ??
                       () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (context) => const SignUpScreen(),
-                          ),
-                        );
+                        Navigator.of(context).pushNamed('/signup');
                       },
                 ),
-                const Spacer(),
+                const SizedBox(height: 32),
                 _LoginPrompt(
+                  brandRed: _kBrandRed(context),
+                  textColor: _kTextDark(context),
                   onLogin: onLogin ??
                       () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (context) => const LoginScreen(),
-                          ),
-                        );
+                        Navigator.of(context).pushNamed('/login');
                       },
                 ),
                 const SizedBox(height: 24),
@@ -134,6 +169,9 @@ class LandingScreen extends StatelessWidget {
 }
 
 class _HeaderLogo extends StatelessWidget {
+  final Color brandRed;
+  const _HeaderLogo({required this.brandRed});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -141,18 +179,18 @@ class _HeaderLogo extends StatelessWidget {
       height: 88,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: _kBrandRed, width: 3),
-        color: Colors.white,
+        border: Border.all(color: brandRed, width: 3),
+        color: Theme.of(context).colorScheme.surface,
       ),
       child: Center(
         child: Container(
           width: 64,
           height: 64,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: _kBrandRed,
+            color: brandRed,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.priority_high_rounded,
             color: Colors.white,
             size: 38,
@@ -163,80 +201,24 @@ class _HeaderLogo extends StatelessWidget {
   }
 }
 
-class _EmergencyCard extends StatelessWidget {
-  const _EmergencyCard({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: _kBrandRed,
-      elevation: 4,
-      shadowColor: Colors.black26,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          width: double.infinity,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                  ),
-                  child: Icon(
-                    Icons.priority_high_rounded,
-                    color: _kBrandRed,
-                    size: 36,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'بلاغ طوارئ',
-                  style: TextStyle(
-                    fontFamily: 'NotoSansArabic',
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'بلاغ طوارئ سريع من غير تسجيل',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'NotoSansArabic',
-                    fontSize: 14,
-                    height: 1.35,
-                    color: Colors.white.withValues(alpha: 0.95),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _CreateAccountCard extends StatelessWidget {
-  const _CreateAccountCard({required this.onTap});
+  const _CreateAccountCard({
+    required this.onTap,
+    required this.cardColor,
+    required this.brandRed,
+    required this.textColor,
+  });
 
   final VoidCallback onTap;
+  final Color cardColor;
+  final Color brandRed;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: _kCardGrey,
+      color: cardColor,
       elevation: 3,
       shadowColor: Colors.black12,
       borderRadius: BorderRadius.circular(16),
@@ -252,28 +234,28 @@ class _CreateAccountCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.person_add_alt_1_outlined,
-                  color: _kBrandRed,
+                  color: brandRed,
                   size: 52,
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'انشاء حساب',
+                  context.loc.landingCreateAccount,
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: _kTextDark,
+                    color: textColor,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'سجل حساب عشان تستخدم كل المميزات وجهات الاتصال الطارئة',
+                  context.loc.landingCreateAccountDesc,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 14,
                     height: 1.35,
-                    color: Colors.grey.shade700,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -286,9 +268,11 @@ class _CreateAccountCard extends StatelessWidget {
 }
 
 class _LoginPrompt extends StatelessWidget {
-  const _LoginPrompt({required this.onLogin});
+  const _LoginPrompt({required this.onLogin, required this.brandRed, required this.textColor});
 
   final VoidCallback onLogin;
+  final Color brandRed;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -304,23 +288,88 @@ class _LoginPrompt extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'عندك اكونت؟ ',
+                context.loc.landingHaveAccount,
                 style: TextStyle(
                   fontFamily: 'NotoSansArabic',
                   fontSize: 15,
-                  color: _kTextDark,
+                  color: textColor,
                 ),
               ),
+              const SizedBox(width: 4),
               Text(
-                'تسجيل دخول',
+                context.loc.landingLoginBtn,
                 style: TextStyle(
                   fontFamily: 'NotoSansArabic',
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: _kBrandRed,
+                  color: brandRed,
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmergencyReportCard extends StatelessWidget {
+  const _EmergencyReportCard({required this.onTap, required this.brandRed});
+  final VoidCallback onTap;
+  final Color brandRed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: brandRed,
+      elevation: 4,
+      shadowColor: brandRed.withValues(alpha: 0.3),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.emergency_share_rounded,
+                    color: Colors.white,
+                    size: 44,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  context.loc.landingEmergency,
+                  style: const TextStyle(
+                    fontFamily: 'NotoSansArabic',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  context.loc.landingEmergencyDesc,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'NotoSansArabic',
+                    fontSize: 14,
+                    height: 1.35,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

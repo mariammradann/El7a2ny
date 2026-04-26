@@ -1,7 +1,15 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
-enum SponsorCategory { all, cars, insurance }
+import '../core/localization/app_strings.dart';
+import '../services/session_service.dart';
+import '../models/sponsor_model.dart';
+import '../services/api_service.dart';
+import 'add_sponsor_page.dart';
+import 'become_partner_page.dart';
 
+// ─────────────────────────────────────────────
+//  SPONSORS PAGE
+// ─────────────────────────────────────────────
 class SponsorsPage extends StatefulWidget {
   const SponsorsPage({super.key});
 
@@ -10,616 +18,307 @@ class SponsorsPage extends StatefulWidget {
 }
 
 class _SponsorsPageState extends State<SponsorsPage> {
-  SponsorCategory _selectedCategory = SponsorCategory.all;
+  String _selectedCategory = 'all';
+  List<SponsorModel> _sponsors = [];
+  bool _loading = true;
+  String? _error;
 
-  final List<Map<String, dynamic>> _allSponsors = [
-    {
-      'category': SponsorCategory.cars,
-      'topLabel': 'شريك مميز',
-      'topColor': const Color(0xFFFF8C00),
-      'borderColor': const Color(0xFFF97316),
-      'buttonColor': const Color(0xFFEA580C),
-      'iconBackground': const Color(0xFFFFEBE5),
-      'iconColor': const Color(0xFFDC2626),
-      'title': 'بافاريان أوتو جروب',
-      'rating': '4.8',
-      'badgeLabel': 'مركز سيارات',
-      'badgeBackground': const Color(0xFFFFEDD5),
-      'badgeTextColor': const Color(0xFFEA580C),
-      'description': 'خدمات سيارات مميزة في جميع أنحاء مصر',
-      'services': ['مساعدة على الطريق', 'ونش طوارئ', 'فحص مجاني', 'دعم 24/7'],
-      'phone': '16625',
-      'branch': 'فرع 15',
-    },
-    {
-      'category': SponsorCategory.cars,
-      'topLabel': null,
-      'topColor': Colors.transparent,
-      'borderColor': Colors.transparent,
-      'buttonColor': const Color(0xFFEA580C),
-      'iconBackground': const Color(0xFFE0F2FE),
-      'iconColor': const Color(0xFF2563EB),
-      'title': 'غبور أوتو',
-      'rating': '4.7',
-      'badgeLabel': 'مركز سيارات',
-      'badgeBackground': const Color(0xFFFFF7ED),
-      'badgeTextColor': const Color(0xFFF97316),
-      'description': 'موزع ومقدم خدمات سيارات رائد',
-      'services': [
-        'خدمة الونش',
-        'دعم الحوادث',
-        'مطالبات التأمين',
-        'إصلاحات طارئة',
-      ],
-      'phone': '16662',
-      'branch': 'فرع 25',
-    },
-    {
-      'category': SponsorCategory.insurance,
-      'topLabel': 'شريك مميز',
-      'topColor': const Color(0xFF16A34A),
-      'borderColor': const Color(0xFF16A34A),
-      'buttonColor': const Color(0xFF16A34A),
-      'iconBackground': const Color(0xFFD1FAE5),
-      'iconColor': const Color(0xFF16A34A),
-      'title': 'أليانز مصر',
-      'rating': '4.9',
-      'badgeLabel': 'تأمين',
-      'badgeBackground': const Color(0xFFD1FAE5),
-      'badgeTextColor': const Color(0xFF166534),
-      'description': 'رائد التأمين العالمي بتغطية شاملة',
-      'services': [
-        'شبكة دولية',
-        'تغطية طبية شاملة',
-        'رعاية طوارئ',
-        'علاج بدون نقدي',
-      ],
-      'phone': '16555',
-      'branch': 'فرع 200',
-    },
-    {
-      'category': SponsorCategory.insurance,
-      'topLabel': null,
-      'topColor': Colors.transparent,
-      'borderColor': Colors.transparent,
-      'buttonColor': const Color(0xFF16A34A),
-      'iconBackground': const Color(0xFFE0F2FE),
-      'iconColor': const Color(0xFF2563EB),
-      'title': 'مصر للتأمين',
-      'rating': '4.5',
-      'badgeLabel': 'تأمين',
-      'badgeBackground': const Color(0xFFD1FAE5),
-      'badgeTextColor': const Color(0xFF166534),
-      'description': 'شركة التأمين المصرية الموثوقة',
-      'services': ['باقات معقولة', 'معالجة سريعة', 'شبكة واسعة', 'تغطية محلية'],
-      'phone': '16223',
-      'branch': 'فرع 106',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
 
-  List<Map<String, dynamic>> get _filteredSponsors {
-    if (_selectedCategory == SponsorCategory.all) {
-      return _allSponsors;
+  Future<void> _load() async {
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+      final data = await ApiService.fetchSponsors();
+      if (mounted) {
+        setState(() {
+          _sponsors = data;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     }
-    return _allSponsors
-        .where((sponsor) => sponsor['category'] == _selectedCategory)
-        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8F9FA),
-        body: SafeArea(
-          bottom: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _SponsorsHeader(),
-              const SizedBox(height: 14),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    final loc = context.loc;
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: theme.primaryColor,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 140,
+              pinned: true,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              elevation: 0,
+              centerTitle: true,
+              flexibleSpace: FlexibleSpaceBar(
+                centerTitle: true,
+                titlePadding: const EdgeInsets.only(bottom: 16),
+                title: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _SponsorsTabs(
-                      selectedCategory: _selectedCategory,
-                      onCategoryChanged: (category) {
-                        setState(() {
-                          _selectedCategory = category;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        _selectedCategory == SponsorCategory.all
-                            ? 'عرض جميع 8 شركاء موثوقين'
-                            : _selectedCategory == SponsorCategory.cars
-                            ? 'عرض ${_filteredSponsors.length} مركز سيارات'
-                            : 'عرض ${_filteredSponsors.length} شركات تأمين',
-                        style: const TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF475569),
+                    Text(loc.trustedSponsors, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, fontFamily: 'NotoSansArabic')),
+                    Text(loc.sponsorsSubtitle, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                  ],
+                ),
+              ),
+              actions: [
+                if (SessionService().isAdmin)
+                  IconButton(
+                    icon: const Icon(Icons.add_business_rounded, color: Colors.blue),
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddSponsorPage()));
+                    },
+                  ),
+                IconButton(
+                  icon: Icon(Icons.handshake_rounded, color: theme.primaryColor),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BecomePartnerPage()));
+                  },
+                ),
+              ],
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                child: Row(
+                  children: [
+                    if (SessionService().isAdmin) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddSponsorPage()));
+                          },
+                          icon: const Icon(Icons.add_business_rounded, size: 18),
+                          label: Text(loc.addSponsor, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'NotoSansArabic')),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.blue,
+                            side: const BorderSide(color: Colors.blue),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BecomePartnerPage()));
+                        },
+                        icon: const Icon(Icons.handshake_rounded, size: 18),
+                        label: Text(loc.becomePartner, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'NotoSansArabic')),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    children: [
-                      ..._filteredSponsors
-                          .asMap()
-                          .entries
-                          .map((entry) {
-                            int idx = entry.key;
-                            Map<String, dynamic> sponsor = entry.value;
-                            return [
-                              SponsorCard(
-                                topLabel: sponsor['topLabel'],
-                                topColor: sponsor['topColor'],
-                                borderColor: sponsor['borderColor'],
-                                buttonColor: sponsor['buttonColor'],
-                                iconBackground: sponsor['iconBackground'],
-                                iconColor: sponsor['iconColor'],
-                                title: sponsor['title'],
-                                rating: sponsor['rating'],
-                                badgeLabel: sponsor['badgeLabel'],
-                                badgeBackground: sponsor['badgeBackground'],
-                                badgeTextColor: sponsor['badgeTextColor'],
-                                description: sponsor['description'],
-                                services: List<String>.from(
-                                  sponsor['services'],
-                                ),
-                                phone: sponsor['phone'],
-                                branch: sponsor['branch'],
-                              ),
-                              if (idx < _filteredSponsors.length - 1)
-                                const SizedBox(height: 16),
-                            ];
-                          })
-                          .expand((list) => list),
-                      const SizedBox(height: 24),
-                      const _PartnerFooterCard(),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SponsorsHeader extends StatelessWidget {
-  const _SponsorsHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerRight,
-          end: Alignment.centerLeft,
-          colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
-        ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-      ),
-      padding: const EdgeInsets.fromLTRB(18, 20, 18, 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              InkWell(
-                onTap: () => Navigator.of(context).pop(),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.16),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.close, size: 22, color: Colors.white),
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.all(10),
-                child: const Icon(
-                  Icons.apartment,
-                  size: 22,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'الرعاة الموثوقون',
-              style: TextStyle(
-                fontFamily: 'NotoSansArabic',
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          const Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'شركاء متميزون لاحتياجات الطوارئ',
-              style: TextStyle(
-                fontFamily: 'NotoSansArabic',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.white70,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SponsorsTabs extends StatelessWidget {
-  const _SponsorsTabs({
-    required this.selectedCategory,
-    required this.onCategoryChanged,
-  });
-
-  final SponsorCategory selectedCategory;
-  final Function(SponsorCategory) onCategoryChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      textDirection: TextDirection.rtl,
-      children: [
-        Expanded(
-          child: _SponsorTab(
-            label: 'جميع الرعاة',
-            active: selectedCategory == SponsorCategory.all,
-            onTap: () => onCategoryChanged(SponsorCategory.all),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _SponsorTab(
-            label: 'مراكز السيارات',
-            icon: Icons.local_taxi,
-            active: selectedCategory == SponsorCategory.cars,
-            onTap: () => onCategoryChanged(SponsorCategory.cars),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _SponsorTab(
-            label: 'التأمين الصحي',
-            icon: Icons.shield,
-            active: selectedCategory == SponsorCategory.insurance,
-            onTap: () => onCategoryChanged(SponsorCategory.insurance),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SponsorTab extends StatelessWidget {
-  const _SponsorTab({
-    required this.label,
-    this.icon,
-    required this.active,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData? icon;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFF2563EB) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(999),
-          border: active ? null : Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 16,
-                color: active ? Colors.white : const Color(0xFF475569),
-              ),
-              const SizedBox(width: 6),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'NotoSansArabic',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: active ? Colors.white : const Color(0xFF475569),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class SponsorCard extends StatelessWidget {
-  const SponsorCard({
-    super.key,
-    required this.title,
-    required this.rating,
-    required this.badgeLabel,
-    required this.badgeBackground,
-    required this.badgeTextColor,
-    required this.description,
-    required this.services,
-    required this.phone,
-    required this.branch,
-    required this.buttonColor,
-    required this.iconBackground,
-    required this.iconColor,
-    required this.borderColor,
-    required this.topColor,
-    this.topLabel,
-  });
-
-  final String title;
-  final String rating;
-  final String badgeLabel;
-  final Color badgeBackground;
-  final Color badgeTextColor;
-  final String description;
-  final List<String> services;
-  final String phone;
-  final String branch;
-  final Color buttonColor;
-  final Color iconBackground;
-  final Color iconColor;
-  final Color borderColor;
-  final Color topColor;
-  final String? topLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: borderColor,
-          width: borderColor == Colors.transparent ? 0 : 1.4,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (topLabel != null) ...[
-            Container(
-              decoration: BoxDecoration(
-                color: topColor,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(22),
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const Icon(Icons.star, size: 18, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Text(
-                    topLabel!,
-                    style: const TextStyle(
-                      fontFamily: 'NotoSansArabic',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
+            SliverToBoxAdapter(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                physics: const BouncingScrollPhysics(),
+                child: Row(
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: iconBackground,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      padding: const EdgeInsets.all(10),
-                      child: Icon(Icons.apartment, color: iconColor, size: 26),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
+                    _CategoryChip(label: loc.allSponsors, icon: Icons.all_inclusive, selected: _selectedCategory == 'all', onTap: () => setState(() => _selectedCategory = 'all')),
+                    const SizedBox(width: 12),
+                    _CategoryChip(label: loc.carCenters, icon: Icons.car_repair, selected: _selectedCategory == 'cars', onTap: () => setState(() => _selectedCategory = 'cars')),
+                    const SizedBox(width: 12),
+                    _CategoryChip(label: loc.insuranceSponsors, icon: Icons.health_and_safety, selected: _selectedCategory == 'medical', onTap: () => setState(() => _selectedCategory = 'medical')),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 120),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  if (_loading)
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 80), child: Center(child: CircularProgressIndicator()))
+                  else if (_error != null)
+                    Center(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontFamily: 'NotoSansArabic',
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star,
-                                size: 14,
-                                color: Color(0xFFF59E0B),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                rating,
-                                style: const TextStyle(
-                                  fontFamily: 'NotoSansArabic',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
-                            ],
-                          ),
+                          const Icon(Icons.error_outline_rounded, color: Colors.orange, size: 48),
+                          const SizedBox(height: 12),
+                          Text(loc.connError, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          TextButton(onPressed: _load, child: Text(loc.retry)),
                         ],
                       ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: badgeBackground,
-                        borderRadius: BorderRadius.circular(12),
+                    )
+                  else ...[
+                    ..._sponsors.where((s) {
+                      if (_selectedCategory == 'all') return true;
+                      if (_selectedCategory == 'cars') return s.category == SponsorCategory.cars;
+                      if (_selectedCategory == 'medical') {
+                        return s.category == SponsorCategory.insurance || s.category == SponsorCategory.medical;
+                      }
+                      return true;
+                    }).map((s) => Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: _SponsorCard(
+                        title: s.title,
+                        badge: s.badgeLabel,
+                        imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=128&h=128&auto=format&fit=crop', // fallback image
+                        services: s.services,
+                        phone: s.phone,
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      child: Text(
-                        badgeLabel,
-                        style: TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: badgeTextColor,
-                        ),
-                      ),
-                    ),
+                    )),
                   ],
+                ]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CategoryChip({required this.label, required this.icon, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? theme.primaryColor : theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: selected ? [BoxShadow(color: theme.primaryColor.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))] : [],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: selected ? Colors.white : theme.colorScheme.onSurface),
+            const SizedBox(width: 8),
+            Text(label, style: TextStyle(color: selected ? Colors.white : theme.colorScheme.onSurface, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SponsorCard extends StatelessWidget {
+  final String title, badge, imageUrl, phone;
+  final List<String> services;
+
+  const _SponsorCard({required this.title, required this.badge, required this.imageUrl, required this.phone, required this.services});
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = context.loc;
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(imageUrl, width: 64, height: 64, fit: BoxFit.cover, errorBuilder: (_, _, _) => Container(color: theme.primaryColor.withValues(alpha: 0.1), width: 64, height: 64, child: const Icon(Icons.business))),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontFamily: 'NotoSansArabic',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF4B5563),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'الخدمات المقدمة:',
-                  style: TextStyle(
-                    fontFamily: 'NotoSansArabic',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF374151),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _SponsorServicesGrid(services: services),
-                const SizedBox(height: 16),
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  child: Row(
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.phone,
-                        color: Color(0xFF2563EB),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        phone,
-                        style: const TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF111827),
-                        ),
-                      ),
-                      const Spacer(),
-                      const Icon(
-                        Icons.location_on,
-                        color: Color(0xFFDC2626),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        branch,
-                        style: const TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF111827),
-                        ),
-                      ),
+                      Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: theme.primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: Text(badge, style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w900, fontSize: 10, fontFamily: 'NotoSansArabic'))),
+                      const SizedBox(height: 6),
+                      Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17, fontFamily: 'NotoSansArabic')),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                IconButton.filledTonal(onPressed: () {}, icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16)),
+                if (SessionService().isAdmin) ...[
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    onPressed: () {
+                      SessionService().logAction('Started editing sponsor: $title');
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Sponsor Mode Active')));
+                    },
+                    icon: const Icon(Icons.edit_rounded, size: 16, color: Colors.blue),
                   ),
-                  onPressed: () {},
-                  child: const Text(
-                    'اتصل الآن',
-                    style: TextStyle(
-                      fontFamily: 'NotoSansArabic',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    onPressed: () {
+                      SessionService().logAction('Deleted sponsor: $title');
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sponsor Deleted')));
+                    },
+                    icon: const Icon(Icons.delete_forever_rounded, size: 16, color: Colors.red),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(loc.servicesProvided, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, fontFamily: 'NotoSansArabic')),
+                const SizedBox(height: 12),
+                Wrap(spacing: 8, runSpacing: 8, children: services.map((s) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: theme.colorScheme.onSurface.withValues(alpha: 0.04), borderRadius: BorderRadius.circular(12)), child: Text(s, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontWeight: FontWeight.bold)))).toList()),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(18), border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1))),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        Icon(Icons.phone_rounded, color: theme.primaryColor, size: 20),
+                        const SizedBox(width: 12),
+                        Text(phone, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                        const Spacer(),
+                        Text(loc.callNowBtn, style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w900, fontSize: 13, fontFamily: 'NotoSansArabic')),
+                      ],
                     ),
                   ),
                 ),
@@ -628,139 +327,6 @@ class SponsorCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PartnerFooterCard extends StatelessWidget {
-  const _PartnerFooterCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.centerRight,
-          end: Alignment.centerLeft,
-          colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.18),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.apartment, size: 32, color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text(
-            'كن شريكاً',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'NotoSansArabic',
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'انضم لبرنامج الشركاء وتمتع بوصول أسرع إلى العملاء الموثوقين',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'NotoSansArabic',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white70,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 22),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            onPressed: () {},
-            child: const Text(
-              'التقدم للشراكة',
-              style: TextStyle(
-                fontFamily: 'NotoSansArabic',
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF2563EB),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SponsorServicesGrid extends StatelessWidget {
-  const _SponsorServicesGrid({required this.services});
-
-  final List<String> services;
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
-      childAspectRatio: 3.8,
-      children: services.map((service) {
-        return Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.check_circle,
-                size: 16,
-                color: Color(0xFF16A34A),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  service,
-                  style: const TextStyle(
-                    fontFamily: 'NotoSansArabic',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1F2937),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
     );
   }
 }

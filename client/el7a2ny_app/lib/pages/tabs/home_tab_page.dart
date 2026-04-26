@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/api_exception.dart';
-import '../../core/config/api_config.dart';
 import '../../data/models/device_status.dart';
 import '../../data/repositories/device_repository.dart';
 import '../../widgets/emergency_dashboard_widgets.dart';
@@ -11,7 +10,7 @@ import '../sponsors_page.dart';
 import '../premium_subscription_page.dart';
 import '../sensors_page.dart';
 import '../smart_watch_page.dart';
-import '../safety_tab.dart';
+import '../../core/localization/app_strings.dart';
 
 /// الصفحة الرئيسية داخل الـ shell: حالة الأجهزة من الـ API + أزرار الوصول السريع.
 class HomeTabPage extends StatefulWidget {
@@ -56,10 +55,6 @@ class _HomeTabPageState extends State<HomeTabPage> {
     }
   }
 
-  void _toast(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   String _errorText(Object e) {
     if (e is ApiException) {
       final message = e.message;
@@ -67,9 +62,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
       if (lower.contains('connection refused') ||
           lower.contains('failed host lookup') ||
           lower.contains('socketexception')) {
-        return 'تعذر الاتصال بالخادم.\n'
-            'تأكدي أن السيرفر شغال وأن API_BASE_URL مضبوط صح.\n'
-            'العنوان الحالي: ${ApiConfig.baseUrl}${ApiConfig.apiPrefix}';
+        return context.loc.connError;
       }
       return message;
     }
@@ -78,16 +71,17 @@ class _HomeTabPageState extends State<HomeTabPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     if (_loading) {
-      return ColoredBox(
-        color: emergencyPageBg,
+      return Container(
+        color: getEmergencyPageBg(context),
         child: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_error != null || _status == null) {
-      return ColoredBox(
-        color: emergencyPageBg,
+      return Container(
+        color: getEmergencyPageBg(context),
         child: SafeArea(
           child: Center(
             child: Padding(
@@ -98,7 +92,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
                   Icon(
                     Icons.cloud_off_outlined,
                     size: 48,
-                    color: Colors.grey.shade600,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -106,15 +100,15 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'NotoSansArabic',
-                      color: emergencyTextDark,
+                      color: getEmergencyTextDark(context),
                     ),
                   ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: _loadDevices,
                     child: Text(
-                      'إعادة المحاولة',
-                      style: TextStyle(
+                      context.loc.retry,
+                      style: const TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontWeight: FontWeight.w700,
                       ),
@@ -129,8 +123,8 @@ class _HomeTabPageState extends State<HomeTabPage> {
     }
 
     final status = _status!;
-    return ColoredBox(
-      color: emergencyPageBg,
+    return Container(
+      color: getEmergencyPageBg(context),
       child: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -139,24 +133,24 @@ class _HomeTabPageState extends State<HomeTabPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'نظام الحالي للطوارئ',
+                context.loc.currentSystem,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'NotoSansArabic',
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: emergencyTitleRed,
+                  color: getEmergencyTitleRed(context),
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                'منصة الاستجابة الذكية للطوارئ',
+                context.loc.responsePlatform,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'NotoSansArabic',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: emergencySubtitleTeal,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -165,26 +159,26 @@ class _HomeTabPageState extends State<HomeTabPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'حالة الأجهزة',
+                      context.loc.deviceStatus,
                       style: TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: emergencyTextDark,
+                        color: getEmergencyTextDark(context),
                       ),
                     ),
                     const SizedBox(height: 16),
                     EmergencyDeviceStatusRow(
                       icon: Icons.watch_rounded,
-                      iconColor: const Color(0xFF1976D2),
-                      label: 'الساعة الذكية',
+                      iconColor: Theme.of(context).colorScheme.primary,
+                      label: context.loc.smartWatch,
                       connected: status.smartwatchConnected,
                     ),
                     const SizedBox(height: 14),
                     EmergencyDeviceStatusRow(
                       icon: Icons.monitor_heart_outlined,
-                      iconColor: const Color(0xFF7B1FA2),
-                      label: 'حساس المنزل',
+                      iconColor: Theme.of(context).colorScheme.secondary,
+                      label: context.loc.homeSensor,
                       connected: status.homeSensorConnected,
                     ),
                   ],
@@ -196,34 +190,19 @@ class _HomeTabPageState extends State<HomeTabPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'وصول سريع',
+                      context.loc.quickAccess,
                       style: TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: emergencyTextDark,
+                        color: getEmergencyTextDark(context),
                       ),
                     ),
                     const SizedBox(height: 14),
+
                     EmergencySolidButton(
-                      label: 'تفعيل التنبيهات',
-                      backgroundColor: const Color(0xFF1565C0),
-                      onPressed: () => _toast(
-                        context,
-                        'تفعيل التنبيهات — اربطي الـ endpoint في المستودع',
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    EmergencySolidButton(
-                      label: 'تفعيل تنبيه الطوارئ 🚨',
-                      backgroundColor: const Color(0xFFE53935),
-                      onPressed: () =>
-                          _toast(context, 'تنبيه الطوارئ — اربطي الـ endpoint'),
-                    ),
-                    const SizedBox(height: 10),
-                    EmergencySolidButton(
-                      label: 'حساسات',
-                      backgroundColor: const Color(0xFF6A1B9A),
+                      label: context.loc.sensors,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -234,8 +213,8 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     ),
                     const SizedBox(height: 10),
                     EmergencySolidButton(
-                      label: 'الساعة',
-                      backgroundColor: const Color(0xFF0277BD),
+                      label: context.loc.theWatch,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -246,11 +225,14 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     ),
                     const SizedBox(height: 10),
                     EmergencyGradientButton(
-                      label: 'Sponsors',
-                      gradient: const LinearGradient(
+                      label: context.loc.sponsors,
+                      gradient: LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [Color(0xFF42A5F5), Color(0xFF7E57C2)],
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.secondary,
+                        ],
                       ),
                       onPressed: () {
                         Navigator.of(context).push(
@@ -262,28 +244,39 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     ),
                     const SizedBox(height: 10),
                     EmergencySolidButton(
-                      label: 'لوحة تحكم',
-                      backgroundColor: Colors.grey.shade700,
+                      label: context.loc.emergencyDashboard,
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey.shade800
+                          : Colors.grey.shade700,
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (context) => Scaffold(
                               appBar: AppBar(
-                                title: const Text(
-                                  'لوحة التحكم',
-                                  style: TextStyle(
+                                title: Text(
+                                  context.loc.emergencyDashboard,
+                                  style: const TextStyle(
                                     fontFamily: 'NotoSansArabic',
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 flexibleSpace: Container(
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: [
-                                        Color(0xFF0F172A),
-                                        Color(0xFF1E3A8A),
-                                        Color(0xFF3730A3),
-                                      ],
+                                      colors:
+                                          Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? [
+                                              const Color(0xFF020617),
+                                              const Color(0xFF0F172A),
+                                              const Color(0xFF1E3A8A),
+                                            ]
+                                          : [
+                                              const Color(0xFF0F172A),
+                                              const Color(0xFF1E3A8A),
+                                              const Color(0xFF3730A3),
+                                            ],
                                       begin: Alignment.centerRight,
                                       end: Alignment.centerLeft,
                                     ),
@@ -304,9 +297,11 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     ),
                     const SizedBox(height: 10),
                     EmergencySolidButton(
-                      label: 'البلاغات',
-                      backgroundColor: Colors.grey.shade400,
-                      foregroundColor: emergencyTextDark,
+                      label: context.loc.alerts,
+                      backgroundColor: theme.brightness == Brightness.light
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade800,
+                      foregroundColor: getEmergencyTextDark(context),
                       height: 44,
                       onPressed: () {
                         Navigator.of(context).push(
@@ -317,53 +312,17 @@ class _HomeTabPageState extends State<HomeTabPage> {
                       },
                     ),
                     const SizedBox(height: 10),
-                    EmergencySolidButton(
-                      label: 'مكالمات الطوارئ',
-                      backgroundColor: Colors.grey.shade300,
-                      foregroundColor: const Color(0xFF0F172A),
-                      height: 44,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (context) => Scaffold(
-                              appBar: AppBar(
-                                title: const Text(
-                                  'مكالمات الطوارئ',
-                                  style: TextStyle(
-                                    fontFamily: 'NotoSansArabic',
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                flexibleSpace: Container(
-                                  decoration: const BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Color(0xFF0F172A),
-                                        Color(0xFF1E3A8A),
-                                        Color(0xFF3730A3),
-                                      ],
-                                      begin: Alignment.centerRight,
-                                      end: Alignment.centerLeft,
-                                    ),
-                                  ),
-                                ),
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: Colors.white,
-                              ),
-                              body: const SafetyTab(),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 10),
+
                     EmergencyGradientButton(
-                      label: 'Subscription',
+                      label: context.loc.premiumSub,
                       height: 52,
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [Color(0xFF43A047), Color(0xFF2E7D32)],
+                        colors: [
+                          theme.colorScheme.secondary,
+                          theme.colorScheme.secondaryContainer,
+                        ],
                       ),
                       onPressed: () {
                         Navigator.of(context).push(
@@ -422,9 +381,15 @@ class _PulseBadgeState extends State<_PulseBadge>
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       margin: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF10B981).withOpacity(0.2),
+        color: const Color(0xFF10B981).withValues(
+          alpha: Theme.of(context).brightness == Brightness.dark ? 0.1 : 0.2,
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(
+            alpha: Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.4,
+          ),
+        ),
       ),
       child: Center(
         child: Row(
@@ -443,10 +408,12 @@ class _PulseBadgeState extends State<_PulseBadge>
               ),
             ),
             const SizedBox(width: 6),
-            const Text(
-              'كل الأنظمة شغالة',
+            Text(
+              context.loc.allSystemsOperational,
               style: TextStyle(
-                color: Color(0xFF6EE7B7),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFF047857),
                 fontSize: 12,
                 fontFamily: 'NotoSansArabic',
                 height: 1,

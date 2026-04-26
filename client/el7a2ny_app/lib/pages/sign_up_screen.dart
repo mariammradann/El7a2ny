@@ -1,17 +1,20 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 
-import '../core/api/api_exception.dart';
-import '../data/repositories/auth_repository.dart';
-
-/// ألوان التصميم — أحمر أساسي وخلفيات وردية فاتحة للأقسام.
-const Color _kBrandRed = Color(0xFFE32626);
-const Color _kSectionPink = Color(0xFFFDECEC);
-const Color _kTextDark = Color(0xFF424242);
-const Color _kPlaceholderGrey = Color(0xFF9E9E9E);
+import 'package:el7a2ny_app/core/api/api_exception.dart';
+import 'package:el7a2ny_app/core/services/social_auth_service.dart';
+import 'package:el7a2ny_app/data/repositories/auth_repository.dart';
+import 'package:el7a2ny_app/core/localization/app_strings.dart';
+import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
+import '../services/api_service.dart';
+import '../widgets/global_fab_overlay.dart';
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+  final SocialProfile? socialProfile;
+  const SignUpScreen({super.key, this.socialProfile});
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -19,10 +22,13 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _auth = AuthRepository();
 
-  bool _micGranted = false;
-  bool _locationGranted = false;
-  bool _cameraGranted = false;
+  final bool _micGranted = false;
+  final bool _locationGranted = false;
+  final bool _cameraGranted = false;
+  bool _submitting = false;
+  bool _volunteerEnabled = false;
 
   final _firstName = TextEditingController();
   final _lastName = TextEditingController();
@@ -41,95 +47,123 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _hasVehicle;
   String? _smartWatch;
   String? _sensor;
+  String? _selectedCertificateName;
 
-  bool _volunteerEnabled = false;
-  bool _submitting = false;
-
-  final List<_ContactControllers> _contacts = [];
-  final _auth = AuthRepository();
+  final List<_ContactControllers> _contacts = [
+    _ContactControllers(),
+    _ContactControllers(),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _contacts.add(_ContactControllers());
+    if (widget.socialProfile != null) {
+      _firstName.text = widget.socialProfile!.firstName;
+      _lastName.text = widget.socialProfile!.lastName;
+      _email.text = widget.socialProfile!.email;
+    }
   }
 
   @override
   void dispose() {
-    _firstName.dispose();
-    _lastName.dispose();
-    _email.dispose();
-    _phone.dispose();
-    _nationalId.dispose();
-    _day.dispose();
-    _month.dispose();
-    _year.dispose();
-    _password.dispose();
-    _confirmPassword.dispose();
-    _skills.dispose();
-    for (final c in _contacts) {
-      c.dispose();
-    }
+    _firstName.dispose(); _lastName.dispose(); _email.dispose(); _phone.dispose();
+    _nationalId.dispose(); _day.dispose(); _month.dispose(); _year.dispose();
+    _password.dispose(); _confirmPassword.dispose(); _skills.dispose();
+    for (var c in _contacts) { c.dispose(); }
     super.dispose();
   }
 
-  void _addContact() {
-    setState(() {
-      _contacts.add(_ContactControllers());
-    });
+  void _addContact() => setState(() => _contacts.add(_ContactControllers()));
+
+  Future<void> _pickContact(int index) async {
+    if (await Permission.contacts.request().isGranted) {
+      final contactId = await FlutterContacts.native.showPicker();
+      if (contactId != null) {
+        final full = await FlutterContacts.get(contactId, properties: {ContactProperty.phone});
+        if (full != null && mounted) {
+          setState(() {
+            _contacts[index].name.text = full.displayName ?? '';
+            if (full.phones.isNotEmpty) {
+              _contacts[index].phone.text = full.phones.first.number.replaceAll(RegExp(r'[^\d]'), '');
+            }
+          });
+        }
+      }
+    } else {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.loc.allowContactAccess)));
+    }
   }
 
-  /// جسم JSON يُرسل لـ Django — عدّلي أسماء المفاتيح لتطابق الـ serializer.
-  Map<String, dynamic> _buildRegistrationBody() {
-    return {
-      'first_name': _firstName.text.trim(),
-      'last_name': _lastName.text.trim(),
-      'email': _email.text.trim(),
-      'phone': _phone.text.trim(),
-      'national_id': _nationalId.text.trim(),
-      'birth_date': '${_year.text.trim()}-${_month.text.trim()}-${_day.text.trim()}',
-      'gender': _gender,
-      'blood_type': _bloodType,
-      'has_vehicle': _hasVehicle,
-      'permission_mic': _micGranted,
-      'permission_location': _locationGranted,
-      'permission_camera': _cameraGranted,
-      'password': _password.text,
-      'volunteer_enabled': _volunteerEnabled,
-      'skills': _skills.text.trim(),
-      'smart_watch_model': _smartWatch,
-      'sensor_model': _sensor,
-      'emergency_contacts': [
-        for (final c in _contacts)
-          {
-            'name': c.name.text.trim(),
-            'relation': c.relation.text.trim(),
-            'phone': c.phone.text.trim(),
-          },
-      ],
-    };
+  Future<void> _pickCertificate() async {
+    final result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['pdf', 'jpg', 'png']);
+    if (result != null && mounted) {
+      setState(() => _selectedCertificateName = result.files.single.name);
+    }
   }
+
+  Map<String, dynamic> _buildRegistrationBody() {
+  return {
+    // 1. الحقول الأساسية (تأكد من الأسماء)
+    'first_name': _firstName.text.trim(),
+    'last_name': _lastName.text.trim(),
+    'email': _email.text.trim(),
+    'password': _password.text,
+    
+    // 2. تعديل المسميات لتطابق الداتابيز (مهم جداً)
+    'phone_number': _phone.text.trim(),     // كانت 'phone' وغيرناها
+    'national_id': _nationalId.text.trim(),
+    'date_of_birth': '${_year.text.trim()}-${_month.text.trim()}-${_day.text.trim()}', // كانت 'birth_date'
+    
+    // 3. حقول إجبارية في الداتابيز (لازم تتبعت حتى لو قيم افتراضية)
+    'gender': _gender ?? 'male', // تأكد إنها مش null
+    'blood_type': _bloodType ?? 'O+', 
+    'user_type': _volunteerEnabled ? 'volunteer' : 'customer', // 'customer' بدل 'normal'
+    
+    // 4. حقول الـ Permissions (لازم تتبعت Boolean)
+    'mic': _micGranted,
+    'camera': _cameraGranted,
+    'share_location': _locationGranted,
+    
+    // 5. حقول الصور (لو مش هترفع صورة دلوقتي ابعتها String فاضي مش null)
+    'id_card_front': '',
+    'id_card_back': '',
+    'external_certificate': '',
+    
+    // 6. حقول إضافية
+    'status': 'active',
+    'verification_status': 'pending',
+    'field': _skills.text.trim(),
+    
+    // 7. الحقول الجديدة
+    'has_vehicle': _hasVehicle == 'yes',
+    'volunteer_enabled': _volunteerEnabled,
+    'skills': _skills.text.trim(),
+    'smart_watch_model': _smartWatch,
+    'sensor_model': _sensor,
+    'emergency_contacts': _contacts
+        .where((c) => c.name.text.trim().isNotEmpty && c.phone.text.trim().isNotEmpty)
+        .map((c) => {
+              'name': c.name.text.trim(),
+              'phone': c.phone.text.trim(),
+              'relationship': c.relation.text.trim(),
+            })
+        .toList(),
+  };
+}
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _submitting = true);
     try {
       await _auth.register(_buildRegistrationBody());
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم إنشاء الحساب')),
-      );
-      Navigator.of(context).pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.loc.accountCreated)));
+        Navigator.of(context).pop();
+      }
     } on ApiException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -137,367 +171,463 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _kTextDark),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.hide();
+    });
+
+    final theme = Theme.of(context);
+    final loc = context.loc;
+    final primary = theme.primaryColor;
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(loc.signUpTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        actions: [const LanguageToggleButton(), const SizedBox(width: 8)],
+      ),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'انشاء حساب',
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: _kBrandRed,
+              Text(loc.signUpSubtitle, textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontFamily: 'NotoSansArabic')),
+              const SizedBox(height: 24),
+              
+              _PremiumSection(
+                title: loc.basicInfo,
+                child: Column(
+                  children: [
+                    _AvatarUploader(onTap: () {}, primary: primary),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(child: _AppField(controller: _firstName, label: loc.firstNameLabel)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _AppField(controller: _lastName, label: loc.lastNameLabel)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _AppField(
+                      controller: _email,
+                      label: loc.emailLabel,
+                      keyboardType: TextInputType.emailAddress,
+                      prefix: Icons.email_outlined,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return context.loc.requiredField;
+                        if (!v.contains('@')) return context.loc.emailValidationAt;
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    _AppField(
+                      controller: _phone,
+                      label: loc.mobileNum,
+                      keyboardType: TextInputType.phone,
+                      prefix: Icons.phone_outlined,
+                      formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+                      validator: (v) => (v == null || v.trim().length != 11) ? context.loc.mobileValidation11 : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _AppField(
+                      controller: _nationalId,
+                      label: loc.nationalIdLabel,
+                      keyboardType: TextInputType.number,
+                      prefix: Icons.badge_outlined,
+                      formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(14)],
+                      validator: (v) => (v == null || v.trim().length != 14) ? context.loc.nationalIdValidation : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _DateRow(day: _day, month: _month, year: _year),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: _AppDropdown<String>(
+                          label: loc.genderLabel,
+                          value: _gender,
+                          items: const ['male', 'female'],
+                          itemLabel: (v) => v == 'male' ? loc.maleOption : loc.femaleOption,
+                          onChanged: (v) => setState(() => _gender = v),
+                        )),
+                        const SizedBox(width: 12),
+                        Expanded(child: _AppDropdown<String>(
+                          label: loc.bloodTypeLabel,
+                          value: _bloodType,
+                          items: const ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'],
+                          onChanged: (v) => setState(() => _bloodType = v),
+                        )),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _AppDropdown<String>(
+                      label: loc.hasVehicleLabel,
+                      value: _hasVehicle,
+                      items: const ['yes', 'no'],
+                      itemLabel: (v) => v == 'yes' ? loc.yes : loc.no,
+                      onChanged: (v) => setState(() => _hasVehicle = v),
+                    ),
+                    if (widget.socialProfile == null) ...[
+                      const SizedBox(height: 16),
+                      _AppField(controller: _password, label: loc.password, obscure: true, prefix: Icons.lock_outline),
+                      const SizedBox(height: 16),
+                      _AppField(controller: _confirmPassword, label: loc.confirmPassword, obscure: true, prefix: Icons.lock_reset_outlined),
+                    ],
+                  ],
                 ),
               ),
-              Text(
-                'أكمل بياناتك للاستفادة من خدمات الطوارئ',
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
+              
+              const SizedBox(height: 20),
+              _PremiumSection(
+                title: loc.emergencyContacts,
+                trailing: TextButton.icon(onPressed: _addContact, icon: const Icon(Icons.add), label: Text(loc.addContactsLabel)),
+                child: Column(
+                  children: List.generate(_contacts.length, (i) => Padding(
+                    padding: EdgeInsets.only(top: i == 0 ? 0 : 20),
+                    child: _ContactItem(index: i + 1, controllers: _contacts[i], onPick: () => _pickContact(i)),
+                  )),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              _PremiumSection(
+                title: loc.smartWatchLabel,
+                child: _AppDropdown<String>(
+                  label: loc.selectModel,
+                  value: _smartWatch,
+                  items: const ['Apple Watch', 'Samsung Galaxy Watch', 'Huawei Watch', 'other'],
+                  itemLabel: (v) => v == 'other' ? loc.otherModel : v,
+                  onChanged: (v) => setState(() => _smartWatch = v),
+                  isRequired: false,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              _PremiumSection(
+                title: loc.sensorLabel,
+                child: _AppDropdown<String>(
+                  label: loc.selectModel,
+                  value: _sensor,
+                  items: const ['pulse', 'glucose', 'other'],
+                  itemLabel: (v) => v == 'pulse' ? loc.pulseSensor : (v == 'glucose' ? loc.glucoseSensor : loc.otherModel),
+                  onChanged: (v) => setState(() => _sensor = v),
+                  isRequired: false,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+              _PremiumSection(
+                title: loc.volunteerLabel,
+                child: Column(
+                  children: [
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(loc.volunteerConsent, style: const TextStyle(fontSize: 14, fontFamily: 'NotoSansArabic')),
+                      value: _volunteerEnabled,
+                      activeTrackColor: primary,
+                      onChanged: (v) => setState(() => _volunteerEnabled = v),
+                    ),
+                    if (_volunteerEnabled) ...[
+                      const SizedBox(height: 12),
+                      _AppField(controller: _skills, label: loc.addSkillsHint, maxLines: 2, isRequired: false),
+                      const SizedBox(height: 16),
+                      _UploadBox(onTap: _pickCertificate, fileName: _selectedCertificateName),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton(
+                  onPressed: _submitting ? null : _submit,
+                  style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                  child: _submitting ? const CircularProgressIndicator(color: Colors.white) : Text(loc.registerBtn, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
                 ),
               ),
             ],
           ),
         ),
-        body: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _PinkSection(
-                  title: 'الأذونات المطلوبة',
-                  child: _PermissionsRow(
-                    mic: _micGranted,
-                    location: _locationGranted,
-                    camera: _cameraGranted,
-                    onMic: (v) => setState(() => _micGranted = v),
-                    onLocation: (v) => setState(() => _locationGranted = v),
-                    onCamera: (v) => setState(() => _cameraGranted = v),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _PinkSection(
-                  title: 'المعلومات الشخصية',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _ProfileAvatarRow(
-                        onUploadTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('رفع الصورة — ربط المعرض لاحقاً')),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _OutlinedField(
-                              controller: _firstName,
-                              label: 'الاسم الأول',
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _OutlinedField(
-                              controller: _lastName,
-                              label: 'اسم العائلة',
-                              validator: (v) =>
-                                  (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _OutlinedField(
-                        controller: _email,
-                        label: 'البريد الإلكتروني',
-                        keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icons.email_outlined,
-                      ),
-                      const SizedBox(height: 12),
-                      _OutlinedField(
-                        controller: _phone,
-                        label: 'رقم الموبايل',
-                        keyboardType: TextInputType.phone,
-                        prefixIcon: Icons.phone_android_rounded,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _OutlinedField(
-                        controller: _nationalId,
-                        label: 'رقم البطاقة (١٤ رقم)',
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(14),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'تاريخ الميلاد',
-                        style: TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontSize: 13,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _OutlinedField(
-                              controller: _day,
-                              label: 'يوم',
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(2),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _OutlinedField(
-                              controller: _month,
-                              label: 'شهر',
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(2),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _OutlinedField(
-                              controller: _year,
-                              label: 'سنة',
-                              keyboardType: TextInputType.number,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(4),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _DropdownField<String>(
-                              label: 'النوع',
-                              value: _gender,
-                              items: const ['ذكر', 'أنثى'],
-                              onChanged: (v) => setState(() => _gender = v),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _DropdownField<String>(
-                              label: 'فصيلة الدم',
-                              value: _bloodType,
-                              items: const [
-                                'A+',
-                                'A-',
-                                'B+',
-                                'B-',
-                                'O+',
-                                'O-',
-                                'AB+',
-                                'AB-',
-                              ],
-                              onChanged: (v) => setState(() => _bloodType = v),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _DropdownField<String>(
-                        label: 'هل لديك سيارة؟',
-                        value: _hasVehicle,
-                        items: const ['نعم', 'لا'],
-                        onChanged: (v) => setState(() => _hasVehicle = v),
-                      ),
-                      const SizedBox(height: 12),
-                      _OutlinedField(
-                        controller: _password,
-                        label: 'كلمة السر',
-                        obscure: true,
-                        validator: (v) {
-                          if (v == null || v.length < 6) {
-                            return '٦ أحرف على الأقل';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      _OutlinedField(
-                        controller: _confirmPassword,
-                        label: 'تأكيد كلمة السر',
-                        obscure: true,
-                        validator: (v) {
-                          if (v != _password.text) {
-                            return 'غير متطابقة';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _PinkSection(
-                  title: 'جهات الاتصال الطارئة',
-                  trailing: TextButton.icon(
-                    onPressed: _addContact,
-                    icon: const Icon(Icons.add, color: _kBrandRed, size: 20),
-                    label: Text(
-                      'إضافة جهات اتصال',
-                      style: TextStyle(
-                        fontFamily: 'NotoSansArabic',
-                        fontWeight: FontWeight.w700,
-                        color: _kBrandRed,
-                      ),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < _contacts.length; i++) ...[
-                        if (i > 0) const SizedBox(height: 16),
-                        _ContactBlock(
-                          index: i + 1,
-                          controllers: _contacts[i],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _PinkSection(
-                  title: 'الساعة الذكية (اختياري)',
-                  child: _DropdownField<String>(
-                    label: 'اختر الطراز',
-                    value: _smartWatch,
-                    items: const [
-                      'Apple Watch',
-                      'Samsung Galaxy Watch',
-                      'Huawei Watch',
-                      'أخرى',
-                    ],
-                    onChanged: (v) => setState(() => _smartWatch = v),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _PinkSection(
-                  title: 'الحساس (اختياري)',
-                  child: _DropdownField<String>(
-                    label: 'اختر الطراز',
-                    value: _sensor,
-                    items: const [
-                      'حساس نبض',
-                      'حساس سكر',
-                      'أخرى',
-                    ],
-                    onChanged: (v) => setState(() => _sensor = v),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _PinkSection(
-                  title: 'متطوع',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          'أرغب في التطوع لمساعدة الآخرين في الطوارئ',
-                          style: TextStyle(
-                            fontFamily: 'NotoSansArabic',
-                            fontSize: 14,
-                            color: _kTextDark,
-                          ),
-                        ),
-                        value: _volunteerEnabled,
-                        activeThumbColor: _kBrandRed,
-                        onChanged: (v) => setState(() => _volunteerEnabled = v),
-                      ),
-                      if (_volunteerEnabled) ...[
-                        const SizedBox(height: 12),
-                        _OutlinedField(
-                          controller: _skills,
-                          label: 'أضف مهاراتك',
-                          maxLines: 2,
-                        ),
-                        const SizedBox(height: 12),
-                        _CertificateUploadZone(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('تحميل الشهادات — ربط الملفات لاحقاً'),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _submitting ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _kBrandRed,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 26,
-                            height: 26,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            'تسجيل',
-                            style: TextStyle(
-                              fontFamily: 'NotoSansArabic',
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ),
+      ),
+    );
+  }
+}
+
+class _PremiumSection extends StatelessWidget {
+  final String title;
+  final Widget child;
+  final Widget? trailing;
+  const _PremiumSection({required this.title, required this.child, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final trailingWidget = trailing;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: TextStyle(fontWeight: FontWeight.w900, color: theme.primaryColor, fontSize: 16, fontFamily: 'NotoSansArabic')),
+              trailingWidget ?? const SizedBox.shrink(),
+            ],
           ),
+          const SizedBox(height: 20),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _AppField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final bool obscure;
+  final TextInputType? keyboardType;
+  final IconData? prefix;
+  final int maxLines;
+  final bool isRequired;
+  final List<TextInputFormatter>? formatters;
+  final String? Function(String?)? validator;
+
+  const _AppField({
+    required this.controller,
+    required this.label,
+    this.obscure = false,
+    this.keyboardType,
+    this.prefix,
+    this.maxLines = 1,
+    this.isRequired = true,
+    this.formatters,
+    this.validator,
+  });
+
+  @override
+  State<_AppField> createState() => _AppFieldState();
+}
+
+class _AppFieldState extends State<_AppField> {
+  late bool _obscureText;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscureText = widget.obscure;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: widget.controller,
+      obscureText: _obscureText,
+      keyboardType: widget.keyboardType,
+      inputFormatters: widget.formatters,
+      maxLines: _obscureText ? 1 : widget.maxLines,
+      style: const TextStyle(fontFamily: 'NotoSansArabic'),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        prefixIcon: widget.prefix != null ? Icon(widget.prefix, size: 20) : null,
+        suffixIcon: widget.obscure
+            ? IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  size: 22,
+                ),
+                onPressed: () => setState(() => _obscureText = !_obscureText),
+              )
+            : null,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+      ),
+      validator: widget.validator ?? (widget.isRequired
+          ? (v) => (v == null || v.isEmpty) ? context.loc.requiredField : null
+          : null),
+    );
+  }
+}
+
+class _AppDropdown<T> extends StatelessWidget {
+  final String label;
+  final T? value;
+  final List<T> items;
+  final String Function(T)? itemLabel;
+  final ValueChanged<T?> onChanged;
+  final bool isRequired;
+
+  const _AppDropdown({
+    required this.label,
+    required this.value,
+    required this.items,
+    this.itemLabel,
+    required this.onChanged,
+    this.isRequired = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<T>(
+      initialValue: value,
+      items: items.map((e) => DropdownMenuItem(value: e, child: Text(itemLabel != null ? itemLabel!(e) : e.toString(), style: const TextStyle(fontFamily: 'NotoSansArabic')))).toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+      ),
+      validator: isRequired ? (v) => v == null ? context.loc.requiredField : null : null,
+    );
+  }
+}
+
+class _DateRow extends StatelessWidget {
+  final TextEditingController day, month, year;
+  const _DateRow({required this.day, required this.month, required this.year});
+
+  @override
+  Widget build(BuildContext context) {
+    final curYear = DateTime.now().year;
+    return Row(
+      children: [
+        Expanded(child: _AppField(
+          controller: day, 
+          label: context.loc.dayLabel, 
+          keyboardType: TextInputType.number,
+          formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(2)],
+          validator: (v) {
+            final n = int.tryParse(v ?? '');
+            if (n == null || n < 1 || n > 31) return context.loc.invalidVal;
+            return null;
+          },
+        )),
+        const SizedBox(width: 8),
+        Expanded(child: _AppField(
+          controller: month, 
+          label: context.loc.monthLabel, 
+          keyboardType: TextInputType.number,
+          formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(2)],
+          validator: (v) {
+            final n = int.tryParse(v ?? '');
+            if (n == null || n < 1 || n > 12) return context.loc.invalidVal;
+            return null;
+          },
+        )),
+        const SizedBox(width: 8),
+        Expanded(child: _AppField(
+          controller: year, 
+          label: context.loc.yearLabel, 
+          keyboardType: TextInputType.number,
+          formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
+          validator: (v) {
+            final n = int.tryParse(v ?? '');
+            if (n == null || n < 1900 || n > curYear) return context.loc.invalidVal;
+            return null;
+          },
+        )),
+      ],
+    );
+  }
+}
+
+class _ContactItem extends StatelessWidget {
+  final int index;
+  final _ContactControllers controllers;
+  final VoidCallback onPick;
+  const _ContactItem({required this.index, required this.controllers, required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = context.loc;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('${loc.contactNLabel} $index', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+            IconButton(onPressed: onPick, icon: const Icon(Icons.contact_phone_outlined, size: 20)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _AppField(controller: controllers.name, label: loc.theName),
+        const SizedBox(height: 12),
+        _AppField(controller: controllers.relation, label: loc.relationLabel),
+        const SizedBox(height: 12),
+        _AppField(
+          controller: controllers.phone, 
+          label: loc.mobileNum, 
+          keyboardType: TextInputType.phone,
+          formatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)],
+          validator: (v) => (v == null || v.trim().length != 11) ? context.loc.mobileValidation11 : null,
+        ),
+      ],
+    );
+  }
+}
+
+class _AvatarUploader extends StatelessWidget {
+  final VoidCallback onTap;
+  final Color primary;
+  const _AvatarUploader({required this.onTap, required this.primary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Stack(
+        children: [
+          CircleAvatar(radius: 50, backgroundColor: primary.withValues(alpha: 0.1), child: Icon(Icons.person_outline, size: 50, color: primary)),
+          Positioned(bottom: 0, right: 0, child: CircleAvatar(radius: 18, backgroundColor: primary, child: const Icon(Icons.camera_alt, size: 18, color: Colors.white))),
+        ],
+      ),
+    );
+  }
+}
+
+class _UploadBox extends StatelessWidget {
+  final VoidCallback onTap;
+  final String? fileName;
+  const _UploadBox({required this.onTap, this.fileName});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final loc = context.loc;
+    final isDone = fileName != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDone ? Colors.green : theme.primaryColor.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(isDone ? Icons.check_circle_outline : Icons.cloud_upload_outlined, color: isDone ? Colors.green : theme.primaryColor, size: 32),
+            const SizedBox(height: 8),
+            Text(isDone ? fileName! : loc.uploadCertLabel, style: TextStyle(fontWeight: FontWeight.bold, color: isDone ? Colors.green : null, fontFamily: 'NotoSansArabic')),
+          ],
         ),
       ),
     );
@@ -508,424 +638,5 @@ class _ContactControllers {
   final name = TextEditingController();
   final relation = TextEditingController();
   final phone = TextEditingController();
-
-  void dispose() {
-    name.dispose();
-    relation.dispose();
-    phone.dispose();
-  }
-}
-
-class _PinkSection extends StatelessWidget {
-  const _PinkSection({
-    required this.title,
-    required this.child,
-    this.trailing,
-  });
-
-  final String title;
-  final Widget child;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _kSectionPink,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: 'NotoSansArabic',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: _kBrandRed,
-                  ),
-                ),
-              ),
-              ?trailing,
-            ],
-          ),
-          const SizedBox(height: 14),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _PermissionsRow extends StatelessWidget {
-  const _PermissionsRow({
-    required this.mic,
-    required this.location,
-    required this.camera,
-    required this.onMic,
-    required this.onLocation,
-    required this.onCamera,
-  });
-
-  final bool mic;
-  final bool location;
-  final bool camera;
-  final ValueChanged<bool> onMic;
-  final ValueChanged<bool> onLocation;
-  final ValueChanged<bool> onCamera;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _PermissionTile(
-            icon: Icons.mic_none_rounded,
-            label: 'الميكروفون',
-            value: mic,
-            onChanged: onMic,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _PermissionTile(
-            icon: Icons.location_on_outlined,
-            label: 'الموقع',
-            value: location,
-            onChanged: onLocation,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _PermissionTile(
-            icon: Icons.photo_camera_outlined,
-            label: 'الكاميرا',
-            value: camera,
-            onChanged: onCamera,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PermissionTile extends StatelessWidget {
-  const _PermissionTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: _kBrandRed, size: 28),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'NotoSansArabic',
-              fontSize: 11,
-              color: _kTextDark,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Switch.adaptive(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: _kBrandRed,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProfileAvatarRow extends StatelessWidget {
-  const _ProfileAvatarRow({required this.onUploadTap});
-
-  final VoidCallback onUploadTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 36,
-          backgroundColor: Colors.blue.shade100,
-          child: Icon(Icons.person_rounded, size: 40, color: Colors.blue.shade700),
-        ),
-        const SizedBox(width: 16),
-        TextButton(
-          onPressed: onUploadTap,
-          child: Text(
-            'رفع الصورة',
-            style: TextStyle(
-              fontFamily: 'NotoSansArabic',
-              fontWeight: FontWeight.w700,
-              color: _kBrandRed,
-              fontSize: 15,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OutlinedField extends StatelessWidget {
-  const _OutlinedField({
-    required this.controller,
-    required this.label,
-    this.validator,
-    this.keyboardType,
-    this.prefixIcon,
-    this.obscure = false,
-    this.maxLines = 1,
-    this.inputFormatters,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final String? Function(String?)? validator;
-  final TextInputType? keyboardType;
-  final IconData? prefixIcon;
-  final bool obscure;
-  final int maxLines;
-  final List<TextInputFormatter>? inputFormatters;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      validator: validator,
-      keyboardType: keyboardType,
-      obscureText: obscure,
-      maxLines: obscure ? 1 : maxLines,
-      inputFormatters: inputFormatters,
-      style: const TextStyle(fontFamily: 'NotoSansArabic'),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(
-          fontFamily: 'NotoSansArabic',
-          color: _kPlaceholderGrey,
-          fontSize: 14,
-        ),
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: Colors.grey.shade600, size: 22)
-            : null,
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _kBrandRed, width: 1.5),
-        ),
-      ),
-    );
-  }
-}
-
-class _DropdownField<T> extends StatelessWidget {
-  const _DropdownField({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-
-  final String label;
-  final T? value;
-  final List<T> items;
-  final ValueChanged<T?> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<T>(
-      key: ValueKey<Object?>((label, value)),
-      initialValue: value,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(
-          fontFamily: 'NotoSansArabic',
-          color: _kPlaceholderGrey,
-          fontSize: 14,
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _kBrandRed, width: 1.5),
-        ),
-      ),
-      hint: Text(
-        'اختر',
-        style: TextStyle(fontFamily: 'NotoSansArabic', color: Colors.grey.shade500),
-      ),
-      items: items
-          .map(
-            (e) => DropdownMenuItem<T>(
-              value: e,
-              child: Text(
-                e.toString(),
-                style: const TextStyle(fontFamily: 'NotoSansArabic'),
-              ),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-    );
-  }
-}
-
-class _ContactBlock extends StatelessWidget {
-  const _ContactBlock({
-    required this.index,
-    required this.controllers,
-  });
-
-  final int index;
-  final _ContactControllers controllers;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'جهة اتصال $index',
-          style: TextStyle(
-            fontFamily: 'NotoSansArabic',
-            fontWeight: FontWeight.w700,
-            color: _kTextDark,
-          ),
-        ),
-        const SizedBox(height: 10),
-        _OutlinedField(
-          controller: controllers.name,
-          label: 'الاسم',
-        ),
-        const SizedBox(height: 10),
-        _OutlinedField(
-          controller: controllers.relation,
-          label: 'صلة القرابة',
-        ),
-        const SizedBox(height: 10),
-        _OutlinedField(
-          controller: controllers.phone,
-          label: 'رقم الهاتف',
-          keyboardType: TextInputType.phone,
-          prefixIcon: Icons.phone_rounded,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _CertificateUploadZone extends StatelessWidget {
-  const _CertificateUploadZone({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _kBrandRed.withValues(alpha: 0.4),
-              width: 1.5,
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.upload_file_rounded,
-                size: 40,
-                color: _kBrandRed.withValues(alpha: 0.85),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'أضف الشهادات الخاصة بك',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: _kTextDark,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'تحميل الشهادات',
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontSize: 13,
-                  color: _kBrandRed,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  void dispose() { name.dispose(); relation.dispose(); phone.dispose(); }
 }

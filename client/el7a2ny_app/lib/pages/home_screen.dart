@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import '../core/localization/app_strings.dart';
 import 'dashboard_tab.dart';
 import 'emergency_tab.dart';
 import 'safety_tab.dart';
 import 'alerts_tab.dart';
 import 'sensors_page.dart';
+import 'emergency_chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,26 +19,26 @@ class _HomeScreenState extends State<HomeScreen>
   late TabController _tabController;
   int _activeTab = 0;
 
-  final List<Map<String, dynamic>> _tabs = [
+  List<Map<String, dynamic>> _getTabs(BuildContext context) => [
     {
-      'label': 'لوحة التحكم',
-      'activeGradient': [Color(0xFF3B82F6), Color(0xFF6366F1)],
+      'label': context.loc.dashboard,
+      'activeGradient': const [Color(0xFF3B82F6), Color(0xFF6366F1)],
     },
     {
-      'label': 'مكالمة طوارئ',
-      'activeGradient': [Color(0xFFEF4444), Color(0xFFF97316)],
+      'label': context.loc.emergencyCall,
+      'activeGradient': const [Color(0xFFEF4444), Color(0xFFF97316)],
     },
     {
-      'label': 'معلومات السلامة',
-      'activeGradient': [Color(0xFF10B981), Color(0xFF14B8A6)],
+      'label': context.loc.safetyInfo,
+      'activeGradient': const [Color(0xFF10B981), Color(0xFF14B8A6)],
     },
     {
-      'label': 'البلاغات النشطة',
-      'activeGradient': [Color(0xFF8B5CF6), Color(0xFFA855F7)],
+      'label': context.loc.activeAlertsTab,
+      'activeGradient': const [Color(0xFF8B5CF6), Color(0xFFA855F7)],
     },
     {
-      'label': 'الحساسات',
-      'activeGradient': [Color(0xFF16A34A), Color(0xFF15803D)],
+      'label': context.loc.sensorsTab,
+      'activeGradient': const [Color(0xFF16A34A), Color(0xFF15803D)],
     },
   ];
 
@@ -57,17 +59,27 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tabs = _getTabs(context);
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: context.loc.isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF1F5F9),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const EmergencyChatScreen()),
+            );
+          },
+          backgroundColor: Theme.of(context).primaryColor,
+          child: const Icon(Icons.chat_bubble_rounded, color: Colors.white),
+        ),
         body: Column(
           children: [
             // ── Header ──────────────────────────────────────────────
-            _buildHeader(),
+            _buildHeader(context),
 
             // ── Tab Bar ─────────────────────────────────────────────
-            _buildTabBar(),
+            _buildTabBar(context, tabs),
 
             // ── Tab Content ─────────────────────────────────────────
             Expanded(
@@ -88,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -121,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.black.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -131,20 +143,20 @@ class _HomeScreenState extends State<HomeScreen>
                     color: Colors.white, size: 26),
               ),
               const SizedBox(width: 12),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'نظام الطوارئ',
-                    style: TextStyle(
+                    context.loc.emergencySystemTitle,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    'خدمات الطوارئ 24/7',
-                    style: TextStyle(color: Color(0xFF93C5FD), fontSize: 12),
+                    context.loc.emergencyServices24_7,
+                    style: const TextStyle(color: Color(0xFF93C5FD), fontSize: 12),
                   ),
                 ],
               ),
@@ -157,17 +169,19 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(BuildContext context, List<Map<String, dynamic>> tabs) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      color: Colors.white,
+      color: theme.scaffoldBackgroundColor,
       padding: const EdgeInsets.all(8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -180,18 +194,18 @@ class _HomeScreenState extends State<HomeScreen>
             borderRadius: BorderRadius.circular(10),
             gradient: LinearGradient(
               colors: List<Color>.from(
-                  _tabs[_activeTab]['activeGradient'] as List),
+                  tabs[_activeTab]['activeGradient'] as List),
             ),
           ),
           indicatorSize: TabBarIndicatorSize.tab,
           indicatorPadding: const EdgeInsets.all(4),
           dividerColor: Colors.transparent,
           labelColor: Colors.white,
-          unselectedLabelColor: const Color(0xFF64748B),
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
           labelStyle:
               const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
-          tabs: _tabs
+          tabs: tabs
               .map((t) => Tab(text: t['label'] as String))
               .toList(),
         ),
@@ -232,9 +246,9 @@ class _PulseBadgeState extends State<_PulseBadge>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF10B981).withOpacity(0.2),
+        color: const Color(0xFF10B981).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -251,9 +265,9 @@ class _PulseBadgeState extends State<_PulseBadge>
             ),
           ),
           const SizedBox(width: 6),
-          const Text(
-            'كل الأنظمة شغالة',
-            style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 12),
+          Text(
+            context.loc.allSystemsOperationalStatus,
+            style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 12),
           ),
         ],
       ),

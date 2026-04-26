@@ -18,14 +18,17 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.07),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -46,7 +49,7 @@ class StatCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
-                  color: gradientColors[0].withOpacity(0.4),
+                  color: gradientColors[0].withValues(alpha: 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -64,20 +67,20 @@ class StatCard extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 if (unit.isNotEmpty) ...[
                   const SizedBox(width: 2),
                   Text(
                     unit,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF475569),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -87,9 +90,9 @@ class StatCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: Color(0xFF64748B),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],

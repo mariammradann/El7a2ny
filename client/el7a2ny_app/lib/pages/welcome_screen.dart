@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'landing_screen.dart';
+import '../core/localization/app_strings.dart';
+import '../widgets/global_fab_overlay.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -40,8 +42,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const LandingScreen(),
-            transitionsBuilder: (_, anim, __, child) =>
+            settings: const RouteSettings(name: '/landing'),
+            pageBuilder: (_, _, _) => const LandingScreen(),
+            transitionsBuilder: (_, anim, _, child) =>
                 FadeTransition(opacity: anim, child: child),
             transitionDuration: const Duration(milliseconds: 600),
           ),
@@ -58,13 +61,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.hide();
+    });
+
+    const arLoc = AppStrings(true);
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFE44646), Color(0xFF8B0000)],
+            colors: Theme.of(context).brightness == Brightness.light
+                ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor.withValues(alpha: 0.8)]
+                : [Theme.of(context).colorScheme.primaryContainer, Theme.of(context).primaryColor],
           ),
         ),
         child: Center(
@@ -80,7 +90,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     width: 90,
                     height: 90,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(28),
                     ),
                     child: const Icon(
@@ -90,9 +100,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'الحقني',
-                    style: TextStyle(
+                  Text(
+                    arLoc.landingAppName,
+                    style: const TextStyle(
                       fontFamily: 'NotoSansArabic',
                       fontSize: 68,
                       fontWeight: FontWeight.w900,
@@ -112,9 +122,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'نظام الطوارئ',
-                    style: TextStyle(
+                  Text(
+                    arLoc.emergencySystemTitle,
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 18,
                       letterSpacing: 1.2,

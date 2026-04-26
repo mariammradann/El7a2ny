@@ -2,6 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>نحتاج للوصول إلى الكاميرا لالتقاط صور للبلاغ</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>نحتاج للوصول إلى موقعك لتحديد مكان الطوارئ</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>نحتاج للوصول إلى الميكروفون لتسجيل الصوت</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>نحتاج للوصول إلى الصور لإرفاقها مع البلاغ</string>
+	<key>NSContactsUsageDescription</key>
+	<string>نحتاج للوصول إلى جهات الاتصال لاختيار جهات اتصال الطوارئ</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

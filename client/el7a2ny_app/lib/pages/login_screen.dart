@@ -1,16 +1,16 @@
-﻿import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import '../app/main_shell_screen.dart';
-import '../core/api/api_exception.dart';
-import '../data/repositories/auth_repository.dart';
-import 'forgot_password_screen.dart';
-import 'sign_up_screen.dart';
-
-const Color _kAccentGreen = Color(0xFF76B947);
-const Color _kBlackButton = Color(0xFF000000);
-const Color _kTextDark = Color(0xFF424242);
-const Color _kPlaceholderGrey = Color(0xFF9E9E9E);
+import 'package:el7a2ny_app/app/main_shell_screen.dart';
+import 'package:el7a2ny_app/core/api/api_exception.dart';
+import 'package:el7a2ny_app/data/repositories/auth_repository.dart';
+import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
+import 'package:el7a2ny_app/core/localization/app_strings.dart';
+import 'package:el7a2ny_app/pages/forgot_password_screen.dart';
+import 'package:el7a2ny_app/pages/sign_up_screen.dart';
+import '../widgets/language_toggle_button.dart';
+import '../services/session_service.dart';
+import '../widgets/global_fab_overlay.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,44 +20,49 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _email = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _identifier = TextEditingController();
   final _password = TextEditingController();
   bool _rememberMe = true;
   bool _loading = false;
+  bool _obscurePassword = true;
 
   final _auth = AuthRepository();
 
+  Color _kAccentGreen(BuildContext context) => Theme.of(context).primaryColor;
+  Color _kTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
+  Color _kPlaceholderGrey(BuildContext context) => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
+
   @override
   void dispose() {
-    _email.dispose();
+    _identifier.dispose();
     _password.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
     try {
       await _auth.login(
-        email: _email.text.trim(),
+        identifier: _identifier.text.trim(),
         password: _password.text,
         rememberMe: _rememberMe,
       );
       if (!mounted) return;
       await Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
-          builder: (context) => const MainShellScreen(),
-        ),
+        MaterialPageRoute<void>(builder: (context) => const MainShellScreen()),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -65,20 +70,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _kTextDark),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.hide();
+    });
+
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: _kTextDark(context)),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
-        body: SafeArea(
+        actions: [
+          LanguageToggleButton(iconColor: _kTextDark(context)),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
@@ -86,62 +101,80 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 8),
                 Text(
-                  'مرحبا مجددا !',
-                  textAlign: TextAlign.right,
+                  context.loc.welcomeBack,
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    color: Colors.black87,
+                    color: _kTextDark(context),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'سجل دخولك.',
-                  textAlign: TextAlign.right,
+                  context.loc.loginDesc,
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 15,
-                    color: Colors.grey.shade600,
+                    color: _kTextDark(context).withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 36),
                 Text(
-                  'الايميل',
-                  textAlign: TextAlign.right,
+                  context.loc.emailOrMobile,
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: _kTextDark,
+                    color: _kTextDark(context),
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: _email,
+                TextFormField(
+                  controller: _identifier,
                   keyboardType: TextInputType.emailAddress,
-                  textAlign: TextAlign.right,
                   style: const TextStyle(fontFamily: 'NotoSansArabic'),
-                  decoration: _fieldDecoration(hint: 'email@example.com'),
+                  decoration: _fieldDecoration(context, hint: context.loc.emailOrMobileHint),
+                  inputFormatters: [
+                    _SmartMobileFormatter(),
+                  ],
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return context.loc.requiredField;
+                    // Check if input is numeric (mobile number) or email-like
+                    final isNumeric = RegExp(r'^[0-9]+$').hasMatch(v);
+                    if (isNumeric) {
+                      if (v.length != 11) return context.loc.mobileValidation11;
+                    } else {
+                      if (!v.contains('@')) return context.loc.emailValidationAt;
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'الباسورد',
-                  textAlign: TextAlign.right,
+                  context.loc.password,
                   style: TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: _kTextDark,
+                    color: _kTextDark(context),
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextField(
+                TextFormField(
                   controller: _password,
-                  obscureText: true,
-                  textAlign: TextAlign.right,
+                  obscureText: _obscurePassword,
                   style: const TextStyle(fontFamily: 'NotoSansArabic'),
-                  decoration: _fieldDecoration(hint: 'الباسورد'),
+                  decoration: _fieldDecoration(context, hint: context.loc.passwordHint).copyWith(
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: _kPlaceholderGrey(context),
+                        size: 22,
+                      ),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
+                  validator: (v) => (v == null || v.isEmpty) ? context.loc.requiredField : null,
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -150,11 +183,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'افتكرني',
+                          context.loc.rememberMe,
                           style: TextStyle(
                             fontFamily: 'NotoSansArabic',
                             fontSize: 14,
-                            color: _kTextDark,
+                            color: _kTextDark(context),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -163,10 +196,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 24,
                           child: Checkbox(
                             value: _rememberMe,
-                            activeColor: _kAccentGreen,
+                            activeColor: _kAccentGreen(context),
                             checkColor: Colors.white,
-                            side: BorderSide(color: Colors.grey.shade700, width: 1.5),
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            side: BorderSide(
+                              color: _kTextDark(context).withValues(alpha: 0.4),
+                              width: 1.5,
+                            ),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                             visualDensity: VisualDensity.compact,
                             onChanged: (v) {
                               setState(() => _rememberMe = v ?? false);
@@ -188,13 +225,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
-                            'نسيت الباسورد؟',
-                            textAlign: TextAlign.left,
+                            context.loc.forgotPasswordQ,
+                            textAlign: TextAlign.end,
                             style: TextStyle(
                               fontFamily: 'NotoSansArabic',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: _kAccentGreen,
+                              color: _kAccentGreen(context),
                             ),
                           ),
                         ),
@@ -208,8 +245,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: FilledButton(
                     onPressed: _loading ? null : _login,
                     style: FilledButton.styleFrom(
-                      backgroundColor: _kBlackButton,
-                      foregroundColor: Colors.white,
+                      backgroundColor: theme.colorScheme.onSurface,
+                      foregroundColor: theme.colorScheme.surface,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -225,8 +262,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           )
                         : Text(
-                            'سجل',
-                            style: TextStyle(
+                            context.loc.loginBtnMain,
+                            style: const TextStyle(
                               fontFamily: 'NotoSansArabic',
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
@@ -239,85 +276,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'هل انت جديد معنا؟ ',
+                      context.loc.noAccountQ,
                       style: TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 14,
-                        color: Colors.grey.shade700,
+                        color: _kTextDark(context).withValues(alpha: 0.7),
                       ),
                     ),
+                    const SizedBox(width: 4),
                     InkWell(
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (context) => const SignUpScreen(),
+                            builder: (context) => SignUpScreen(),
                           ),
                         );
                       },
                       child: Text(
-                        'سجل الآن',
+                        context.loc.registerNow,
                         style: TextStyle(
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: _kAccentGreen,
+                          color: _kAccentGreen(context),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                _OrDivider(),
-                const SizedBox(height: 28),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _SocialCircle(
-                      backgroundColor: Colors.white,
-                      border: Border.all(color: Colors.grey.shade300),
-                      onTap: () => _socialTap('Google'),
-                      child: const FaIcon(
-                        FontAwesomeIcons.google,
-                        size: 22,
-                        color: Color(0xFF4285F4),
-                      ),
-                    ),
-                    _SocialCircle(
-                      backgroundColor: const Color(0xFF1877F2),
-                      onTap: () => _socialTap('Facebook'),
-                      child: const FaIcon(
-                        FontAwesomeIcons.facebookF,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                    _SocialCircle(
-                      onTap: () => _socialTap('Instagram'),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFFF58529),
-                            const Color(0xFFDD2A7B),
-                            const Color(0xFF8134AF),
-                          ],
-                        ),
-                      ),
-                      child: const FaIcon(
-                        FontAwesomeIcons.instagram,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                    _SocialCircle(
-                      backgroundColor: Colors.grey.shade200,
-                      onTap: () => _socialTap('X'),
-                      child: FaIcon(
-                        FontAwesomeIcons.xTwitter,
-                        color: Colors.grey.shade900,
-                        size: 20,
                       ),
                     ),
                   ],
@@ -331,126 +313,45 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _socialTap(String name) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('تسجيل عبر $name — قريباً')),
-    );
-  }
-
-  InputDecoration _fieldDecoration({required String hint}) {
+  InputDecoration _fieldDecoration(BuildContext context, {required String hint}) {
+    final theme = Theme.of(context);
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
         fontFamily: 'NotoSansArabic',
-        color: _kPlaceholderGrey,
+        color: _kPlaceholderGrey(context),
         fontSize: 14,
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: theme.colorScheme.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: _kTextDark, width: 1.2),
+        borderSide: BorderSide(color: theme.primaryColor, width: 1.2),
       ),
     );
   }
 }
 
-class _OrDivider extends StatelessWidget {
+class _SmartMobileFormatter extends TextInputFormatter {
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: _DashedLine(color: Colors.grey.shade400)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Text(
-            'او',
-            style: TextStyle(
-              fontFamily: 'NotoSansArabic',
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ),
-        Expanded(child: _DashedLine(color: Colors.grey.shade400)),
-      ],
-    );
-  }
-}
-
-class _DashedLine extends StatelessWidget {
-  const _DashedLine({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const dash = 5.0;
-        const gap = 4.0;
-        final w = constraints.maxWidth;
-        final count = (w / (dash + gap)).floor();
-        return Row(
-          children: List.generate(count, (i) {
-            return Padding(
-              padding: EdgeInsets.only(right: i < count - 1 ? gap : 0),
-              child: Container(
-                width: dash,
-                height: 1,
-                color: color,
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
-}
-
-class _SocialCircle extends StatelessWidget {
-  const _SocialCircle({
-    required this.onTap,
-    required this.child,
-    this.backgroundColor,
-    this.decoration,
-    this.border,
-  });
-
-  final VoidCallback onTap;
-  final Widget child;
-  final Color? backgroundColor;
-  final BoxDecoration? decoration;
-  final BoxBorder? border;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Ink(
-          width: 52,
-          height: 52,
-          decoration: decoration ??
-              BoxDecoration(
-                shape: BoxShape.circle,
-                color: backgroundColor ?? Colors.white,
-                border: border,
-              ),
-          child: Center(child: child),
-        ),
-      ),
-    );
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // If the input is purely digits and exceeds 11, prevent more typing
+    if (RegExp(r'^[0-9]+$').hasMatch(newValue.text) &&
+        newValue.text.length > 11) {
+      return oldValue;
+    }
+    return newValue;
   }
 }

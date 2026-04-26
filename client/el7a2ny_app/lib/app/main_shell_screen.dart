@@ -1,12 +1,18 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../data/repositories/auth_repository.dart';
 import '../pages/tabs/community_tab_page.dart';
 import '../pages/tabs/home_tab_page.dart';
 import '../pages/tabs/istighatha_tab_page.dart';
 import '../pages/tabs/profile_tab_page.dart';
+import '../core/localization/app_strings.dart';
 import '../pages/landing_screen.dart';
-import '../widgets/emergency_dashboard_widgets.dart';
+import '../pages/settings_screen.dart';
+import '../widgets/language_toggle_button.dart';
+import '../services/session_service.dart';
+import '../pages/admin_screen.dart';
+import '../pages/notifications_page.dart';
+import '../widgets/global_fab_overlay.dart';
 
 /// الهيكل الموحد: هيدر ثابت + محتوى + شريط تنقل سفلي.
 /// لا يُستخدم مع شاشات تسجيل الدخول / إنشاء الحساب.
@@ -30,30 +36,31 @@ class _MainShellScreenState extends State<MainShellScreen> {
   @override
   void initState() {
     super.initState();
-    _index = widget.initialIndex.clamp(0, 3);
+    _index = widget.initialIndex;
+    // Note: index clamping will happen dynamically in build based on isAdmin
   }
 
   Future<void> _onMenu(String value) async {
     switch (value) {
       case 'settings':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('الإعدادات — قريباً')),
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (context) => const SettingsScreen(),
+          ),
         );
         break;
       case 'logout':
         final navigator = Navigator.of(context);
         await _auth.logout();
         if (!mounted) return;
-        navigator.pushAndRemoveUntil(
-          MaterialPageRoute<void>(
-            builder: (context) => const LandingScreen(),
-          ),
+        navigator.pushNamedAndRemoveUntil(
+          '/landing',
           (route) => false,
         );
         break;
       case 'help':
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('المساعدة — قريباً')),
+          SnackBar(content: Text(context.loc.help)),
         );
         break;
     }
@@ -61,114 +68,146 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: emergencyPageBg,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          // RTL: القائمة يمين، الإشعارات يسار
-          leading: PopupMenuButton<String>(
-            tooltip: 'القائمة',
-            offset: const Offset(0, 48),
-            onSelected: _onMenu,
-            itemBuilder: (context) => [
-              PopupMenuItem<String>(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings_outlined, color: emergencyTextDark, size: 22),
-                    const SizedBox(width: 10),
-                    Text(
-                      'الإعدادات',
-                      style: TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem<String>(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout_rounded, color: emergencyTextDark, size: 22),
-                    const SizedBox(width: 10),
-                    Text(
-                      'تسجيل الخروج',
-                      style: TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuItem<String>(
-                value: 'help',
-                child: Row(
-                  children: [
-                    Icon(Icons.help_outline_rounded, color: emergencyTextDark, size: 22),
-                    const SizedBox(width: 10),
-                    Text(
-                      'المساعدة',
-                      style: TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            child: Icon(Icons.menu_rounded, color: emergencyTextDark),
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.show();
+    });
+
+    final theme = Theme.of(context);
+    final loc = context.loc;
+
+    return ListenableBuilder(
+      listenable: SessionService(),
+      builder: (context, _) {
+        final isAdmin = SessionService().isAdmin;
+
+        final List<Widget> tabs = [
+          const HomeTabPage(),
+          IstighathaTabPage(onProfileTap: () {
+            if (mounted) setState(() => _index = 3);
+          }),
+          const CommunityTabPage(),
+          const ProfileTabPage(),
+          if (isAdmin) const AdminScreen(isNested: true),
+        ];
+
+        final List<NavigationDestination> destinations = [
+          NavigationDestination(
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded, color: theme.primaryColor),
+            label: loc.tabHome,
           ),
-          actions: [
-            IconButton(
-              tooltip: 'الإشعارات',
-              icon: Icon(Icons.notifications_outlined, color: emergencyTextDark),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('الإشعارات — قريباً')),
-                );
-              },
-            ),
-          ],
-        ),
-        body: IndexedStack(
-          index: _index,
-          sizing: StackFit.expand,
-          children: const [
-            HomeTabPage(),
-            IstighathaTabPage(),
-            CommunityTabPage(),
-            ProfileTabPage(),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          height: 64,
-          backgroundColor: Colors.white,
-          indicatorColor: emergencyTitleRed.withValues(alpha: 0.12),
-          selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
-          destinations: const [
+          NavigationDestination(
+            icon: const Icon(Icons.warning_amber_rounded),
+            selectedIcon: Icon(Icons.emergency_share_rounded, color: theme.primaryColor),
+            label: loc.tabIstighatha,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups_rounded, color: theme.primaryColor),
+            label: loc.tabCommunity,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded, color: theme.primaryColor),
+            label: loc.tabProfile,
+          ),
+          if (isAdmin)
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'Home',
+              icon: const Icon(Icons.insights_rounded),
+              selectedIcon: Icon(Icons.insights_rounded, color: theme.primaryColor),
+              label: loc.tabInsights,
             ),
-            NavigationDestination(
-              icon: Icon(Icons.warning_amber_rounded),
-              selectedIcon: Icon(Icons.emergency_share_rounded),
-              label: 'استغاثة',
+        ];
+
+        // Ensure index doesn't overflow if isAdmin state changes
+        final safeIndex = _index.clamp(0, destinations.length - 1);
+
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: AppBar(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            title: (isAdmin && safeIndex == 4) 
+              ? Text(loc.adminDashboard, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, fontFamily: 'NotoSansArabic'))
+              : null,
+            centerTitle: true,
+            leading: PopupMenuButton<String>(
+              tooltip: context.loc.menu,
+              offset: const Offset(0, 48),
+              onSelected: _onMenu,
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: 'settings',
+                  child: Row(
+                    children: [
+                      Icon(Icons.settings_outlined, color: theme.colorScheme.onSurface, size: 22),
+                      const SizedBox(width: 10),
+                      Text(
+                        context.loc.settings,
+                        style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout_rounded, color: theme.colorScheme.onSurface, size: 22),
+                      const SizedBox(width: 10),
+                      Text(
+                        context.loc.logout,
+                        style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'help',
+                  child: Row(
+                    children: [
+                      Icon(Icons.help_outline_rounded, color: theme.colorScheme.onSurface, size: 22),
+                      const SizedBox(width: 10),
+                      Text(
+                        context.loc.help,
+                        style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              child: Icon(Icons.menu_rounded, color: theme.colorScheme.onSurface),
             ),
-            NavigationDestination(
-              icon: Icon(Icons.groups_outlined),
-              selectedIcon: Icon(Icons.groups_rounded),
-              label: 'Community',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline_rounded),
-              selectedIcon: Icon(Icons.person_rounded),
-              label: 'Profile',
-            ),
-          ],
-        ),
-      ),
+            actions: [
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                  );
+                },
+                icon: Icon(Icons.notifications_outlined, color: theme.colorScheme.onSurface),
+              ),
+              LanguageToggleButton(iconColor: theme.colorScheme.onSurface),
+              const SizedBox(width: 8),
+            ],
+          ),
+          body: IndexedStack(
+            index: safeIndex,
+            sizing: StackFit.expand,
+            children: tabs,
+          ),
+          bottomNavigationBar: NavigationBar(
+            height: 70,
+            backgroundColor: theme.colorScheme.surface,
+            indicatorColor: theme.primaryColor.withValues(alpha: 0.12),
+            selectedIndex: safeIndex,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            destinations: destinations,
+          ),
+        );
+      },
     );
   }
 }
