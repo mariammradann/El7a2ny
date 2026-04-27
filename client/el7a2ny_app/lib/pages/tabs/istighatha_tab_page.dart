@@ -100,13 +100,13 @@ class _IstighathaTabPageState extends State<IstighathaTabPage> with SingleTicker
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _buildHeader(isDark, theme),
-              const SizedBox(height: 20),
-              _buildMotivationalText(),
-              const SizedBox(height: 100),
-              _buildSOSButton(),
-              const SizedBox(height: 100),
-              _buildVibrationToggle(isDark, theme),
+                    _buildHeader(isDark, theme),
+                    const SizedBox(height: 20),
+                    _buildMotivationalText(),
+                    const SizedBox(height: 100),
+                    _buildSOSButton(),
+                    const SizedBox(height: 100),
+                    _buildVibrationToggle(isDark, theme),
             ],
           ),
         ),

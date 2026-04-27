@@ -173,6 +173,10 @@ class _SensorSliverAppBar extends StatelessWidget {
       pinned: true,
       backgroundColor: isDanger ? const Color(0xFFDC2626) : Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDanger ? Colors.white : Theme.of(context).colorScheme.onSurface),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
       centerTitle: true,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,

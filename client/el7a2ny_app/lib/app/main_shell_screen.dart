@@ -17,10 +17,16 @@ import '../widgets/global_fab_overlay.dart';
 /// الهيكل الموحد: هيدر ثابت + محتوى + شريط تنقل سفلي.
 /// لا يُستخدم مع شاشات تسجيل الدخول / إنشاء الحساب.
 class MainShellScreen extends StatefulWidget {
-  const MainShellScreen({
-    super.key,
+  static final GlobalKey<_MainShellScreenState> shellKey = GlobalKey<_MainShellScreenState>();
+  
+  MainShellScreen({
+    Key? key,
     this.initialIndex = 0,
-  });
+  }) : super(key: key ?? shellKey);
+
+  static void setIndex(BuildContext context, int index) {
+    shellKey.currentState?._updateIndex(index);
+  }
 
   final int initialIndex;
 
@@ -37,7 +43,12 @@ class _MainShellScreenState extends State<MainShellScreen> {
   void initState() {
     super.initState();
     _index = widget.initialIndex;
-    // Note: index clamping will happen dynamically in build based on isAdmin
+  }
+
+  void _updateIndex(int newIndex) {
+    if (mounted) {
+      setState(() => _index = newIndex);
+    }
   }
 
   Future<void> _onMenu(String value) async {
@@ -82,9 +93,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
         final List<Widget> tabs = [
           const HomeTabPage(),
-          IstighathaTabPage(onProfileTap: () {
-            if (mounted) setState(() => _index = 3);
-          }),
+          IstighathaTabPage(onProfileTap: () => _updateIndex(3)),
           const CommunityTabPage(),
           const ProfileTabPage(),
           if (isAdmin) const AdminScreen(isNested: true),
@@ -128,57 +137,17 @@ class _MainShellScreenState extends State<MainShellScreen> {
             backgroundColor: theme.scaffoldBackgroundColor,
             elevation: 0,
             surfaceTintColor: Colors.transparent,
+            automaticallyImplyLeading: false,
             title: (isAdmin && safeIndex == 4) 
               ? Text(loc.adminDashboard, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, fontFamily: 'NotoSansArabic'))
               : null,
             centerTitle: true,
-            leading: PopupMenuButton<String>(
-              tooltip: context.loc.menu,
-              offset: const Offset(0, 48),
-              onSelected: _onMenu,
-              itemBuilder: (context) => [
-                PopupMenuItem<String>(
-                  value: 'settings',
-                  child: Row(
-                    children: [
-                      Icon(Icons.settings_outlined, color: theme.colorScheme.onSurface, size: 22),
-                      const SizedBox(width: 10),
-                      Text(
-                        context.loc.settings,
-                        style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout_rounded, color: theme.colorScheme.onSurface, size: 22),
-                      const SizedBox(width: 10),
-                      Text(
-                        context.loc.logout,
-                        style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'help',
-                  child: Row(
-                    children: [
-                      Icon(Icons.help_outline_rounded, color: theme.colorScheme.onSurface, size: 22),
-                      const SizedBox(width: 10),
-                      Text(
-                        context.loc.help,
-                        style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              child: Icon(Icons.menu_rounded, color: theme.colorScheme.onSurface),
-            ),
+            leading: safeIndex != 0
+                ? IconButton(
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
+                    onPressed: () => setState(() => _index = 0),
+                  )
+                : null,
             actions: [
               IconButton(
                 onPressed: () {
@@ -190,6 +159,56 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 icon: Icon(Icons.notifications_outlined, color: theme.colorScheme.onSurface),
               ),
               LanguageToggleButton(iconColor: theme.colorScheme.onSurface),
+              PopupMenuButton<String>(
+                tooltip: context.loc.menu,
+                offset: const Offset(0, 48),
+                onSelected: _onMenu,
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    value: 'settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings_outlined, color: theme.colorScheme.onSurface, size: 22),
+                        const SizedBox(width: 10),
+                        Text(
+                          context.loc.settings,
+                          style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'logout',
+                    child: Row(
+                      children: [
+                        Icon(Icons.logout_rounded, color: theme.colorScheme.onSurface, size: 22),
+                        const SizedBox(width: 10),
+                        Text(
+                          context.loc.logout,
+                          style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'help',
+                    child: Row(
+                      children: [
+                        Icon(Icons.help_outline_rounded, color: theme.colorScheme.onSurface, size: 22),
+                        const SizedBox(width: 10),
+                        Text(
+                          context.loc.help,
+                          style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Icon(Icons.menu_rounded, color: theme.colorScheme.onSurface),
+                ),
+              ),
               const SizedBox(width: 8),
             ],
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'payment_types.dart';
 import 'payment_processing_page.dart';
+import '../core/localization/app_strings.dart';
 
 
 const _kOrange = Color(0xFFFF6B00);
@@ -55,12 +56,13 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
   }
 
   String get _methodTitle {
+    final loc = context.loc;
     switch (widget.method) {
-      case PaymentMethodType.card:       return 'بطاقة ائتمان/خصم';
-      case PaymentMethodType.fawry:      return 'فوري';
-      case PaymentMethodType.vodafoneCash: return 'فودافون كاش';
-      case PaymentMethodType.instaPay:   return 'إنستاباي';
-      case PaymentMethodType.bankTransfer: return 'تحويل بنكي';
+      case PaymentMethodType.card:       return loc.methodCreditCard;
+      case PaymentMethodType.fawry:      return loc.methodFawry;
+      case PaymentMethodType.vodafoneCash: return loc.methodVodafoneCash;
+      case PaymentMethodType.instaPay:   return loc.methodInstaPay;
+      case PaymentMethodType.bankTransfer: return loc.methodBankTransfer;
     }
   }
 
@@ -104,8 +106,9 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.loc.isAr;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
         body: Column(
@@ -162,9 +165,9 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'تفاصيل الدفع',
-                    style: TextStyle(
+                  Text(
+                    context.loc.paymentDetails,
+                    style: const TextStyle(
                       fontFamily: 'NotoSansArabic',
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
@@ -223,9 +226,9 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
       case PaymentMethodType.fawry:
         return _buildFawryInfo();
       case PaymentMethodType.vodafoneCash:
-        return _buildPhoneForm('رقم محفظة فودافون كاش', '01x xxxx xxxx');
+        return _buildPhoneForm(context.loc.vodafoneWalletLabel, '01x xxxx xxxx');
       case PaymentMethodType.instaPay:
-        return _buildPhoneForm('رقم المحفظة / الموبايل', '01x xxxx xxxx');
+        return _buildPhoneForm(context.loc.walletPhoneLabel, '01x xxxx xxxx');
       case PaymentMethodType.bankTransfer:
         return _buildBankInfo();
     }
@@ -237,14 +240,14 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _inputField(
-          label: 'اسم حامل البطاقة',
-          hint: 'الاسم كما هو مكتوب على البطاقة',
+          label: context.loc.cardHolderName,
+          hint: context.loc.cardNameHint,
           controller: _cardNameCtrl,
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'هذا الحقل مطلوب' : null,
+          validator: (v) => (v == null || v.trim().isEmpty) ? context.loc.requiredField : null,
         ),
         const SizedBox(height: 14),
         _inputField(
-          label: 'رقم البطاقة',
+          label: context.loc.cardNumberLabel,
           hint: '1234 5678 9012 3456',
           controller: _cardNumberCtrl,
           keyboardType: TextInputType.number,
@@ -262,9 +265,9 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             ],
           ),
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'هذا الحقل مطلوب';
+            if (v == null || v.trim().isEmpty) return context.loc.requiredField;
             final digits = v.replaceAll(' ', '');
-            if (digits.length < 16) return 'رقم البطاقة غير مكتمل';
+            if (digits.length < 16) return context.loc.cardIncomplete;
             return null;
           },
         ),
@@ -273,7 +276,7 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
           children: [
             Expanded(
               child: _inputField(
-                label: 'تاريخ الانتهاء',
+                label: context.loc.cardExpiry,
                 hint: 'MM / YY',
                 controller: _expiryCtrl,
                 keyboardType: TextInputType.number,
@@ -283,8 +286,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                 ],
                 maxLength: 5,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'مطلوب';
-                  if (v.length < 5) return 'غير صحيح';
+                  if (v == null || v.trim().isEmpty) return context.loc.requiredField;
+                  if (v.length < 5) return context.loc.invalidVal;
                   return null;
                 },
               ),
@@ -292,7 +295,7 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             const SizedBox(width: 12),
             Expanded(
               child: _inputField(
-                label: 'CVV / CVC',
+                label: context.loc.cardCvc,
                 hint: '• • •',
                 controller: _cvcCtrl,
                 keyboardType: TextInputType.number,
@@ -300,8 +303,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 maxLength: 3,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'مطلوب';
-                  if (v.length < 3) return 'غير صحيح';
+                  if (v == null || v.trim().isEmpty) return context.loc.requiredField;
+                  if (v.length < 3) return context.loc.invalidVal;
                   return null;
                 },
               ),
@@ -320,9 +323,9 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             value: _saveCard,
             onChanged: (v) => setState(() => _saveCard = v),
             activeColor: _kOrange,
-            title: const Text(
-              'حفظ البطاقة للمرات القادمة',
-              style: TextStyle(
+            title: Text(
+              context.loc.saveCardLabel,
+              style: const TextStyle(
                 fontFamily: 'NotoSansArabic',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -361,9 +364,9 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                     color: _kOrange, size: 36),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'كود الدفع الخاص بك',
-                style: TextStyle(
+              Text(
+                context.loc.fawryCodeLabel,
+                style: const TextStyle(
                   fontFamily: 'NotoSansArabic',
                   fontSize: 14,
                   color: Color(0xFF6B7280),
@@ -389,8 +392,10 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                       Clipboard.setData(ClipboardData(text: _fawryRef));
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('تم نسخ الكود',
-                              style: TextStyle(fontFamily: 'NotoSansArabic')),
+                          content: Text(
+                            context.loc.codeCopied,
+                            style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                          ),
                           backgroundColor: _kOrange,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
@@ -407,13 +412,13 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
           ),
         ),
         const SizedBox(height: 16),
-        _infoStep('1', 'روح لأقرب فرع فوري'),
+        _infoStep('1', context.loc.fawryStep1),
         const SizedBox(height: 10),
-        _infoStep('2', 'قول للموظف "دفع خدمة إلحقني"'),
+        _infoStep('2', context.loc.fawryStep2),
         const SizedBox(height: 10),
-        _infoStep('3', 'اديه الكود: $_fawryRef'),
+        _infoStep('3', '${context.loc.fawryStep3}: $_fawryRef'),
         const SizedBox(height: 10),
-        _infoStep('4', 'ادفع المبلغ واحتفظ بالإيصال'),
+        _infoStep('4', context.loc.fawryStep4),
       ],
     );
   }
@@ -431,8 +436,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           maxLength: 11,
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'هذا الحقل مطلوب';
-            if (v.length < 11) return 'رقم الهاتف غير مكتمل';
+            if (v == null || v.trim().isEmpty) return context.loc.requiredField;
+            if (v.length < 11) return context.loc.invalidVal;
             return null;
           },
         ),
@@ -445,13 +450,13 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             border: Border.all(color: const Color(0xFFFFD699)),
           ),
           child: Row(
-            children: const [
+            children: [
               Icon(Icons.info_outline_rounded, color: _kOrange, size: 18),
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'هيتبعتلك رسالة تأكيد على رقم التليفون',
-                  style: TextStyle(
+                  context.loc.phoneConfirmationMsg,
+                  style: const TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 13,
                     color: Color(0xFF92400E),
@@ -480,9 +485,9 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'بيانات الحساب البنكي',
-                style: TextStyle(
+              Text(
+                context.loc.bankAccountDetails,
+                style: const TextStyle(
                   fontFamily: 'NotoSansArabic',
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
@@ -490,24 +495,24 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                 ),
               ),
               const Divider(height: 24),
-              _bankRow('البنك', _bankName),
+              _bankRow(context.loc.bankNameLabel, _bankName),
               const SizedBox(height: 12),
-              _bankRow('رقم الحساب', _bankAccount, copyable: true),
+              _bankRow(context.loc.accountNumberLabel, _bankAccount, copyable: true),
               const SizedBox(height: 12),
-              _bankRow('IBAN', _bankIban, copyable: true),
+              _bankRow(context.loc.ibanLabel, _bankIban, copyable: true),
               const SizedBox(height: 12),
-              _bankRow('المبلغ', '${widget.amount.toInt()} جنيه مصري'),
+              _bankRow(context.loc.amountLabel, '${widget.amount.toInt()} ${context.loc.egp}'),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        _infoStep('1', 'افتح تطبيق البنك أو روح الفرع'),
+        _infoStep('1', context.loc.bankStep1),
         const SizedBox(height: 10),
-        _infoStep('2', 'حوّل المبلغ للحساب أعلاه'),
+        _infoStep('2', context.loc.bankStep2),
         const SizedBox(height: 10),
-        _infoStep('3', 'اكتب "إلحقني-اشتراك" في خانة البيان'),
+        _infoStep('3', context.loc.bankStep3),
         const SizedBox(height: 10),
-        _infoStep('4', 'اضغط "تأكيد الدفع" وهنراجع التحويل'),
+        _infoStep('4', context.loc.bankStep4),
       ],
     );
   }
@@ -529,13 +534,13 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
       ),
       child: Column(
         children: [
-          _summaryRow('الخطة', widget.isYearly ? 'إلحقني بلس - سنوي' : 'إلحقني بلس - شهري'),
+          _summaryRow(context.loc.planLabel, widget.isYearly ? context.loc.plusYearly : context.loc.plusMonthly),
           const Divider(height: 20),
-          _summaryRow('طريقة الدفع', _methodTitle),
+          _summaryRow(context.loc.paymentMethodLabel, _methodTitle),
           const Divider(height: 20),
           _summaryRow(
-            'الإجمالي',
-            '${widget.amount.toInt()} جنيه',
+            context.loc.totalLabel,
+            '${widget.amount.toInt()} ${context.loc.egp}',
             valueStyle: const TextStyle(
               fontFamily: 'NotoSansArabic',
               fontSize: 18,
@@ -552,8 +557,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
   Widget _buildPayButton(BuildContext context) {
     final label = widget.method == PaymentMethodType.fawry ||
             widget.method == PaymentMethodType.bankTransfer
-        ? 'تأكيد الدفع'
-        : 'ادفع الآن';
+        ? context.loc.confirmPayment
+        : context.loc.payNow;
 
     return Container(
       color: Colors.white,
@@ -755,8 +760,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                   Clipboard.setData(ClipboardData(text: value));
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('تم النسخ',
-                          style: TextStyle(fontFamily: 'NotoSansArabic')),
+                      content: Text(context.loc.copied,
+                          style: const TextStyle(fontFamily: 'NotoSansArabic')),
                       backgroundColor: _kOrange,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(

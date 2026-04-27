@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'payment_types.dart';
 import 'home_screen.dart';
 import '../services/session_service.dart';
+import '../core/localization/app_strings.dart';
 
 
 const _kOrange = Color(0xFFFF6B00);
@@ -67,8 +68,9 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.loc.isAr;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
         body: SafeArea(
@@ -80,8 +82,9 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios_rounded,
-                        color: Color(0xFF374151), size: 20),
+                    icon: Icon(
+                        isAr ? Icons.arrow_forward_ios_rounded : Icons.arrow_back_ios_new_rounded,
+                        color: const Color(0xFF374151), size: 20),
                     onPressed: () => Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (_) => const HomeScreen()),
                       (route) => false,
@@ -124,9 +127,9 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                         opacity: _fadeAnim,
                         child: Column(
                           children: [
-                            const Text(
-                              'تم الدفع بنجاح! 🎉',
-                              style: TextStyle(
+                            Text(
+                              context.loc.paymentSuccessTitle,
+                              style: const TextStyle(
                                 fontFamily: 'NotoSansArabic',
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
@@ -134,10 +137,10 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'اشتراكك في إلحقني بلس فعّال دلوقتي',
+                            Text(
+                              context.loc.subscriptionActiveMsg,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'NotoSansArabic',
                                 fontSize: 14,
                                 color: Color(0xFF6B7280),
@@ -204,10 +207,10 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
-                      'فاتورة الاشتراك',
-                      style: TextStyle(
+                      context.loc.receiptTitle,
+                      style: const TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -215,8 +218,8 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                       ),
                     ),
                     Text(
-                      'إلحقني بلس',
-                      style: TextStyle(
+                      context.loc.premiumPlusTitle,
+                      style: const TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 12,
                         color: Colors.white70,
@@ -231,9 +234,9 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                     color: Colors.white24,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    'مدفوع ✓',
-                    style: TextStyle(
+                  child: Text(
+                    context.loc.paidStatus,
+                    style: const TextStyle(
                       fontFamily: 'NotoSansArabic',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -251,15 +254,15 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
             padding: const EdgeInsets.all(18),
             child: Column(
               children: [
-                _receiptRow('رقم المعاملة', _transactionId, copyable: true),
+                _receiptRow(context.loc.transactionIdLabel, _transactionId, copyable: true),
                 _divider(),
-                _receiptRow('التاريخ والوقت', _formattedDate),
+                _receiptRow(context.loc.dateTimeLabel, _formattedDate),
                 _divider(),
-                _receiptRow('الخطة', widget.isYearly ? 'إلحقني بلس - سنوي' : 'إلحقني بلس - شهري'),
+                _receiptRow(context.loc.planLabel, widget.isYearly ? context.loc.plusYearly : context.loc.plusMonthly),
                 _divider(),
-                _receiptRow('طريقة الدفع', widget.methodTitle),
+                _receiptRow(context.loc.paymentMethodLabel, widget.methodTitle),
                 _divider(),
-                _receiptRow('الحالة', 'ناجح ✓',
+                _receiptRow(context.loc.statusLabel, context.loc.successStatus,
                     valueColor: _kGreen),
                 _divider(),
                 // Total
@@ -268,9 +271,9 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'الإجمالي المدفوع',
-                        style: TextStyle(
+                      Text(
+                        context.loc.totalPaidLabel,
+                        style: const TextStyle(
                           fontFamily: 'NotoSansArabic',
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
@@ -278,7 +281,7 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                         ),
                       ),
                       Text(
-                        '${widget.amount.toInt()} جنيه',
+                        '${widget.amount.toInt()} ${context.loc.egp}',
                         style: const TextStyle(
                           fontFamily: 'NotoSansArabic',
                           fontSize: 22,
@@ -322,23 +325,23 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                 color: Colors.white, size: 22),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'مبروك! أنت دلوقتي عضو بلس 🎊',
-                  style: TextStyle(
+                  context.loc.congratsPlusTitle,
+                  style: const TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF92400E),
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'استمتع بجميع مميزات إلحقني بلس الحصرية',
-                  style: TextStyle(
+                  context.loc.enjoyPlusDesc,
+                  style: const TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 12,
                     color: Color(0xFFB45309),
@@ -383,9 +386,9 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                     (route) => false,
                 );
               },
-              child: const Text(
-                'الرجوع للرئيسية',
-                style: TextStyle(
+              child: Text(
+                context.loc.backToHome,
+                style: const TextStyle(
                   fontFamily: 'NotoSansArabic',
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -439,8 +442,8 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                   Clipboard.setData(ClipboardData(text: value));
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('تم نسخ رقم المعاملة',
-                          style: TextStyle(fontFamily: 'NotoSansArabic')),
+                      content: Text(context.loc.copiedTxId,
+                          style: const TextStyle(fontFamily: 'NotoSansArabic')),
                       backgroundColor: _kOrange,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(

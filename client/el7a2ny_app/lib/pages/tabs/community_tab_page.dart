@@ -3,6 +3,7 @@ import '../../core/localization/app_strings.dart';
 import '../../services/api_service.dart';
 import '../../models/help_initiative_model.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../app/main_shell_screen.dart';
 
 class CommunityTabPage extends StatefulWidget {
   const CommunityTabPage({super.key});
@@ -132,6 +133,7 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
           icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white, size: 28),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           onPressed: () async {
+            /* 
             final result = await Navigator.of(context).push<bool>(
               MaterialPageRoute(
                 builder: (context) => const CreateInitiativeScreen(),
@@ -141,7 +143,12 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
             if (result == true) {
               _load();
             }
+            */
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Create Initiative feature is coming soon!')),
+            );
           },
+
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(

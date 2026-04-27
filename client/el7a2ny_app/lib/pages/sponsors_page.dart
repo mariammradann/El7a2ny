@@ -70,6 +70,10 @@ class _SponsorsPageState extends State<SponsorsPage> {
               pinned: true,
               backgroundColor: theme.scaffoldBackgroundColor,
               elevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
               centerTitle: true,
               flexibleSpace: FlexibleSpaceBar(
                 centerTitle: true,

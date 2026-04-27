@@ -29,7 +29,7 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
 
     // Return to main app shell
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MainShellScreen()),
+      MaterialPageRoute(builder: (_) => MainShellScreen()),
       (route) => false,
     );
   }
@@ -147,6 +147,11 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
       ),
       child: Row(
         children: [
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          ),
+          const SizedBox(width: 8),
           Container(
             width: 48,
             height: 48,

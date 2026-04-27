@@ -37,11 +37,8 @@ class ServiceCard extends StatelessWidget {
         color: cardBgColor,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : theme.dividerColor.withValues(alpha: 0.1), width: 1),
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/flutter
         boxShadow: [
+
           BoxShadow(
             color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,

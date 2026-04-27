@@ -11,6 +11,9 @@ import '../premium_subscription_page.dart';
 import '../sensors_page.dart';
 import '../smart_watch_page.dart';
 import '../../core/localization/app_strings.dart';
+import '../../services/session_service.dart';
+import '../user_rating_screen.dart';
+import '../volunteer_rating_screen.dart';
 
 /// الصفحة الرئيسية داخل الـ shell: حالة الأجهزة من الـ API + أزرار الوصول السريع.
 class HomeTabPage extends StatefulWidget {
@@ -331,6 +334,24 @@ class _HomeTabPageState extends State<HomeTabPage> {
                                 const PremiumSubscriptionPage(),
                           ),
                         );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+
+                    EmergencySolidButton(
+                      label: context.loc.isAr ? 'تقييم الخدمة' : 'Rate Service',
+                      backgroundColor: const Color(0xFFF59E0B),
+                      onPressed: () {
+                        final isVolunteer = SessionService().currentRole == UserRole.volunteer;
+                        if (isVolunteer) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const VolunteerRatingScreen()),
+                          );
+                        } else {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const UserRatingScreen()),
+                          );
+                        }
                       },
                     ),
                   ],

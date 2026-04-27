@@ -3,9 +3,6 @@ import 'payment_page.dart';
 import '../core/localization/app_strings.dart';
 import '../services/session_service.dart';
 import 'edit_plan_page.dart';
-import 'user_rating_screen.dart';
-import 'volunteer_rating_screen.dart';
-import '../widgets/star_rating_bar.dart';
 
 
 class PremiumSubscriptionPage extends StatefulWidget {
@@ -158,7 +155,7 @@ class _PremiumSubscriptionPageState extends State<PremiumSubscriptionPage> {
                         ],
                       ),
                       const SizedBox(height: 32),
-                      const _RatingPromptCard(),
+
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -220,7 +217,7 @@ class _PremiumHeader extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white10),
                   ),
-                  child: const Icon(Icons.close_rounded, size: 24, color: Colors.white),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: Colors.white),
                 ),
               ),
               Expanded(
@@ -303,7 +300,7 @@ class _PremiumHeader extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Text(
-                        'شهري',
+                        context.loc.monthly,
                         style: TextStyle(
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
@@ -322,7 +319,7 @@ class _PremiumHeader extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Text(
-                        'سنوي',
+                        context.loc.yearly,
                         style: TextStyle(
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
@@ -399,7 +396,7 @@ class _PriceBlock extends StatelessWidget {
       children: [
         Text(
           isYearly ? '2990' : '299',
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 54,
             fontWeight: FontWeight.w900,
@@ -407,10 +404,10 @@ class _PriceBlock extends StatelessWidget {
             height: 1,
           ),
         ),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Text(
-          'EGP',
-          style: TextStyle(
+          context.loc.egp,
+          style: const TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 20,
             fontWeight: FontWeight.w800,
@@ -465,7 +462,7 @@ class _PriceDetailsAr extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          isYearly ? 'سنوياً' : loc.monthlyLabelSmall,
+          isYearly ? context.loc.yearly : context.loc.monthlyLabelSmall,
           style: const TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 16,
@@ -495,10 +492,10 @@ class _LargePriceAr extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      isYearly ? '2990 جنيه' : '299 جنيه',
+      isYearly ? '${context.loc.yearlyPrice} ${context.loc.egp}' : '${context.loc.monthlyPrice} ${context.loc.egp}',
       textAlign: TextAlign.right,
       textDirection: TextDirection.rtl,
-      style: TextStyle(
+      style: const TextStyle(
         fontFamily: 'NotoSansArabic',
         fontSize: 48,
         fontWeight: FontWeight.w900,
@@ -786,82 +783,7 @@ class _CheckIcon extends StatelessWidget {
   }
 }
 
-class _RatingPromptCard extends StatelessWidget {
-  const _RatingPromptCard();
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final isVolunteer = SessionService().currentRole == UserRole.volunteer;
-    
-    return GestureDetector(
-      onTap: () {
-        if (isVolunteer) {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const VolunteerRatingScreen()),
-          );
-        } else {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const UserRatingScreen()),
-          );
-        }
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEFCF3),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: Column(
-          children: [
-            Text(
-              isVolunteer ? context.loc.volunteerRatingTitle : context.loc.userRatingTitle,
-              style: TextStyle(
-                fontFamily: 'NotoSansArabic',
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (isVolunteer)
-              const Icon(Icons.shield_rounded, size: 48, color: Color(0xFFF59E0B))
-            else
-              StarRatingBar(
-                itemSize: 40,
-                onRatingChanged: (rating) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const UserRatingScreen()),
-                  );
-                },
-              ),
-            const SizedBox(height: 16),
-            Text(
-              isVolunteer ? context.loc.volunteerRatingDesc : context.loc.userRatingDesc,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'NotoSansArabic',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _StickyFooter extends StatelessWidget {
   final bool isYearly;

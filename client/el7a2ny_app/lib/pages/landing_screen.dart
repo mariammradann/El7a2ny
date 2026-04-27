@@ -73,7 +73,7 @@ class LandingScreen extends StatelessWidget {
                         SessionService().setRole(UserRole.citizen);
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (context) => const MainShellScreen(),
+                            builder: (context) => MainShellScreen(),
                           ),
                         );
                       },
@@ -104,7 +104,7 @@ class LandingScreen extends StatelessWidget {
                         SessionService().setRole(UserRole.volunteer);
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (context) => const MainShellScreen(),
+                            builder: (context) => MainShellScreen(),
                           ),
                         );
                       },
@@ -135,7 +135,7 @@ class LandingScreen extends StatelessWidget {
                         SessionService().setRole(UserRole.admin);
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (context) => const MainShellScreen(),
+                            builder: (context) => MainShellScreen(),
                           ),
                         );
                       },

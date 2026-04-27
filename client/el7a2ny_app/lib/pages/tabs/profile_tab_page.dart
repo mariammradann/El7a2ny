@@ -15,6 +15,8 @@ import '../history_list_page.dart';
 import 'package:intl/intl.dart';
 import '../../services/session_service.dart';
 import '../subscription_details_page.dart';
+import '../premium_subscription_page.dart';
+import '../../app/main_shell_screen.dart';
 
 
 class ProfileTabPage extends StatefulWidget {
@@ -108,36 +110,48 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         builder: (context, _) {
                           final isPlus = SessionService().isPlus;
                           final isYearly = SessionService().isYearlyPlan;
-                          if (!isPlus) return const SizedBox.shrink();
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _SectionHeader(
-                                title: isAr ? 'خطة الاشتراك' : 'Subscription Plan', 
+                                title: loc.subscriptionPlan, 
                                 icon: Icons.stars_rounded
                               ),
                               InkWell(
                                 onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => const SubscriptionDetailsPage()),
-                                  );
+                                  if (isPlus) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const SubscriptionDetailsPage()),
+                                    );
+                                  } else {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const PremiumSubscriptionPage()),
+                                    );
+                                  }
                                 },
                                 borderRadius: BorderRadius.circular(20),
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                                    gradient: LinearGradient(
+                                      colors: isPlus 
+                                        ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+                                        : [Colors.white, const Color(0xFFF8FAFC)],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.3)),
+                                    border: Border.all(
+                                      color: isPlus 
+                                        ? const Color(0xFFFFD700).withOpacity(0.3)
+                                        : Colors.grey.withOpacity(0.2)
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.2),
+                                        color: Colors.black.withOpacity(0.05),
                                         blurRadius: 10,
                                         offset: const Offset(0, 4),
                                       ),
@@ -148,40 +162,52 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                       Container(
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFFFD700).withValues(alpha: 0.1),
+                                          color: isPlus 
+                                            ? const Color(0xFFFFD700).withOpacity(0.1)
+                                            : Colors.grey.withOpacity(0.1),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFFD700), size: 28),
+                                        child: Icon(
+                                          isPlus ? Icons.workspace_premium_rounded : Icons.person_outline_rounded, 
+                                          color: isPlus ? const Color(0xFFFFD700) : Colors.grey, 
+                                          size: 28
+                                        ),
                                       ),
                                       const SizedBox(width: 16),
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            const Text(
-                                              'إلحقني بلس',
+                                            Text(
+                                              isPlus ? (loc.isAr ? 'إلحقني بلس' : 'El7a2ny Plus') : loc.freePlan,
                                               style: TextStyle(
                                                 fontFamily: 'NotoSansArabic',
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.w900,
-                                                color: Color(0xFFFFD700),
+                                                color: isPlus ? const Color(0xFFFFD700) : const Color(0xFF0F172A),
                                               ),
                                             ),
                                             Text(
-                                              isYearly 
-                                                ? (isAr ? 'الخطة السنوية - نشط' : 'Yearly Plan - Active')
-                                                : (isAr ? 'الخطة الشهرية - نشط' : 'Monthly Plan - Active'),
+                                              isPlus 
+                                                ? (isYearly 
+                                                  ? '${loc.plusYearly} - ${loc.activePlanStatus}'
+                                                  : '${loc.plusMonthly} - ${loc.activePlanStatus}')
+                                                : loc.basicFeatures,
                                               style: TextStyle(
                                                 fontFamily: 'NotoSansArabic',
                                                 fontSize: 13,
-                                                color: Colors.white.withValues(alpha: 0.7),
+                                                color: isPlus ? Colors.white.withOpacity(0.7) : Colors.grey,
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFFFD700), size: 16),
+                                      Icon(
+                                        Icons.arrow_forward_ios_rounded, 
+                                        color: isPlus ? const Color(0xFFFFD700) : Colors.grey, 
+                                        size: 16
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -316,53 +342,25 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         const SizedBox(height: 24),
                       ],
                       
-                      // 5. History Section
-                      _SectionHeader(title: isAr ? 'السجل' : 'Activity History', icon: Icons.history_rounded),
-                      if (_history.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          child: Center(child: Text(isAr ? 'لا يوجد سجل حالياً' : 'No history available')),
-                        )
-                      else
-                        ..._history.take(3).map((h) => _HistoryTile(history: h)),
-                      if (_history.length > 3)
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => HistoryListPage(history: _history)),
-                            );
-                          },
-                          child: Text(isAr ? 'عرض الكل' : 'View All'),
-                        ),
 
-
-                      const SizedBox(height: 24),
 
                       // 6. Account & Preferences
 
-<<<<<<< HEAD
-                      // 5. Account & Preferences
                       _SectionHeader(
                         title: loc.appPreferences,
                         icon: Icons.settings_rounded,
                       ),
-=======
-                      _SectionHeader(title: loc.appPreferences, icon: Icons.settings_rounded),
->>>>>>> origin/flutter
+
                       _ProfileMenuTile(
                         icon: Icons.lock_outline_rounded,
                         title: loc.changePassword,
                         onTap: () {
                           Navigator.push(
                             context,
-<<<<<<< HEAD
                             MaterialPageRoute(
                               builder: (_) => const VerifyCurrentPasswordScreen(),
                             ),
-=======
-                            MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
->>>>>>> origin/flutter
+
                           );
                         },
                       ),

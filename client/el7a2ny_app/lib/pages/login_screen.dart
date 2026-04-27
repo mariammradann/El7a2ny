@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       if (!mounted) return;
       await Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(builder: (context) => const MainShellScreen()),
+        MaterialPageRoute<void>(builder: (context) => MainShellScreen()),
       );
     } on ApiException catch (e) {
       if (!mounted) return;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'payment_types.dart';
 import 'payment_receipt_page.dart';
+import '../core/localization/app_strings.dart';
 
 
 const _kOrange = Color(0xFFFF6B00);
@@ -30,12 +31,15 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
   late final Animation<double> _pulse;
 
   int _step = 0;
-  final List<String> _steps = [
-    'جاري التحقق من البيانات...',
-    'جاري معالجة الدفع...',
-    'جاري تأكيد الاشتراك...',
-    'تمت العملية بنجاح!',
-  ];
+  List<String> get _steps {
+    final loc = context.loc;
+    return [
+      loc.processingVerifying,
+      loc.processingPayment,
+      loc.processingSubscription,
+      loc.processingSuccess,
+    ];
+  }
 
   @override
   void initState() {
@@ -59,7 +63,8 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
   }
 
   Future<void> _runSteps() async {
-    for (int i = 0; i < _steps.length; i++) {
+    final stepsCount = _steps.length;
+    for (int i = 0; i < stepsCount; i++) {
       await Future.delayed(Duration(milliseconds: i == 0 ? 800 : 900));
       if (!mounted) return;
       setState(() => _step = i);
@@ -91,8 +96,10 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.loc.isAr;
+    final steps = _steps;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
@@ -130,9 +137,9 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
                     ),
                   ),
                   const SizedBox(height: 40),
-                  const Text(
-                    'جاري معالجة الدفع',
-                    style: TextStyle(
+                  Text(
+                    context.loc.processingPayment,
+                    style: const TextStyle(
                       fontFamily: 'NotoSansArabic',
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
@@ -140,9 +147,9 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'برجاء الانتظار...',
-                    style: TextStyle(
+                  Text(
+                    context.loc.pleaseWait,
+                    style: const TextStyle(
                       fontFamily: 'NotoSansArabic',
                       fontSize: 14,
                       color: Color(0xFF6B7280),
@@ -150,7 +157,7 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
                   ),
                   const SizedBox(height: 48),
                   // Steps
-                  ...List.generate(_steps.length, (i) {
+                  ...List.generate(steps.length, (i) {
                     final done = i < _step;
                     final active = i == _step;
                     return Padding(
@@ -208,7 +215,7 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
                                         ? const Color(0xFF111827)
                                         : const Color(0xFF9CA3AF),
                               ),
-                              child: Text(_steps[i]),
+                              child: Text(steps[i]),
                             ),
                           ),
                         ],

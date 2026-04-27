@@ -201,7 +201,5 @@ class GlobalFabRouteObserver extends NavigatorObserver {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
     _updateVisibility(newRoute);
   }
-
-  }
-
 }
+

@@ -798,6 +798,88 @@ class AppStrings {
   String get statusActiveAdmin => isAr ? 'نشط' : 'Active';
   String get statusPending => isAr ? 'قيد الانتظار' : 'Pending';
   String get statusSuspended => isAr ? 'موقوف' : 'Suspended';
+
+  // More Payment & Subscription
+  String get monthly => isAr ? 'شهري' : 'Monthly';
+  String get yearly => isAr ? 'سنوي' : 'Yearly';
+  String get monthlyPrice => isAr ? '299 جنيه' : '299 EGP';
+  String get yearlyPrice => isAr ? '2990 جنيه' : '2990 EGP';
+  String get perMonth => isAr ? ' / شهرياً' : ' / Month';
+  String get perYear => isAr ? ' / سنوياً' : ' / Year';
+  String get egp => isAr ? 'جنيه' : 'EGP';
+  String get egpFull => isAr ? 'جنيه مصري' : 'Egyptian Pound';
+
+  String get choosePaymentMethod => isAr ? 'اختر طريقة الدفع' : 'Choose Payment Method';
+  String get mostUsed => isAr ? 'الأكثر استخداماً' : 'Most used';
+  String get continueBtn => isAr ? 'متابعة' : 'Continue';
+  String get secureTransactions => isAr ? 'جميع المعاملات آمنة ومشفرة' : 'All transactions are secure and encrypted';
+  String get paymentDetails => isAr ? 'تفاصيل الدفع' : 'Payment Details';
+  
+  String get cardHolderName => isAr ? 'اسم حامل البطاقة' : 'Cardholder Name';
+  String get cardNameHint => isAr ? 'الاسم كما هو مكتوب على البطاقة' : 'Name as written on card';
+  String get cardNumberLabel => isAr ? 'رقم البطاقة' : 'Card Number';
+  String get cardIncomplete => isAr ? 'رقم البطاقة غير مكتمل' : 'Card number incomplete';
+  String get saveCardLabel => isAr ? 'حفظ البطاقة للمرات القادمة' : 'Save card for future use';
+  
+  String get fawryCodeLabel => isAr ? 'كود الدفع الخاص بك' : 'Your Payment Code';
+  String get codeCopied => isAr ? 'تم نسخ الكود' : 'Code Copied';
+  String get fawryStep1 => isAr ? 'روح لأقرب فرع فوري' : 'Go to nearest Fawry branch';
+  String get fawryStep2 => isAr ? 'قول للموظف "دفع خدمة إلحقني"' : 'Tell clerk "Pay El7a2ny Service"';
+  String get fawryStep3 => isAr ? 'اديه الكود' : 'Give them the code';
+  String get fawryStep4 => isAr ? 'ادفع المبلغ واحتفظ بالإيصال' : 'Pay and keep the receipt';
+  
+  String get vodafoneWalletLabel => isAr ? 'رقم محفظة فودافون كاش' : 'Vodafone Cash Wallet Number';
+  String get walletPhoneLabel => isAr ? 'رقم المحفظة / الموبايل' : 'Wallet / Mobile Number';
+  String get phoneConfirmationMsg => isAr ? 'هيتبعتلك رسالة تأكيد على رقم التليفون' : 'A confirmation SMS will be sent to your phone';
+  
+  String get bankAccountDetails => isAr ? 'بيانات الحساب البنكي' : 'Bank Account Details';
+  String get bankNameLabel => isAr ? 'البنك' : 'Bank';
+  String get accountNumberLabel => isAr ? 'رقم الحساب' : 'Account Number';
+  String get ibanLabel => isAr ? 'IBAN' : 'IBAN';
+  String get amountLabel => isAr ? 'المبلغ' : 'Amount';
+  String get bankStep1 => isAr ? 'افتح تطبيق البنك أو روح الفرع' : 'Open bank app or go to branch';
+  String get bankStep2 => isAr ? 'حوّل المبلغ للحساب أعلاه' : 'Transfer amount to account above';
+  String get bankStep3 => isAr ? 'اكتب "إلحقني-اشتراك" في خانة البيان' : 'Write "El7a2ny-Subscription" in remarks';
+  String get bankStep4 => isAr ? 'اضغط "تأكيد الدفع" وهنراجع التحويل' : 'Press "Confirm Payment" to review';
+  
+  String get planLabel => isAr ? 'الخطة' : 'Plan';
+  String get plusYearly => isAr ? 'إلحقني بلس - سنوي' : 'El7a2ny Plus - Yearly';
+  String get plusMonthly => isAr ? 'إلحقني بلس - شهري' : 'El7a2ny Plus - Monthly';
+  String get paymentMethodLabel => isAr ? 'طريقة الدفع' : 'Payment Method';
+  String get totalLabel => isAr ? 'الإجمالي' : 'Total';
+  String get confirmPayment => isAr ? 'تأكيد الدفع' : 'Confirm Payment';
+  
+  String get processingVerifying => isAr ? 'جاري التحقق من البيانات...' : 'Verifying data...';
+  String get processingPayment => isAr ? 'جاري معالجة الدفع...' : 'Processing payment...';
+  String get processingSubscription => isAr ? 'جاري تأكيد الاشتراك...' : 'Confirming subscription...';
+  String get processingSuccess => isAr ? 'تمت العملية بنجاح!' : 'Operation successful!';
+  String get pleaseWait => isAr ? 'برجاء الانتظار...' : 'Please wait...';
+  
+  String get paymentSuccessTitle => isAr ? 'تم الدفع بنجاح! 🎉' : 'Payment Successful! 🎉';
+  String get subscriptionActiveMsg => isAr ? 'اشتراكك في إلحقني بلس فعّال دلوقتي' : 'Your El7a2ny Plus subscription is now active';
+  String get receiptTitle => isAr ? 'فاتورة الاشتراك' : 'Subscription Receipt';
+  String get paidStatus => isAr ? 'مدفوع ✓' : 'Paid ✓';
+  String get transactionIdLabel => isAr ? 'رقم المعاملة' : 'Transaction ID';
+  String get dateTimeLabel => isAr ? 'التاريخ والوقت' : 'Date and Time';
+  String get statusLabel => isAr ? 'الحالة' : 'Status';
+  String get successStatus => isAr ? 'ناجح ✓' : 'Successful ✓';
+  String get totalPaidLabel => isAr ? 'الإجمالي المدفوع' : 'Total Paid';
+  String get congratsPlusTitle => isAr ? 'مبروك! أنت دلوقتي عضو بلس 🎊' : 'Congrats! You are now a Plus member 🎊';
+  String get enjoyPlusDesc => isAr ? 'استمتع بجميع مميزات إلحقني بلس الحصرية' : 'Enjoy all exclusive El7a2ny Plus features';
+  String get backToHome => isAr ? 'الرجوع للرئيسية' : 'Back to Home';
+  String get copiedTxId => isAr ? 'تم نسخ رقم المعاملة' : 'Transaction ID Copied';
+  String get copied => isAr ? 'تم النسخ' : 'Copied';
+
+  String get methodCreditCard => isAr ? 'بطاقة ائتمان/خصم' : 'Credit/Debit Card';
+  String get methodFawry => isAr ? 'فوري' : 'Fawry';
+  String get methodVodafoneCash => isAr ? 'فودافون كاش' : 'Vodafone Cash';
+  String get methodInstaPay => isAr ? 'إنستاباي' : 'InstaPay';
+  String get methodBankTransfer => isAr ? 'تحويل بنكي' : 'Bank Transfer';
+  String get fawrySubtitle => isAr ? 'ادفع من أي فرع فوري' : 'Pay from any Fawry branch';
+  String get vodafoneSubtitle => isAr ? 'الدفع عبر المحفظة الإلكترونية' : 'Pay via electronic wallet';
+  String get instapaySubtitle => isAr ? 'التحويل الفوري بين البنوك' : 'Instant transfer between banks';
+  String get bankSubtitle => isAr ? 'التحويل المباشر للحساب' : 'Direct account transfer';
+
   String get statusInProgress => isAr ? 'قيد التنفيذ' : 'In Progress';
   String get statusDispatched => isAr ? 'تم الإرسال' : 'Dispatched';
   String get statusResolvedAdmin => isAr ? 'تم الحل' : 'Resolved';
@@ -844,4 +926,10 @@ class AppStrings {
   String get realEmergency => isAr ? 'حالة طوارئ حقيقية' : 'Real Emergency';
   String get submitRating => isAr ? 'إرسال التقييم' : 'Submit Rating';
   String get ratingSuccess => isAr ? 'شكراً لتقييمك!' : 'Thank you for your rating!';
+
+  // Profile Plan
+  String get subscriptionPlan => isAr ? 'خطة الاشتراك' : 'Subscription Plan';
+  String get freePlan => isAr ? 'الخطة المجانية' : 'Free Plan';
+  String get basicFeatures => isAr ? 'استمتع بالمميزات الأساسية' : 'Enjoy basic features';
+  String get activePlanStatus => isAr ? 'نشط' : 'Active';
 }

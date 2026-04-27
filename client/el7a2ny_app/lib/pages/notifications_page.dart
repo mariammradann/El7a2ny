@@ -61,7 +61,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         // Navigate to Community Tab (index 2 in MainShellScreen)
         Navigator.pushAndRemoveUntil(
           context, 
-          MaterialPageRoute(builder: (_) => const MainShellScreen(initialIndex: 2)),
+          MaterialPageRoute(builder: (_) => MainShellScreen(initialIndex: 2)),
           (route) => false,
         );
         break;
@@ -74,7 +74,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         // Just go to Home
         Navigator.pushAndRemoveUntil(
           context, 
-          MaterialPageRoute(builder: (_) => const MainShellScreen(initialIndex: 0)),
+          MaterialPageRoute(builder: (_) => MainShellScreen(initialIndex: 0)),
           (route) => false,
         );
         break;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'payment_types.dart';
 import 'payment_details_page.dart';
+import '../core/localization/app_strings.dart';
 
 
 class _PaymentOption {
@@ -40,50 +41,55 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   PaymentMethodType? _selected;
 
-  static const List<_PaymentOption> _options = [
-    _PaymentOption(
-      type: PaymentMethodType.card,
-      title: 'بطاقة ائتمان/خصم',
-      subtitle: 'Visa, Mastercard, Meeza',
-      icon: Icons.credit_card_rounded,
-      iconBg: Color(0xFF4F8EF7),
-      isMostUsed: true,
-    ),
-    _PaymentOption(
-      type: PaymentMethodType.fawry,
-      title: 'فوري',
-      subtitle: 'ادفع من أي فرع فوري',
-      icon: Icons.grid_view_rounded,
-      iconBg: Color(0xFFFF6B00),
-      isMostUsed: true,
-    ),
-    _PaymentOption(
-      type: PaymentMethodType.vodafoneCash,
-      title: 'فودافون كاش',
-      subtitle: 'الدفع عبر المحفظة الإلكترونية',
-      icon: Icons.smartphone_rounded,
-      iconBg: Color(0xFFE3001B),
-    ),
-    _PaymentOption(
-      type: PaymentMethodType.instaPay,
-      title: 'إنستاباي',
-      subtitle: 'التحويل الفوري بين البنوك',
-      icon: Icons.phone_android_rounded,
-      iconBg: Color(0xFF7C3AED),
-    ),
-    _PaymentOption(
-      type: PaymentMethodType.bankTransfer,
-      title: 'تحويل بنكي',
-      subtitle: 'التحويل المباشر للحساب',
-      icon: Icons.account_balance_rounded,
-      iconBg: Color(0xFF374151),
-    ),
-  ];
+  List<_PaymentOption> get _options {
+    final loc = context.loc;
+    return [
+      _PaymentOption(
+        type: PaymentMethodType.card,
+        title: loc.methodCreditCard,
+        subtitle: 'Visa, Mastercard, Meeza',
+        icon: Icons.credit_card_rounded,
+        iconBg: const Color(0xFF4F8EF7),
+        isMostUsed: true,
+      ),
+      _PaymentOption(
+        type: PaymentMethodType.fawry,
+        title: loc.methodFawry,
+        subtitle: loc.fawrySubtitle,
+        icon: Icons.grid_view_rounded,
+        iconBg: const Color(0xFFFF6B00),
+        isMostUsed: true,
+      ),
+      _PaymentOption(
+        type: PaymentMethodType.vodafoneCash,
+        title: loc.methodVodafoneCash,
+        subtitle: loc.vodafoneSubtitle,
+        icon: Icons.smartphone_rounded,
+        iconBg: const Color(0xFFE3001B),
+      ),
+      _PaymentOption(
+        type: PaymentMethodType.instaPay,
+        title: loc.methodInstaPay,
+        subtitle: loc.instapaySubtitle,
+        icon: Icons.phone_android_rounded,
+        iconBg: const Color(0xFF7C3AED),
+      ),
+      _PaymentOption(
+        type: PaymentMethodType.bankTransfer,
+        title: loc.methodBankTransfer,
+        subtitle: loc.bankSubtitle,
+        icon: Icons.account_balance_rounded,
+        iconBg: const Color(0xFF374151),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.loc.isAr;
+    final options = _options;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
         body: Column(
@@ -94,9 +100,9 @@ class _PaymentPageState extends State<PaymentPage> {
               child: ListView.separated(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                itemCount: _options.length,
+                itemCount: options.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) => _buildPaymentCard(_options[i]),
+                itemBuilder: (context, i) => _buildPaymentCard(options[i]),
               ),
             ),
             _buildConfirmButton(context),
@@ -134,9 +140,9 @@ class _PaymentPageState extends State<PaymentPage> {
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'اختر طريقة الدفع',
-                    style: TextStyle(
+                  Text(
+                    context.loc.choosePaymentMethod,
+                    style: const TextStyle(
                       fontFamily: 'NotoSansArabic',
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
@@ -153,11 +159,11 @@ class _PaymentPageState extends State<PaymentPage> {
                       ),
                       children: [
                         TextSpan(
-                          text: '${widget.amount.toInt()} جنيه',
+                          text: '${widget.amount.toInt()} ${context.loc.egp}',
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                         TextSpan(
-                          text: widget.isYearly ? ' / سنوياً' : ' / شهرياً',
+                          text: widget.isYearly ? context.loc.perYear : context.loc.perMonth,
                           style: const TextStyle(fontWeight: FontWeight.w400),
                         ),
                       ],
@@ -180,12 +186,12 @@ class _PaymentPageState extends State<PaymentPage> {
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.shield_outlined, color: Color(0xFF22C55E), size: 18),
-          SizedBox(width: 6),
+        children: [
+          const Icon(Icons.shield_outlined, color: Color(0xFF22C55E), size: 18),
+          const SizedBox(width: 6),
           Text(
-            'جميع المعاملات آمنة ومشفرة',
-            style: TextStyle(
+            context.loc.secureTransactions,
+            style: const TextStyle(
               fontFamily: 'NotoSansArabic',
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -261,7 +267,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   const SizedBox(width: 12),
                   // Arrow
                   Icon(
-                    Icons.arrow_forward_ios_rounded,
+                    context.loc.isAr ? Icons.arrow_forward_ios_rounded : Icons.arrow_back_ios_new_rounded,
                     size: 14,
                     color:
                         isSelected ? _kOrange : const Color(0xFFADB5BD),
@@ -296,9 +302,9 @@ class _PaymentPageState extends State<PaymentPage> {
                       bottomLeft: Radius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'الأكثر استخداماً',
-                    style: TextStyle(
+                  child: Text(
+                    context.loc.mostUsed,
+                    style: const TextStyle(
                       fontFamily: 'NotoSansArabic',
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
@@ -348,9 +354,9 @@ class _PaymentPageState extends State<PaymentPage> {
                   );
                 }
               : null,
-          child: const Text(
-            'متابعة',
-            style: TextStyle(
+          child: Text(
+            context.loc.continueBtn,
+            style: const TextStyle(
               fontFamily: 'NotoSansArabic',
               fontSize: 16,
               fontWeight: FontWeight.w800,
