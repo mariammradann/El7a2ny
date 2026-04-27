@@ -63,8 +63,10 @@ class LandingScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  runSpacing: 12,
                   children: [
                     OutlinedButton.icon(
                       onPressed: () {
@@ -76,12 +78,12 @@ class LandingScreen extends StatelessWidget {
                         );
                       },
                       icon: Icon(
-                        Icons.dashboard_rounded,
+                        Icons.person_rounded,
                         color: _kBrandRed(context),
                         size: 20,
                       ),
                       label: const Text(
-                        'demo',
+                        'Citizen',
                         style: TextStyle(
                           fontFamily: 'NotoSansArabic',
                           fontSize: 14,
@@ -97,7 +99,37 @@ class LandingScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        SessionService().setRole(UserRole.volunteer);
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const MainShellScreen(),
+                          ),
+                        );
+                      },
+                      icon: Icon(
+                        Icons.volunteer_activism_rounded,
+                        color: _kBrandRed(context),
+                        size: 20,
+                      ),
+                      label: const Text(
+                        'Volunteer',
+                        style: TextStyle(
+                          fontFamily: 'NotoSansArabic',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _kBrandRed(context),
+                        side: BorderSide(color: _kBrandRed(context).withValues(alpha: 0.4)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                     ElevatedButton.icon(
                       onPressed: () {
                         SessionService().setRole(UserRole.admin);

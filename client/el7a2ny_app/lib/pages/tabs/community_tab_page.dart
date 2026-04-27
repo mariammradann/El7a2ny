@@ -3,7 +3,6 @@ import '../../core/localization/app_strings.dart';
 import '../../services/api_service.dart';
 import '../../models/help_initiative_model.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../create_initiative_screen.dart';
 
 class CommunityTabPage extends StatefulWidget {
   const CommunityTabPage({super.key});

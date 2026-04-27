@@ -1,384 +1,363 @@
 import 'package:flutter/material.dart';
-import '../core/localization/app_strings.dart';
+import 'payment_types.dart';
+import 'payment_details_page.dart';
 
-enum PaymentMethod { card, eps, giropay, other }
 
+class _PaymentOption {
+  final PaymentMethodType type;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color iconBg;
+  final bool isMostUsed;
+
+  const _PaymentOption({
+    required this.type,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.iconBg,
+    this.isMostUsed = false,
+  });
+}
+
+const _kOrange = Color(0xFFFF6B00);
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 class PaymentPage extends StatefulWidget {
-  const PaymentPage({super.key});
+  final double amount;
+  final bool isYearly;
+  const PaymentPage({
+    super.key,
+    this.amount = 299,
+    this.isYearly = false,
+  });
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  PaymentMethod _selectedMethod = PaymentMethod.card;
+  PaymentMethodType? _selected;
 
-  final _cardNumberController = TextEditingController();
-  final _expiryController = TextEditingController();
-  final _cvcController = TextEditingController();
-  final _countryController = TextEditingController(text: 'مصر');
-  final _postalCodeController = TextEditingController();
-
-  @override
-  void dispose() {
-    _cardNumberController.dispose();
-    _expiryController.dispose();
-    _cvcController.dispose();
-    _countryController.dispose();
-    _postalCodeController.dispose();
-    super.dispose();
-  }
+  static const List<_PaymentOption> _options = [
+    _PaymentOption(
+      type: PaymentMethodType.card,
+      title: 'بطاقة ائتمان/خصم',
+      subtitle: 'Visa, Mastercard, Meeza',
+      icon: Icons.credit_card_rounded,
+      iconBg: Color(0xFF4F8EF7),
+      isMostUsed: true,
+    ),
+    _PaymentOption(
+      type: PaymentMethodType.fawry,
+      title: 'فوري',
+      subtitle: 'ادفع من أي فرع فوري',
+      icon: Icons.grid_view_rounded,
+      iconBg: Color(0xFFFF6B00),
+      isMostUsed: true,
+    ),
+    _PaymentOption(
+      type: PaymentMethodType.vodafoneCash,
+      title: 'فودافون كاش',
+      subtitle: 'الدفع عبر المحفظة الإلكترونية',
+      icon: Icons.smartphone_rounded,
+      iconBg: Color(0xFFE3001B),
+    ),
+    _PaymentOption(
+      type: PaymentMethodType.instaPay,
+      title: 'إنستاباي',
+      subtitle: 'التحويل الفوري بين البنوك',
+      icon: Icons.phone_android_rounded,
+      iconBg: Color(0xFF7C3AED),
+    ),
+    _PaymentOption(
+      type: PaymentMethodType.bankTransfer,
+      title: 'تحويل بنكي',
+      subtitle: 'التحويل المباشر للحساب',
+      icon: Icons.account_balance_rounded,
+      iconBg: Color(0xFF374151),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final onSurface = theme.colorScheme.onSurface;
-
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          context.loc.paymentTitle,
-          style: TextStyle(
-            fontFamily: 'NotoSansArabic',
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            color: onSurface,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: Column(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: Column(
           children: [
-            _PaymentMethodTabs(
-              selectedMethod: _selectedMethod,
-              onChange: (method) => setState(() => _selectedMethod = method),
-            ),
-            const SizedBox(height: 24),
+            _buildHeader(context),
+            _buildSecurityBanner(),
             Expanded(
-              child: ListView(
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  if (_selectedMethod == PaymentMethod.card) ...[
-                    _PaymentField(
-                      label: context.loc.cardNumber,
-                      hintText: '1234 1234 1234 1234',
-                      controller: _cardNumberController,
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _PaymentField(
-                            label: context.loc.cardExpiry,
-                            hintText: 'MM / YY',
-                            controller: _expiryController,
-                            keyboardType: TextInputType.datetime,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _PaymentField(
-                            label: context.loc.cardCvc,
-                            hintText: '123',
-                            controller: _cvcController,
-                            keyboardType: TextInputType.number,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  _PaymentField(
-                    label: context.loc.paymentCountry,
-                    hintText: context.loc.paymentEgypt,
-                    controller: _countryController,
-                    readOnly: true,
-                    suffixIcon: Icons.keyboard_arrow_down_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  _PaymentField(
-                    label: context.loc.paymentPostalCode,
-                    hintText: '11511',
-                    controller: _postalCodeController,
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Order Summary Card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: theme.brightness == Brightness.dark ? 0.2 : 0.03),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.loc.paymentTotal,
-                          style: TextStyle(
-                            fontFamily: 'NotoSansArabic',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: onSurface.withValues(alpha: 0.6),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          context.loc.paymentMonthlyPrice,
-                          style: TextStyle(
-                            fontFamily: 'NotoSansArabic',
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          context.loc.paymentYearlySavings,
-                          style: TextStyle(
-                            fontFamily: 'NotoSansArabic',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: theme.primaryColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Pay Button
-                  SizedBox(
-                    height: 56,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 4,
-                        shadowColor: theme.primaryColor.withValues(alpha: 0.4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      onPressed: () {
-                        // In a real app, integrate with Stripe/Paymob here
-                        Navigator.of(context).pop();
-                      },
-                      child: Text(
-                        context.loc.payNow,
-                        style: const TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                ],
+              child: ListView.separated(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                itemCount: _options.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, i) => _buildPaymentCard(_options[i]),
               ),
             ),
+            _buildConfirmButton(context),
           ],
         ),
       ),
     );
   }
-}
 
-class _PaymentMethodTabs extends StatelessWidget {
-  const _PaymentMethodTabs({
-    required this.selectedMethod,
-    required this.onChange,
-  });
+  // ── Header ──────────────────────────────────────────────────────────────────
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFFF8C00), Color(0xFFE63B00)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 24),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white, size: 20),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'اختر طريقة الدفع',
+                    style: TextStyle(
+                      fontFamily: 'NotoSansArabic',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                        fontFamily: 'NotoSansArabic',
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '${widget.amount.toInt()} جنيه',
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        TextSpan(
+                          text: widget.isYearly ? ' / سنوياً' : ' / شهرياً',
+                          style: const TextStyle(fontWeight: FontWeight.w400),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-  final PaymentMethod selectedMethod;
-  final ValueChanged<PaymentMethod> onChange;
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
+  // ── Security Banner ─────────────────────────────────────────────────────────
+  Widget _buildSecurityBanner() {
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFEEFBF4),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       child: Row(
-        children: [
-          _PaymentMethodTab(
-            label: context.loc.paymentCard,
-            icon: Icons.credit_card_rounded,
-            active: selectedMethod == PaymentMethod.card,
-            onTap: () => onChange(PaymentMethod.card),
-          ),
-          const SizedBox(width: 12),
-          _PaymentMethodTab(
-            label: context.loc.paymentFawry,
-            icon: Icons.account_balance_rounded,
-            active: selectedMethod == PaymentMethod.eps,
-            onTap: () => onChange(PaymentMethod.eps),
-          ),
-          const SizedBox(width: 12),
-          _PaymentMethodTab(
-            label: context.loc.paymentWallet,
-            icon: Icons.account_balance_wallet_rounded,
-            active: selectedMethod == PaymentMethod.giropay,
-            onTap: () => onChange(PaymentMethod.giropay),
-          ),
-          const SizedBox(width: 12),
-          _PaymentMethodTab(
-            label: context.loc.paymentOther,
-            icon: Icons.more_horiz_rounded,
-            active: selectedMethod == PaymentMethod.other,
-            onTap: () => onChange(PaymentMethod.other),
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.shield_outlined, color: Color(0xFF22C55E), size: 18),
+          SizedBox(width: 6),
+          Text(
+            'جميع المعاملات آمنة ومشفرة',
+            style: TextStyle(
+              fontFamily: 'NotoSansArabic',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF15803D),
+            ),
           ),
         ],
       ),
     );
   }
-}
 
-class _PaymentMethodTab extends StatelessWidget {
-  const _PaymentMethodTab({
-    required this.label,
-    required this.icon,
-    required this.active,
-    required this.onTap,
-  });
+  // ── Payment Card ────────────────────────────────────────────────────────────
+  Widget _buildPaymentCard(_PaymentOption option) {
+    final isSelected = _selected == option.type;
 
-  final String label;
-  final IconData icon;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primaryColor = theme.primaryColor;
-    
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => setState(() => _selected = option.type),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        curve: Curves.easeOut,
         decoration: BoxDecoration(
-          color: active ? primaryColor.withValues(alpha: 0.12) : theme.colorScheme.surface,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: active ? primaryColor : theme.dividerColor.withValues(alpha: 0.1),
-            width: 1.5,
+            color: isSelected ? _kOrange : Colors.transparent,
+            width: 2,
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: active ? primaryColor : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? _kOrange.withOpacity(0.15)
+                  : Colors.black.withOpacity(0.05),
+              blurRadius: isSelected ? 12 : 6,
+              offset: const Offset(0, 3),
             ),
-            const SizedBox(width: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'NotoSansArabic',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: active ? primaryColor : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+              child: Row(
+                children: [
+                  // Text
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          option.title,
+                          style: const TextStyle(
+                            fontFamily: 'NotoSansArabic',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          option.subtitle,
+                          style: const TextStyle(
+                            fontFamily: 'NotoSansArabic',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Arrow
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color:
+                        isSelected ? _kOrange : const Color(0xFFADB5BD),
+                  ),
+                  const SizedBox(width: 10),
+                  // Icon box
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: option.iconBg,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child:
+                        Icon(option.icon, color: Colors.white, size: 26),
+                  ),
+                ],
               ),
             ),
+            // "Most used" badge
+            if (option.isMostUsed)
+              Positioned(
+                top: -1,
+                right: -1,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: const BoxDecoration(
+                    color: _kOrange,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(14),
+                      bottomLeft: Radius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'الأكثر استخداماً',
+                    style: TextStyle(
+                      fontFamily: 'NotoSansArabic',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
-}
 
-class _PaymentField extends StatelessWidget {
-  const _PaymentField({
-    required this.label,
-    required this.hintText,
-    required this.controller,
-    this.keyboardType,
-    this.readOnly = false,
-    this.suffixIcon,
-  });
+  // ── Confirm Button ──────────────────────────────────────────────────────────
+  Widget _buildConfirmButton(BuildContext context) {
+    final hasSelection = _selected != null;
 
-  final String label;
-  final String hintText;
-  final TextEditingController controller;
-  final TextInputType? keyboardType;
-  final bool readOnly;
-  final IconData? suffixIcon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, right: 4),
-          child: Text(
-            label,
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.fromLTRB(
+          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+      child: SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor:
+                hasSelection ? _kOrange : const Color(0xFFD1D5DB),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: hasSelection ? 4 : 0,
+            shadowColor: _kOrange.withOpacity(0.4),
+          ),
+          onPressed: hasSelection
+              ? () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => PaymentDetailsPage(
+                        method: _selected!,
+                        amount: widget.amount,
+                        isYearly: widget.isYearly,
+                      ),
+                    ),
+                  );
+                }
+              : null,
+          child: const Text(
+            'متابعة',
             style: TextStyle(
               fontFamily: 'NotoSansArabic',
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          readOnly: readOnly,
-          style: const TextStyle(fontFamily: 'NotoSansArabic', fontSize: 16, fontWeight: FontWeight.w600),
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.35), fontWeight: FontWeight.normal),
-            suffixIcon: suffixIcon != null
-                ? Icon(suffixIcon, color: theme.colorScheme.onSurface.withValues(alpha: 0.4))
-                : null,
-            filled: true,
-            fillColor: theme.colorScheme.surfaceContainer,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.05)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: theme.primaryColor, width: 1.5),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 18,
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

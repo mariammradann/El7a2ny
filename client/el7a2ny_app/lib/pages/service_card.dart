@@ -22,20 +22,25 @@ class ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Adaptive colors for light/dark mode
     final isDark = theme.brightness == Brightness.dark;
-    
-    // We override some properties to match the theme
     final primaryColor = gradientColors[0];
     final cardBgColor = isDark ? const Color(0xFF0F172A) : theme.cardColor;
-    final contentColor = isDark ? Colors.white : theme.colorScheme.onSurface;
+    final nameTextColor = isDark ? Colors.white : theme.colorScheme.onSurface;
+    final numberTextColor = isDark ? Colors.white : primaryColor;
+
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
-        color: cardBgColor.withValues(alpha: 0.95),
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : theme.dividerColor.withValues(alpha: 0.1), width: 1),
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/flutter
         boxShadow: [
           BoxShadow(
             color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.05),
@@ -44,12 +49,14 @@ class ServiceCard extends StatelessWidget {
           ),
         ],
       ),
+
       child: Row(
         children: [
           // Icon Box with Glow
           Container(
-            width: 72,
-            height: 72,
+            width: 60, // Slightly smaller to give more space for text
+            height: 60,
+
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: gradientColors,
@@ -79,21 +86,21 @@ class ServiceCard extends StatelessWidget {
                 Text(
                   name,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: contentColor, 
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: nameTextColor,
                     fontFamily: 'NotoSansArabic',
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   number,
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 22,
                     fontWeight: FontWeight.w900,
-                    color: contentColor,
+                    color: numberTextColor,
+                    letterSpacing: 2,
                     fontFamily: 'NotoSansArabic',
-                    letterSpacing: 1.2,
                   ),
                 ),
               ],

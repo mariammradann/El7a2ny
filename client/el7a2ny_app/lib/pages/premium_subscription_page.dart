@@ -3,9 +3,20 @@ import 'payment_page.dart';
 import '../core/localization/app_strings.dart';
 import '../services/session_service.dart';
 import 'edit_plan_page.dart';
+import 'user_rating_screen.dart';
+import 'volunteer_rating_screen.dart';
+import '../widgets/star_rating_bar.dart';
 
-class PremiumSubscriptionPage extends StatelessWidget {
+
+class PremiumSubscriptionPage extends StatefulWidget {
   const PremiumSubscriptionPage({super.key});
+
+  @override
+  State<PremiumSubscriptionPage> createState() => _PremiumSubscriptionPageState();
+}
+
+class _PremiumSubscriptionPageState extends State<PremiumSubscriptionPage> {
+  bool _isYearly = false;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +29,10 @@ class PremiumSubscriptionPage extends StatelessWidget {
         bottom: false,
         child: Column(
           children: [
-            const _PremiumHeader(),
+            _PremiumHeader(
+              isYearly: _isYearly,
+              onToggleYearly: (val) => setState(() => _isYearly = val),
+            ),
             Expanded(
               child: Container(
                 color: theme.scaffoldBackgroundColor,
@@ -144,14 +158,14 @@ class PremiumSubscriptionPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 32),
-                      const _TestimonialCard(),
+                      const _RatingPromptCard(),
                       const SizedBox(height: 40),
                     ],
                   ),
                 ),
               ),
             ),
-            const _StickyFooter(),
+            _StickyFooter(isYearly: _isYearly),
           ],
         ),
       ),
@@ -160,26 +174,32 @@ class PremiumSubscriptionPage extends StatelessWidget {
 }
 
 class _PremiumHeader extends StatelessWidget {
-  const _PremiumHeader();
+  final bool isYearly;
+  final ValueChanged<bool> onToggleYearly;
+
+  const _PremiumHeader({required this.isYearly, required this.onToggleYearly});
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.loc.isAr;
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFFF9500), Color(0xFFFF6B35), Color(0xFFF92E1C)],
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x40FF6B35),
+            color: Colors.black.withOpacity(0.5),
             blurRadius: 20,
-            offset: Offset(0, 10),
+            offset: const Offset(0, 10),
           ),
         ],
+        border: Border(
+          bottom: BorderSide(color: const Color(0xFFFFD700).withOpacity(0.2), width: 1),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Directionality(
@@ -196,8 +216,9 @@ class _PremiumHeader extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: Colors.white10,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
                   ),
                   child: const Icon(Icons.close_rounded, size: 24, color: Colors.white),
                 ),
@@ -213,15 +234,20 @@ class _PremiumHeader extends StatelessWidget {
                       Column(
                         crossAxisAlignment: isAr ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            context.loc.premiumPlusTitle,
-                            textAlign: isAr ? TextAlign.right : TextAlign.left,
-                            style: const TextStyle(
-                              fontFamily: 'NotoSansArabic',
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                            ).createShader(bounds),
+                            child: Text(
+                              context.loc.premiumPlusTitle,
+                              textAlign: isAr ? TextAlign.right : TextAlign.left,
+                              style: const TextStyle(
+                                fontFamily: 'NotoSansArabic',
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 1.0,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -232,7 +258,7 @@ class _PremiumHeader extends StatelessWidget {
                               fontFamily: 'NotoSansArabic',
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.85),
+                              color: Colors.white.withOpacity(0.6),
                             ),
                           ),
                         ],
@@ -257,6 +283,59 @@ class _PremiumHeader extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 16),
+          // Toggle Yearly / Monthly
+          Center(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => onToggleYearly(false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: !isYearly ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Text(
+                        'شهري',
+                        style: TextStyle(
+                          fontFamily: 'NotoSansArabic',
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: !isYearly ? const Color(0xFFFFD700) : Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => onToggleYearly(true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isYearly ? const Color(0xFFFFD700) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Text(
+                        'سنوي',
+                        style: TextStyle(
+                          fontFamily: 'NotoSansArabic',
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isYearly ? const Color(0xFF0F172A) : Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 24),
           Align(
             alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
@@ -265,13 +344,13 @@ class _PremiumHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 if (isAr) ...[
-                  const _LargePriceAr(),
+                  _LargePriceAr(isYearly: isYearly),
                   const SizedBox(width: 16),
-                  const _PriceDetailsAr(),
+                  _PriceDetailsAr(isYearly: isYearly),
                 ] else ...[
-                  const _PriceBlock(),
+                  _PriceBlock(isYearly: isYearly),
                   const SizedBox(width: 16),
-                  const _PriceDetailsEn(),
+                  _PriceDetailsEn(isYearly: isYearly),
                 ],
               ],
             ),
@@ -290,11 +369,12 @@ class _PlusIconBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
         boxShadow: const [
           BoxShadow(
-            color: Colors.black12,
+            color: Colors.black26,
             blurRadius: 10,
           ),
         ],
@@ -302,22 +382,23 @@ class _PlusIconBadge extends StatelessWidget {
       child: const Icon(
         Icons.auto_awesome_rounded,
         size: 24,
-        color: Color(0xFFFF6B35),
+        color: Color(0xFFFFD700),
       ),
     );
   }
 }
 
 class _PriceBlock extends StatelessWidget {
-  const _PriceBlock();
+  final bool isYearly;
+  const _PriceBlock({required this.isYearly});
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
         Text(
-          '299',
+          isYearly ? '2990' : '299',
           style: TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 54,
@@ -342,7 +423,8 @@ class _PriceBlock extends StatelessWidget {
 }
 
 class _PriceDetailsEn extends StatelessWidget {
-  const _PriceDetailsEn();
+  final bool isYearly;
+  const _PriceDetailsEn({required this.isYearly});
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
@@ -350,7 +432,7 @@ class _PriceDetailsEn extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          loc.monthlyLabelSmall,
+          isYearly ? 'Yearly' : loc.monthlyLabelSmall,
           style: const TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 16,
@@ -374,7 +456,8 @@ class _PriceDetailsEn extends StatelessWidget {
 }
 
 class _PriceDetailsAr extends StatelessWidget {
-  const _PriceDetailsAr();
+  final bool isYearly;
+  const _PriceDetailsAr({required this.isYearly});
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
@@ -382,7 +465,7 @@ class _PriceDetailsAr extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          loc.monthlyLabelSmall,
+          isYearly ? 'سنوياً' : loc.monthlyLabelSmall,
           style: const TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 16,
@@ -407,11 +490,12 @@ class _PriceDetailsAr extends StatelessWidget {
 }
 
 class _LargePriceAr extends StatelessWidget {
-  const _LargePriceAr();
+  final bool isYearly;
+  const _LargePriceAr({required this.isYearly});
   @override
   Widget build(BuildContext context) {
-    return const Text(
-      '299 جنيه',
+    return Text(
+      isYearly ? '2990 جنيه' : '299 جنيه',
       textAlign: TextAlign.right,
       textDirection: TextDirection.rtl,
       style: TextStyle(
@@ -469,10 +553,11 @@ class _SectionIcon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF9500).withValues(alpha: 0.12),
+        color: const Color(0xFFFFD700).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.2)),
       ),
-      child: Icon(icon, size: 20, color: const Color(0xFFFF9500)),
+      child: Icon(icon, size: 20, color: const Color(0xFFFFD700)),
     );
   }
 }
@@ -560,10 +645,11 @@ class _FeatureIcon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF9500).withValues(alpha: 0.1),
+        color: const Color(0xFFFFD700).withOpacity(0.08),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.1)),
       ),
-      child: Icon(icon, size: 24, color: const Color(0xFFFF9500)),
+      child: Icon(icon, size: 24, color: const Color(0xFFFFD700)),
     );
   }
 }
@@ -700,56 +786,92 @@ class _CheckIcon extends StatelessWidget {
   }
 }
 
-class _TestimonialCard extends StatelessWidget {
-  const _TestimonialCard();
+class _RatingPromptCard extends StatelessWidget {
+  const _RatingPromptCard();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isAr = context.loc.isAr;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEFCF3),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.1)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (index) => const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 3),
-              child: Icon(Icons.star_rounded, size: 22, color: Color(0xFFF59E0B)),
-            )),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            context.loc.testimonialText,
-            textAlign: isAr ? TextAlign.right : TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'NotoSansArabic',
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-              fontStyle: FontStyle.italic,
-              height: 1.8,
+    final isVolunteer = SessionService().currentRole == UserRole.volunteer;
+    
+    return GestureDetector(
+      onTap: () {
+        if (isVolunteer) {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const VolunteerRatingScreen()),
+          );
+        } else {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const UserRatingScreen()),
+          );
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFFEFCF3),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-          ),
-        ],
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Column(
+          children: [
+            Text(
+              isVolunteer ? context.loc.volunteerRatingTitle : context.loc.userRatingTitle,
+              style: TextStyle(
+                fontFamily: 'NotoSansArabic',
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (isVolunteer)
+              const Icon(Icons.shield_rounded, size: 48, color: Color(0xFFF59E0B))
+            else
+              StarRatingBar(
+                itemSize: 40,
+                onRatingChanged: (rating) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const UserRatingScreen()),
+                  );
+                },
+              ),
+            const SizedBox(height: 16),
+            Text(
+              isVolunteer ? context.loc.volunteerRatingDesc : context.loc.userRatingDesc,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'NotoSansArabic',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _StickyFooter extends StatelessWidget {
-  const _StickyFooter();
+  final bool isYearly;
+  const _StickyFooter({required this.isYearly});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isAr = context.loc.isAr;
+    final price = isYearly ? 2990.0 : 299.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -772,10 +894,10 @@ class _StickyFooter extends StatelessWidget {
               height: 58,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF9500),
-                  foregroundColor: Colors.white,
+                  backgroundColor: const Color(0xFFFFD700),
+                  foregroundColor: const Color(0xFF0F172A),
                   elevation: 6,
-                  shadowColor: const Color(0xFFFF9500).withValues(alpha: 0.4),
+                  shadowColor: const Color(0xFFFFD700).withOpacity(0.4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
@@ -783,7 +905,10 @@ class _StickyFooter extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (context) => const PaymentPage(),
+                      builder: (context) => PaymentPage(
+                        isYearly: isYearly,
+                        amount: price,
+                      ),
                     ),
                   );
                 },

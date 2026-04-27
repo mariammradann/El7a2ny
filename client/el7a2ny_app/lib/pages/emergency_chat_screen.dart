@@ -361,6 +361,14 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
         children: [
           Row(
             children: [
+              IconButton(
+                icon: Icon(Icons.mic_none_rounded, color: Theme.of(context).primaryColor),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(context.loc.isAr ? 'بدء تسجيل الرسالة الصوتية...' : 'Starting voice recording...')),
+                  );
+                },
+              ),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -373,6 +381,27 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                     decoration: InputDecoration(
                       hintText: context.loc.chatInputHint,
                       border: InputBorder.none,
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.image_outlined, size: 20),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(context.loc.isAr ? 'فتح المعرض...' : 'Opening gallery...')),
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.videocam_outlined, size: 20),
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(context.loc.isAr ? 'فتح الكاميرا...' : 'Opening camera...')),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                       hintStyle: TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 14,
@@ -385,6 +414,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
               ),
               const SizedBox(width: 8),
               Container(
+
                 decoration: const BoxDecoration(
                   color: Color(0xFF434D65),
                   shape: BoxShape.circle,

@@ -827,4 +827,21 @@ class AppStrings {
   String get notifJustNow => isAr ? 'الآن' : 'Just now';
   String get notifHoursAgo => isAr ? 'ساعات' : 'hours ago';
   String get notifDaysAgo => isAr ? 'يوم' : 'day ago';
+
+  // Ratings
+  String get userRatingTitle => isAr ? 'تقييم الخدمة' : 'Service Rating';
+  String get userRatingDesc => isAr ? 'تقييمك بيساعدنا نحسن خدماتنا وننقذ حياة ناس أكتر.' : 'Your rating helps us improve our services and save more lives.';
+  String get rateApp => isAr ? 'تقييم التطبيق' : 'App Rating';
+  String get authoritiesRating => isAr ? 'تقييم الجهات المختصة' : 'Authorities Rating';
+  String get el7a2nyPlusRating => isAr ? 'تقييم خدمات الحقني بلس' : 'El7a2ny Plus Rating';
+  String get policeRating => isAr ? 'الشرطة' : 'Police';
+  String get ambulanceRating => isAr ? 'الإسعاف' : 'Ambulance';
+  String get fireDeptRating => isAr ? 'المطافي' : 'Fire Dept';
+  String get volunteerHelpful => isAr ? 'هل كان المتطوعين مفيدين ومساعدين؟' : 'Were the volunteers helpful?';
+  String get volunteerRatingTitle => isAr ? 'تقييم البلاغ' : 'Report Evaluation';
+  String get volunteerRatingDesc => isAr ? 'شكراً لمجهودك! هل كان هذا البلاغ حقيقياً أم كاذباً؟' : 'Thank you for your effort! Was this report real or fake?';
+  String get fakeReport => isAr ? 'بلاغ كاذب' : 'Fake Report';
+  String get realEmergency => isAr ? 'حالة طوارئ حقيقية' : 'Real Emergency';
+  String get submitRating => isAr ? 'إرسال التقييم' : 'Submit Rating';
+  String get ratingSuccess => isAr ? 'شكراً لتقييمك!' : 'Thank you for your rating!';
 }
