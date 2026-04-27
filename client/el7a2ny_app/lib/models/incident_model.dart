@@ -6,6 +6,7 @@ class IncidentModel {
   final String category;
   final String? description;
   final String status;
+  final String? address;
 
   IncidentModel({
     this.id,
@@ -15,7 +16,9 @@ class IncidentModel {
     required this.category,
     this.description,
     this.status = 'reported',
+    this.address,
   });
+
 
   Map<String, dynamic> toJson() => {
     'user_id': userId,
@@ -24,5 +27,6 @@ class IncidentModel {
     'category': category,
     'description': description,
     'status': status,
+    
   };
 }

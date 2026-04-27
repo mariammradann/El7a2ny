@@ -9,7 +9,6 @@ import '../services/api_service.dart';
 class AlertDetailsPage extends StatefulWidget {
   final AlertModel alert;
   final bool isMyAlerts;
-
   const AlertDetailsPage({
     super.key,
     required this.alert,
@@ -61,17 +60,14 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
 
   Future<void> _joinVolunteers() async {
     if (_joined) return;
-    
     try {
       await ApiService.respondToAlert(int.parse(widget.alert.id));
       if (!mounted) return;
-      
       setState(() {
         _joined = true;
         _currVols++;
         _progress = min(100, (_currVols / _totalVols * 100).round());
       });
-      
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(context.loc.isAr ? 'تم تسجيل تطوعك! المساعدة في الطريق.' : 'Successfully registered! Help is on the way.'),
         backgroundColor: const Color(0xFF10B981),
@@ -91,8 +87,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
     final isAr = context.loc.isAr;
     Color bannerColor;
     IconData largeIcon;
-
     final typeLower = widget.alert.type.toLowerCase();
+
     if (typeLower.contains('fire') || typeLower.contains('حريق')) {
       bannerColor = const Color(0xFFEF4444);
       largeIcon = Icons.fire_extinguisher_rounded;
@@ -107,10 +103,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
       largeIcon = Icons.emergency_rounded;
     }
 
-    final dateStr = widget.alert.createdAt != null
-        ? DateFormat('dd/MM/yyyy').format(widget.alert.createdAt!)
+    final dateStr = widget.alert.createdAt != null 
+        ? DateFormat('dd/MM/yyyy').format(widget.alert.createdAt!) 
         : DateFormat('dd/MM/yyyy').format(DateTime.now());
-
+    
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final onSurface = theme.colorScheme.onSurface;
@@ -135,10 +131,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [
-                                bannerColor.withValues(alpha: 0.9),
-                                bannerColor,
-                              ],
+                              colors: [bannerColor.withValues(alpha: 0.9), bannerColor],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ),
@@ -148,13 +141,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           right: isAr ? -30 : null,
                           left: isAr ? null : -30,
                           bottom: -30,
-                          child: Icon(
-                            largeIcon,
-                            size: 200,
-                            color: Colors.black.withValues(alpha: 0.08),
-                          ),
+                          child: Icon(largeIcon, size: 200, color: Colors.black.withValues(alpha: 0.08)),
                         ),
-                        // Back Button
                         Positioned(
                           top: 40,
                           right: isAr ? 16 : null,
@@ -163,14 +151,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             onTap: () => Navigator.pop(context),
                             child: Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
-                                color: Colors.white24,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                isAr ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded,
-                                color: Colors.white,
-                              ),
+                              decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
+                              child: Icon(isAr ? Icons.arrow_forward_rounded : Icons.arrow_back_rounded, color: Colors.white),
                             ),
                           ),
                         ),
@@ -180,32 +162,19 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           left: isAr ? 16 : null,
                           right: isAr ? null : 16,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(20)),
                             child: Row(
                               children: [
                                 Text(
                                   widget.isMyAlerts ? context.loc.completed : context.loc.activeStatusNow,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                    color: onSurface,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: onSurface),
                                 ),
                                 const SizedBox(width: 8),
                                 Container(
-                                  width: 8,
-                                  height: 8,
+                                  width: 8, height: 8,
                                   decoration: BoxDecoration(
-                                    color: widget.isMyAlerts
-                                        ? const Color(0xFF22C55E)
-                                        : const Color(0xFF34D399),
+                                    color: widget.isMyAlerts ? const Color(0xFF22C55E) : const Color(0xFF34D399),
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -219,34 +188,15 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           left: isAr ? 16 : null,
                           right: isAr ? null : 16,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: widget.isMyAlerts
-                                  ? const Color(0xFFF97316)
-                                  : const Color(0xFFFF0000), 
+                              color: widget.isMyAlerts ? const Color(0xFFF97316) : const Color(0xFFFF0000),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Column(
                               children: [
-                                Text(
-                                  '$_progress%',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 24,
-                                  ),
-                                ),
-                                Text(
-                                  context.loc.volunteeringRate,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                Text('$_progress%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
+                                Text(context.loc.volunteeringRate, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ),
@@ -254,126 +204,67 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                       ],
                     ),
                   ),
-
-                  // Content Padding
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Tags Row
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: bannerColor,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                widget.alert.getLocalizedType(context.loc),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(color: bannerColor, borderRadius: BorderRadius.circular(16)),
+                              child: Text(widget.alert.getLocalizedType(context.loc), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(color: isDark ? Colors.white10 : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(16)),
                               child: Row(
                                 children: [
-                                  const Icon(
-                                    Icons.info_outline_rounded,
-                                    size: 14,
-                                    color: Color(0xFF64748B),
-                                  ),
+                                  const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF64748B)),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    widget.alert.getLocalizedSeverity(context.loc),
-                                    style: TextStyle(
-                                      color: onSurface.withValues(alpha: 0.7),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
+                                  Text(widget.alert.getLocalizedSeverity(context.loc), style: TextStyle(color: onSurface.withValues(alpha: 0.7), fontWeight: FontWeight.bold, fontSize: 12)),
                                 ],
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
-
-                        // Title
                         Text(
                           widget.alert.getLocalizedType(context.loc) + (widget.isMyAlerts ? context.loc.pastAlert : context.loc.activeStatus),
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: onSurface,
-                          ),
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: onSurface),
                         ),
                         const SizedBox(height: 20),
-
-                        // Two columns (Location & Time)
+                        
+                        // Updated Row with Address logic
                         Row(
                           children: [
                             Expanded(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                  horizontal: 12,
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                                 decoration: BoxDecoration(
                                   color: isDark ? theme.colorScheme.surface : theme.primaryColor.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: theme.dividerColor.withValues(alpha: 0.1),
-                                  ),
+                                  border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
                                 ),
                                 child: Column(
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                    const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        const Icon(
-                                          Icons.location_on_outlined,
-                                          size: 16,
-                                          color: Color(0xFF3B82F6),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          context.loc.locationLabel,
-                                          style: const TextStyle(
-                                            color: Color(0xFF3B82F6),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
+                                        Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF3B82F6)),
+                                        SizedBox(width: 6),
+                                        Text('LOCATION', style: TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.bold, fontSize: 12)),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      widget.alert.getLocalizedLocation(context.loc),
+                                      (widget.alert.address != null && widget.alert.address!.isNotEmpty)
+                                          ? widget.alert.address!
+                                          : widget.alert.getLocalizedLocation(context.loc),
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: onSurface,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        height: 1.4,
-                                      ),
+                                      style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 13, height: 1.4),
                                     ),
                                   ],
                                 ),
@@ -382,51 +273,27 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                  horizontal: 12,
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                                 decoration: BoxDecoration(
                                   color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: theme.dividerColor.withValues(alpha: 0.1),
-                                  ),
+                                  border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
                                 ),
                                 child: Column(
                                   children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                    const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        const Icon(
-                                          Icons.access_time_rounded,
-                                          size: 16,
-                                          color: Color(0xFFA855F7),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          context.loc.timeLabel,
-                                          style: const TextStyle(
-                                            color: Color(0xFFA855F7),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
+                                        Icon(Icons.access_time_rounded, size: 16, color: Color(0xFFA855F7)),
+                                        SizedBox(width: 6),
+                                        Text('TIME', style: TextStyle(color: Color(0xFFA855F7), fontWeight: FontWeight.bold, fontSize: 12)),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      widget.alert.timeAgoLocalized(context.loc).isEmpty
-                                          ? context.loc.justNow
-                                          : widget.alert.timeAgoLocalized(context.loc),
+                                      widget.alert.timeAgoLocalized(context.loc).isEmpty ? context.loc.justNow : widget.alert.timeAgoLocalized(context.loc),
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: onSurface,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        height: 1.4,
-                                      ),
+                                      style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 13, height: 1.4),
                                     ),
                                   ],
                                 ),
@@ -435,8 +302,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-
-                        // Volunteers Card (Green)
+                        // Volunteers Card
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -448,41 +314,20 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
                                       Container(
                                         padding: const EdgeInsets.all(6),
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFF22C55E),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.people_alt_rounded,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
+                                        decoration: const BoxDecoration(color: Color(0xFF22C55E), shape: BoxShape.circle),
+                                        child: const Icon(Icons.people_alt_rounded, color: Colors.white, size: 16),
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        context.loc.volunteers,
-                                        style: TextStyle(
-                                          color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF166534),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
+                                      Text(context.loc.volunteers, style: TextStyle(color: isDark ? const Color(0xFF4ADE80) : const Color(0xFF166534), fontWeight: FontWeight.bold, fontSize: 14)),
                                     ],
                                   ),
-                                  Text(
-                                    dateStr,
-                                    style: const TextStyle(
-                                      color: Color(0xFF64748B),
-                                      fontSize: 12,
-                                    ),
-                                  ),
+                                  Text(dateStr, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
                                 ],
                               ),
                               const SizedBox(height: 16),
@@ -491,50 +336,22 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 crossAxisAlignment: CrossAxisAlignment.baseline,
                                 textBaseline: TextBaseline.alphabetic,
                                 children: [
-                                    Text(
-                                      '$_currVols',
-                                      style: TextStyle(
-                                        fontSize: 40,
-                                        fontWeight: FontWeight.w900,
-                                        color: onSurface,
-                                      ),
-                                    ),
+                                  Text('$_currVols', style: TextStyle(fontSize: 40, fontWeight: FontWeight.w900, color: onSurface)),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    '${context.loc.outOfLabel} $_totalVols',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: onSurface.withValues(alpha: 0.6),
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                                  Text('${context.loc.outOfLabel} $_totalVols', style: TextStyle(fontSize: 16, color: onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.w600)),
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              // Progress bar
                               Container(
                                 height: 8,
-                                  decoration: BoxDecoration(
-                                    color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
+                                decoration: BoxDecoration(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(4)),
                                 child: Row(
                                   children: [
                                     Expanded(
                                       flex: _progress,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF10B981),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                        ),
-                                      ),
+                                      child: Container(decoration: BoxDecoration(color: const Color(0xFF10B981), borderRadius: BorderRadius.circular(4))),
                                     ),
-                                    Expanded(
-                                      flex: 100 - _progress,
-                                      child: const SizedBox(),
-                                    ),
+                                    Expanded(flex: 100 - _progress, child: const SizedBox()),
                                   ],
                                 ),
                               ),
@@ -542,8 +359,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // Details Card
+                        // Details
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -556,78 +372,14 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(
-                                    Icons.description_outlined,
-                                    color: Color(0xFF64748B),
-                                    size: 18,
-                                  ),
+                                  const Icon(Icons.description_outlined, color: Color(0xFF64748B), size: 18),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    context.loc.alertDetails,
-                                    style: TextStyle(
-                                      color: onSurface,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
+                                  Text(context.loc.alertDetails, style: TextStyle(color: onSurface, fontWeight: FontWeight.bold, fontSize: 15)),
                                 ],
                               ),
                               const SizedBox(height: 12),
                               if (widget.alert.description != null)
-                                Text(
-                                  widget.alert.description!,
-                                  style: TextStyle(
-                                    color: onSurface.withValues(alpha: 0.7),
-                                    height: 1.7,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Contact Card
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                            horizontal: 20,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark ? theme.colorScheme.surface : theme.colorScheme.secondary.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    context.loc.contactForInquiry,
-                                    style: TextStyle(
-                                      color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1E3A8A),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    '0501234567',
-                                    style: TextStyle(
-                                      color: Color(0xFF2563EB),
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Icon(
-                                Icons.phone_in_talk_rounded,
-                                color: Color(0xFFEF4444),
-                                size: 28,
-                              ),
+                                Text(widget.alert.description!, style: TextStyle(color: onSurface.withValues(alpha: 0.7), height: 1.7, fontSize: 13)),
                             ],
                           ),
                         ),
@@ -637,49 +389,21 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                 ],
               ),
             ),
-
             // Bottom Action Button
             if (!(widget.isMyAlerts || widget.alert.isMyAlert))
               Positioned(
-                bottom: 24,
-                left: 20,
-                right: 20,
+                bottom: 24, left: 20, right: 20,
                 child: Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: _joined ? Colors.grey.withValues(alpha: 0.4) : const Color(0xFF10B981).withValues(alpha: 0.4),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
+                  decoration: BoxDecoration(boxShadow: [BoxShadow(color: _joined ? Colors.grey.withValues(alpha: 0.4) : const Color(0xFF10B981).withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, 8))]),
                   child: ElevatedButton(
                     onPressed: _joined ? null : _joinVolunteers,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _joined ? Colors.grey.shade400 : const Color(0xFF10B981),
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
+                    style: ElevatedButton.styleFrom(backgroundColor: _joined ? Colors.grey.shade400 : const Color(0xFF10B981), padding: const EdgeInsets.symmetric(vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          _joined ? Icons.check_circle_rounded : Icons.person_add_alt_1_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
+                        Icon(_joined ? Icons.check_circle_rounded : Icons.person_add_alt_1_rounded, color: Colors.white, size: 22),
                         const SizedBox(width: 10),
-                        Text(
-                          _joined ? context.loc.joinedBtn : (isAr ? ' انا جي ' : 'I am coming'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        Text(_joined ? context.loc.joinedBtn : (isAr ? ' انا جي ' : 'I am coming'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -687,29 +411,14 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
               )
             else if (widget.alert.status.toLowerCase() != 'resolved' && widget.alert.status.toLowerCase() != 'cancelled')
               Positioned(
-                bottom: 24,
-                left: 20,
-                right: 20,
+                bottom: 24, left: 20, right: 20,
                 child: Row(
                   children: [
                     Expanded(
                       child: ElevatedButton(
                         onPressed: _updatingStatus ? null : () => _updateAlertStatus('cancelled'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade300,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          isAr ? 'إلغاء البلاغ' : 'Cancel Report',
-                          style: const TextStyle(
-                            color: Colors.black87,
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade300, padding: const EdgeInsets.symmetric(vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                        child: Text(isAr ? 'إلغاء البلاغ' : 'Cancel Report', style: const TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.bold)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -717,28 +426,15 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                       flex: 2,
                       child: ElevatedButton(
                         onPressed: _updatingStatus ? null : () => _updateAlertStatus('resolved'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: _updatingStatus
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        style: ElevatedButton.styleFrom(backgroundColor: theme.primaryColor, padding: const EdgeInsets.symmetric(vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                        child: _updatingStatus 
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
                             : Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    isAr ? 'انتهى الخطر' : 'Danger Ended',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  Text(isAr ? 'انتهى الخطر' : 'Danger Ended', style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                       ),

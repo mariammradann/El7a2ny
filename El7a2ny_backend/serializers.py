@@ -8,10 +8,16 @@ class LocationSerializer(serializers.ModelSerializer):
         model = Location
         # تأكد إن دي الحقول اللي الـ Flutter بيبعتها جوه الـ location_data
         fields = ['latitude', 'longitude', 'address', 'city', 'region']
+        extra_kwargs = {
+            'address': {'read_only': True},
+            'city': {'read_only': True},
+            'region': {'read_only': True},
+        }
 
 # 2. Serializer الخاص بالبلاغات (SOS)
 class IncidentSerializer(serializers.ModelSerializer):
     # السطر ده هو اللي بيربط الـ Object اللي جاي من Flutter
+    address = serializers.ReadOnlyField(source='location.address')
     location_data = LocationSerializer(write_only=True)
     lat = serializers.ReadOnlyField(source='location.latitude', default=0.0)
     lng = serializers.ReadOnlyField(source='location.longitude', default=0.0)
@@ -26,7 +32,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             'incident_id', 'user', 'location_data', 'category', 
             'description', 'media', 'status', 'created_at', 
             'admin_id', 'daleel_id','lat',  
-            'lng'
+            'lng','address',
         ]
         # جعل بعض الحقول اختيارية عشان متعملش Bad Request لو متبعتتش
         extra_kwargs = {

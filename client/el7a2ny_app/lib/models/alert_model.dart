@@ -1,33 +1,11 @@
-// ─────────────────────────────────────────────────────────
-//  ALERT MODEL — matches Django REST Framework response
-//
-//  Expected Django endpoint: GET /api/alerts/
-//  Expected JSON:
-//  [
-//    {
-//      "id": 1,
-//      "type": "حريق",
-//      "location": "وسط البلد، شارع طلعت حرب",
-//      "severity": "high",   // "high" | "medium" | "low"
-//      "status": "جاري التعامل",
-//      "current_volunteers": 12,
-//      "total_volunteers": 87,
-//      "lat": 30.044,
-//      "lng": 31.235,
-//      "created_at": "2024-01-01T12:00:00Z"
-//    }, ...
-//  ]
-// ─────────────────────────────────────────────────────────
-
 import '../core/localization/app_strings.dart';
-import '../services/session_service.dart';
 import '../core/auth/auth_token_store.dart';
 
 class AlertModel {
   final String id;
   final String type;
   final String location;
-  final String severity;   // "high" | "medium" | "low"
+  final String severity; // "high" | "medium" | "low"
   final String status;
   final int currentVolunteers;
   final int totalVolunteers;
@@ -36,7 +14,7 @@ class AlertModel {
   final DateTime? createdAt;
   final String? description;
   final bool isMyAlert;
-  
+  final String? address;
 
   const AlertModel({
     required this.id,
@@ -51,34 +29,33 @@ class AlertModel {
     this.createdAt,
     this.description,
     this.isMyAlert = false,
+    this.address,
   });
 
-factory AlertModel.fromJson(Map<String, dynamic> json) {
-  return AlertModel(
-    // ✅ التعديل 1: شيلنا toString() لأن الموديل مستني int
-    // وحولنا الـ ID لـ int بشكل صريح
-    id: (json['incident_id'] ?? json['id'] ?? '').toString(), 
+  factory AlertModel.fromJson(Map<String, dynamic> json) {
+    final currentUserId = AuthTokenStore.userId;
+    final alertOwnerId = json['user']?.toString();
 
-    status: json['status'] ?? 'active',
-    severity: json['severity'] ?? 'medium',
-    totalVolunteers: json['total_volunteers'] ?? 0,
-    currentVolunteers: json['current_volunteers'] ?? 0,
-    type: json['category'] ?? json['type'] ?? 'emergency',
-    description: json['description'] ?? '',
-    location: json['location_name'] ?? json['city'] ?? 'Unknown Location',
-    
-    // تأكد إن الإحداثيات double
-    lat: (json['lat'] ?? 0.0).toDouble(),
-    lng: (json['lng'] ?? 0.0).toDouble(),
-    
-    createdAt: json['created_at'] != null 
-        ? DateTime.parse(json['created_at']) 
-        : DateTime.now(),
+    return AlertModel(
+      id: (json['incident_id'] ?? json['id'] ?? '').toString(),
+      status: json['status'] ?? 'active',
+      severity: json['severity'] ?? 'medium',
+      totalVolunteers: json['total_volunteers'] ?? 0,
+      currentVolunteers: json['current_volunteers'] ?? 0,
+      type: json['category'] ?? json['type'] ?? 'emergency',
+      description: json['description'] ?? '',
+      location: json['location_name'] ?? json['city'] ?? 'Unknown Location',
+      address: json['address'], // ✅ Critical fix for the UI update
+      lat: (json['lat'] ?? 0.0).toDouble(),
+      lng: (json['lng'] ?? 0.0).toDouble(),
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at']) 
+          : DateTime.now(),
+      isMyAlert: currentUserId != null && alertOwnerId == currentUserId,
+    );
+  }
 
-    // ✅ التعديل 2: قارن الـ user_id بتاع البلاغ مع الـ user_id بتاع اليوزر اللي مسجل دخول
-    isMyAlert: (json['user']?.toString() == AuthTokenStore.userId), 
-  );
-}
+  // --- Helper Methods ---
 
   String getLocalizedType(AppStrings loc) {
     switch (type.toLowerCase()) {
@@ -117,15 +94,13 @@ factory AlertModel.fromJson(Map<String, dynamic> json) {
     }
   }
 
-  /// Returns a human-readable time string localized
   String timeAgoLocalized(AppStrings loc) {
     if (createdAt == null) return '';
     final diff = DateTime.now().difference(createdAt!);
     final isAr = loc.isAr;
-    
     if (diff.inMinutes < 1) return isAr ? 'الآن' : 'Just now';
     if (diff.inMinutes < 60) return isAr ? 'من ${diff.inMinutes} دقيقة' : '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return isAr ? 'من ${diff.inHours} ساعة' : '${diff.inHours}h ago';
     return isAr ? 'من ${diff.inDays} يوم' : '${diff.inDays}d ago';
   }
-}
+} 

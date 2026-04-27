@@ -81,7 +81,15 @@ class UserViewSet(viewsets.ModelViewSet):
 
 # 3. الـ IncidentViewSet
 class IncidentViewSet(viewsets.ModelViewSet):
-    queryset = Incident.objects.all().order_by('-created_at')
+    def get_queryset(self):
+        # This function runs on EVERY request, ensuring data is fresh
+        queryset = Incident.objects.all().order_by('-created_at')
+        
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+            
+        return queryset
     serializer_class = IncidentSerializer
     permission_classes = [permissions.AllowAny]
 
@@ -113,12 +121,10 @@ class IncidentViewSet(viewsets.ModelViewSet):
             
             self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def perform_create(self, serializer):
+        # This will trigger the Location.save() logic automatically
+        serializer.save()
 
-    def get_queryset(self):
-            user_id = self.request.query_params.get('user_id')
-            if user_id:
-                return self.queryset.filter(user_id=user_id)
-            return self.queryset
 
 # في ملف views.py
 @api_view(['POST'])

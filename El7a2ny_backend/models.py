@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 import uuid
 from django.db import models
+from geopy.geocoders import Nominatim
 
 class User(models.Model):
     # الحقول الأساسية
@@ -48,7 +49,7 @@ class User(models.Model):
     sensor_model = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'ems_schema"."users' # تأكد من كتابتها كده عشان الـ schema
 
     def __str__(self):
@@ -68,6 +69,24 @@ class Location(models.Model):
     longitude = models.DecimalField(max_digits=11, decimal_places=8) # مطابق للصورة
     class Meta:
         db_table = 'ems_schema"."locations'
+    def save(self, *args, **kwargs):
+        # Only search if address is empty/Unknown
+        if not self.address or self.address == "Unknown":
+            try:
+                geolocator = Nominatim(user_agent="el7a2ny_app")
+                # Search for the address using coordinates
+                location = geolocator.reverse(f"{self.latitude}, {self.longitude}", language='ar')
+                
+                if location and location.raw:
+                    self.address = location.address
+                    addr = location.raw.get('address', {})
+                    # Try to extract city/region from the raw data
+                    self.city = addr.get('city') or addr.get('town') or addr.get('village')
+                    self.region = addr.get('state') or addr.get('suburb')
+            except Exception as e:
+                print(f"Geocoding error: {e}")
+        
+        super().save(*args, **kwargs)
 
 class Incident(models.Model):
     incident_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
