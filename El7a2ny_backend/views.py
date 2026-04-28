@@ -2,9 +2,9 @@ from rest_framework import viewsets, status, serializers, permissions
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.db.models import Q
-from django.contrib.auth.hashers import check_password
-from .models import User, Incident
-from .serializers import UserRegistrationSerializer, IncidentSerializer
+from django.contrib.auth.hashers import check_password, make_password
+from .models import User, Incident, HelpInitiative
+from .serializers import UserRegistrationSerializer, IncidentSerializer, HelpInitiativeSerializer
 
 # 1. الـ Serializer الخاص باليوزر
 class UserSerializer(serializers.ModelSerializer):
@@ -145,3 +145,66 @@ def get_device_status(request):
         "smartwatchConnected": True,
         "homeSensorConnected": False
     })
+
+class HelpInitiativeViewSet(viewsets.ModelViewSet):
+    queryset = HelpInitiative.objects.all().order_by('-created_at')
+    serializer_class = HelpInitiativeSerializer
+    permission_classes = [permissions.AllowAny]
+
+@api_view(['POST'])
+def verify_password_api(request):
+    user_id = request.data.get('user_id')
+    password = request.data.get('password')
+    
+    print(f"DEBUG: verify_password_api called with user_id={user_id}")
+    
+    if not user_id or not password:
+        return Response({"error": "user_id and password are required"}, status=400)
+    
+    try:
+        # Convert string user_id to UUID object to be safe
+        import uuid
+        uid = uuid.UUID(user_id)
+        user = User.objects.get(user_id=uid)
+        
+        if check_password(password, user.password):
+            return Response({"message": "Password verified"}, status=200)
+        else:
+            return Response({"error": "كلمة المرور الحالية غير صحيحة"}, status=401)
+    except ValueError:
+        return Response({"error": f"Invalid UUID format: {user_id}"}, status=400)
+    except User.DoesNotExist:
+        return Response({"error": f"User not found with id: {user_id}"}, status=404)
+    except Exception as e:
+        print(f"ERROR in verify_password_api: {str(e)}")
+        return Response({"error": str(e)}, status=500)
+
+@api_view(['POST'])
+def change_password_api(request):
+    user_id = request.data.get('user_id')
+    old_password = request.data.get('old_password')
+    new_password = request.data.get('new_password')
+    
+    print(f"DEBUG: change_password_api called for user_id={user_id}")
+    
+    if not user_id or not old_password or not new_password:
+        return Response({"error": "Missing required fields"}, status=400)
+    
+    try:
+        import uuid
+        uid = uuid.UUID(user_id)
+        user = User.objects.get(user_id=uid)
+        
+        if check_password(old_password, user.password):
+            user.password = make_password(new_password)
+            user.save()
+            return Response({"message": "تم تغيير كلمة المرور بنجاح"}, status=200)
+        else:
+            return Response({"error": "كلمة المرور القديمة غير صحيحة"}, status=401)
+    except ValueError:
+        return Response({"error": "Invalid UUID format"}, status=400)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+    except Exception as e:
+        print(f"ERROR in change_password_api: {str(e)}")
+        return Response({"error": str(e)}, status=500)

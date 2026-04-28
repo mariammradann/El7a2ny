@@ -14,11 +14,10 @@ import '../models/activity_history_model.dart';
 //  API SERVICE
 // ─────────────────────────────────────────────────────────
 
-
 class ApiService {
   // استخدم IP جهازك بدل localhost لو بتجرب من موبايل حقيقي (مثلاً 192.168.1.5)
   // الـ 10.0.2.2 مخصصة للأندرويد إيموليتور للوصول للسيرفر المحلي
-  static const String baseUrl = "http://127.0.0.1:8000"; 
+  static const String baseUrl = "http://127.0.0.1:8000";
   static bool useMock = false;
 
   // --- 1. نظام جلب البروفايل (الديناميكي) ---
@@ -149,7 +148,9 @@ class ApiService {
   }
 
   /// GET /api/profile/history/
-  static Future<List<ActivityHistoryModel>> fetchActivityHistory({bool isArabic = false}) async {
+  static Future<List<ActivityHistoryModel>> fetchActivityHistory({
+    bool isArabic = false,
+  }) async {
     if (useMock) {
       await Future.delayed(const Duration(milliseconds: 600));
       return isArabic ? _mockHistoryAr : _mockHistory;
@@ -158,7 +159,9 @@ class ApiService {
     final response = await http.get(Uri.parse("$baseUrl/api/profile/history/"));
     if (response.statusCode == 200) {
       List data = jsonDecode(response.body);
-      return data.map((e) => ActivityHistoryModel.fromJson(e as Map<String, dynamic>)).toList();
+      return data
+          .map((e) => ActivityHistoryModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -189,25 +192,44 @@ class ApiService {
   }
 
   static Future<void> respondToAlert(int alertId) async {
-    final response = await http.post(Uri.parse("$baseUrl/api/alerts/$alertId/respond/"));
+    final response = await http.post(
+      Uri.parse("$baseUrl/api/alerts/$alertId/respond/"),
+    );
     if (response.statusCode != 200) throw Exception("Failed to respond");
   }
 
-  static Future<void> updateAlertStatus(String alertId, String newStatus) async {
+  static Future<void> updateAlertStatus(
+    String alertId,
+    String newStatus,
+  ) async {
     final response = await http.patch(
       Uri.parse("$baseUrl/api/incidents/$alertId/"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"status": newStatus}),
     );
-    if (response.statusCode != 200 && response.statusCode != 204 && response.statusCode != 201) {
+    if (response.statusCode != 200 &&
+        response.statusCode != 204 &&
+        response.statusCode != 201) {
       throw Exception("Failed to update alert status");
     }
   }
 
   static final List<EmergencyContact> _mockContacts = [
-    EmergencyContact(name: 'أحمد (الأب)', phone: '+20 10 123 4567', relationship: 'أب'),
-    EmergencyContact(name: 'فاطمة (الأم)', phone: '+20 11 987 6543', relationship: 'أم'),
-    EmergencyContact(name: 'د. محمد (طبيب العائلة)', phone: '+20 12 555 7777', relationship: 'طبيب'),
+    EmergencyContact(
+      name: 'أحمد (الأب)',
+      phone: '+20 10 123 4567',
+      relationship: 'أب',
+    ),
+    EmergencyContact(
+      name: 'فاطمة (الأم)',
+      phone: '+20 11 987 6543',
+      relationship: 'أم',
+    ),
+    EmergencyContact(
+      name: 'د. محمد (طبيب العائلة)',
+      phone: '+20 12 555 7777',
+      relationship: 'طبيب',
+    ),
   ];
 
   static final List<ActivityHistoryModel> _mockHistory = [
@@ -272,4 +294,3 @@ class ApiService {
     ),
   ];
 }
-

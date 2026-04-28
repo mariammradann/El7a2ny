@@ -26,17 +26,30 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
 
   Future<void> _load() async {
     try {
-      setState(() { _loading = true; _error = null; });
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
       final data = await ApiService.fetchHelpInitiatives();
-      if (mounted) setState(() { _initiatives = data; _loading = false; });
+      if (mounted)
+        setState(() {
+          _initiatives = data;
+          _loading = false;
+        });
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      if (mounted)
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
     }
   }
 
   List<HelpInitiative> _getFilteredInitiatives() {
     if (_selectedCategory == null) return _initiatives;
-    return _initiatives.where((initiative) => initiative.category == _selectedCategory).toList();
+    return _initiatives
+        .where((initiative) => initiative.category == _selectedCategory)
+        .toList();
   }
 
   Widget _buildCategoryFilters(BuildContext context) {
@@ -53,15 +66,17 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
             onTap: () => setState(() => _selectedCategory = null),
           ),
           const SizedBox(width: 12),
-          ...categories.map((category) => Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: _CategoryChip(
-              label: loc.helpCategoryName(category.name),
-              iconText: category.categoryIcon,
-              selected: _selectedCategory == category,
-              onTap: () => setState(() => _selectedCategory = category),
+          ...categories.map(
+            (category) => Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: _CategoryChip(
+                label: loc.helpCategoryName(category.name),
+                iconText: category.categoryIcon,
+                selected: _selectedCategory == category,
+                onTap: () => setState(() => _selectedCategory = category),
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -79,7 +94,9 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
         onRefresh: _load,
         color: theme.primaryColor,
         child: CustomScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
           slivers: [
             _buildSliverAppBar(context, theme, isAr),
             SliverPadding(
@@ -93,23 +110,35 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
                   _buildCategoryFilters(context),
                   const SizedBox(height: 16),
                   if (_loading)
-                    const Padding(padding: EdgeInsets.symmetric(vertical: 60), child: Center(child: CircularProgressIndicator()))
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 60),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
                   else if (_error != null)
                     Center(
                       child: Column(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: Colors.orange, size: 48),
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            color: Colors.orange,
+                            size: 48,
+                          ),
                           const SizedBox(height: 12),
-                          Text(loc.connError, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text(
+                            loc.connError,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           TextButton(onPressed: _load, child: Text(loc.retry)),
                         ],
                       ),
                     )
                   else ...[
-                    ..._getFilteredInitiatives().map((initiative) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _HelpInitiativeCard(initiative: initiative),
-                    )),
+                    ..._getFilteredInitiatives().map(
+                      (initiative) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _HelpInitiativeCard(initiative: initiative),
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 40),
                 ]),
@@ -121,7 +150,11 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
     );
   }
 
-  SliverAppBar _buildSliverAppBar(BuildContext context, ThemeData theme, bool isAr) {
+  SliverAppBar _buildSliverAppBar(
+    BuildContext context,
+    ThemeData theme,
+    bool isAr,
+  ) {
     final loc = context.loc;
     return SliverAppBar(
       expandedHeight: 140,
@@ -130,7 +163,11 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
       automaticallyImplyLeading: false,
       actions: [
         IconButton(
-          icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white, size: 28),
+          icon: const Icon(
+            Icons.add_circle_outline_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           onPressed: () async {
             /* 
@@ -145,10 +182,11 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
             }
             */
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Create Initiative feature is coming soon!')),
+              const SnackBar(
+                content: Text('Create Initiative feature is coming soon!'),
+              ),
             );
           },
-
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -330,7 +368,9 @@ class _CategoryChip extends StatelessWidget {
           color: selected ? theme.primaryColor : theme.cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? theme.primaryColor : theme.dividerColor.withValues(alpha: 0.3),
+            color: selected
+                ? theme.primaryColor
+                : theme.dividerColor.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -341,7 +381,9 @@ class _CategoryChip extends StatelessWidget {
               Icon(
                 icon,
                 size: 16,
-                color: selected ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                color: selected
+                    ? Colors.white
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 6),
             ] else if (iconText != null) ...[
@@ -349,7 +391,9 @@ class _CategoryChip extends StatelessWidget {
                 iconText!,
                 style: TextStyle(
                   fontSize: 14,
-                  color: selected ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: selected
+                      ? Colors.white
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(width: 6),
@@ -359,7 +403,9 @@ class _CategoryChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                color: selected
+                    ? Colors.white
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -384,9 +430,7 @@ class _HelpInitiativeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -508,7 +552,9 @@ class _HelpInitiativeCard extends StatelessWidget {
                       '${initiative.participantsCount} ${loc.participantsLabel(initiative.participantsCount)}',
                       style: TextStyle(
                         fontSize: 11,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],
@@ -516,7 +562,10 @@ class _HelpInitiativeCard extends StatelessWidget {
               ),
               if (initiative.authorRole == 'volunteer')
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -545,7 +594,9 @@ class _HelpInitiativeCard extends StatelessWidget {
                   if (contact.contains('@')) {
                     url = Uri.parse('mailto:$contact');
                   } else {
-                    url = Uri.parse('tel:${contact.replaceAll(RegExp(r'[^\d+]'), '')}');
+                    url = Uri.parse(
+                      'tel:${contact.replaceAll(RegExp(r'[^\d+]'), '')}',
+                    );
                   }
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url);
@@ -576,8 +627,12 @@ class _HelpInitiativeCard extends StatelessWidget {
   String _formatTime(DateTime dt, AppStrings loc) {
     final now = DateTime.now();
     final diff = now.difference(dt);
-    if (diff.inMinutes < 60) return loc.isAr ? 'منذ ${diff.inMinutes} دقيقة' : '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return loc.isAr ? 'منذ ${diff.inHours} ساعة' : '${diff.inHours}h ago';
+    if (diff.inMinutes < 60)
+      return loc.isAr
+          ? 'منذ ${diff.inMinutes} دقيقة'
+          : '${diff.inMinutes}m ago';
+    if (diff.inHours < 24)
+      return loc.isAr ? 'منذ ${diff.inHours} ساعة' : '${diff.inHours}h ago';
     return loc.isAr ? 'أمس' : 'Yesterday';
   }
 }

@@ -49,7 +49,7 @@ class AlertModel {
       lat: (json['lat'] ?? 0.0).toDouble(),
       lng: (json['lng'] ?? 0.0).toDouble(),
       createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+          ? DateTime.parse(json['created_at']).toLocal() 
           : DateTime.now(),
       isMyAlert: currentUserId != null && alertOwnerId == currentUserId,
     );
