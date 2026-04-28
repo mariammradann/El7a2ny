@@ -8,7 +8,7 @@ import google.generativeai as genai
 from .serializers import UserRegistrationSerializer, IncidentSerializer
 
 # Configure Gemini - REPLACE WITH YOUR FRESH API KEY
-genai.configure(api_key="AIzaSyBw1GqymWKUuZ_kdKkTOL3UHXvaxP122IU")
+genai.configure(api_key="AIzaSyDR_HnGEg3B_W3o1SgsGb19Y9u5VG-iG90")
 
 @api_view(['POST'])
 def get_first_aid_advice(request):
@@ -17,7 +17,7 @@ def get_first_aid_advice(request):
         return Response({'reply': 'Please provide a message.'}, status=400)
         
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         prompt = f"As a first aid expert, give short and clear advice in the user's language for: {user_message}"
         response = model.generate_content(prompt)
         return Response({'reply': response.text})

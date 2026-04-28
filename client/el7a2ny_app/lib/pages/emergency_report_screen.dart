@@ -69,8 +69,13 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
   }
 
   Future<void> _requestLocation() async {
-    final status = await Permission.locationWhenInUse.request();
-    if (status.isGranted) {
+    // For Web/Chrome, permission_handler can be flaky. Using Geolocator directly is safer.
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    
+    if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
       setState(() => _locationGranted = true);
       try {
         _currentPosition = await Geolocator.getCurrentPosition(
@@ -78,7 +83,9 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
             accuracy: LocationAccuracy.high,
           ),
         );
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Location Error: $e');
+      }
     } else {
       setState(() => _locationGranted = false);
     }
