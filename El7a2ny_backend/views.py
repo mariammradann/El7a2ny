@@ -4,7 +4,26 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.contrib.auth.hashers import check_password
 from .models import User, Incident
+import google.generativeai as genai
 from .serializers import UserRegistrationSerializer, IncidentSerializer
+
+# Configure Gemini - REPLACE WITH YOUR FRESH API KEY
+genai.configure(api_key="AIzaSyBw1GqymWKUuZ_kdKkTOL3UHXvaxP122IU")
+
+@api_view(['POST'])
+def get_first_aid_advice(request):
+    user_message = request.data.get('message')
+    if not user_message:
+        return Response({'reply': 'Please provide a message.'}, status=400)
+        
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"As a first aid expert, give short and clear advice in the user's language for: {user_message}"
+        response = model.generate_content(prompt)
+        return Response({'reply': response.text})
+    except Exception as e:
+        print(f"AI Error: {e}")
+        return Response({'reply': 'Sorry, I am having trouble connecting to my brain right now.'}, status=500)
 
 # 1. الـ Serializer الخاص باليوزر
 class UserSerializer(serializers.ModelSerializer):
