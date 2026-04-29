@@ -17,7 +17,7 @@ class ActivityHistoryModel {
     id: json['id'],
     title: json['title'],
     description: json['description'],
-    date: DateTime.parse(json['date']),
+    date: DateTime.parse(json['date']).toLocal(),
     type: json['type'],
   );
 

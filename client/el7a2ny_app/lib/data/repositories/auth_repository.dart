@@ -1,4 +1,4 @@
-﻿import '../../core/api/api_client.dart';
+import '../../core/api/api_client.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/auth/auth_token_store.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // ضيف الـ import ده
@@ -79,10 +79,19 @@ Future<void> register(Map<String, dynamic> body) async {
   }
 
   Future<void> validateCurrentPassword(String password) async {
-    await _client.post('auth/password/verify/', {'password': password});
+    final userId = AuthTokenStore.userId;
+    await _client.post('auth/password/verify/', {
+      'user_id': userId,
+      'password': password,
+    });
   }
 
   Future<void> changePassword({required String oldPassword, required String newPassword}) async {
-    await _client.post('auth/password/change/', {'old_password': oldPassword, 'new_password': newPassword});
+    final userId = AuthTokenStore.userId;
+    await _client.post('auth/password/change/', {
+      'user_id': userId,
+      'old_password': oldPassword,
+      'new_password': newPassword,
+    });
   }
 }

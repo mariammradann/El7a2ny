@@ -103,15 +103,15 @@ class Incident(models.Model):
 
     class Meta:
         db_table = 'ems_schema"."incidents'
-        managed = True
+        managed = True # لو الجداول موجودة فعلياً وصحيحة
 
-class Initiative(models.Model):
-    id = models.AutoField(primary_key=True)
+class HelpInitiative(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     author_name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
     author_role = models.CharField(max_length=50, default='citizen')
-    category = models.CharField(max_length=50) # food, clothing, etc.
+    category = models.CharField(max_length=50) # food, clothing, financial, medical, education, other
     location = models.CharField(max_length=255)
     latitude = models.DecimalField(max_digits=10, decimal_places=8, null=True, blank=True)
     longitude = models.DecimalField(max_digits=11, decimal_places=8, null=True, blank=True)
@@ -119,8 +119,11 @@ class Initiative(models.Model):
     contact_info = models.JSONField(default=list)
     is_active = models.BooleanField(default=True)
     participants_count = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'ems_schema"."initiatives'
         managed = True
+
+    def __str__(self):
+        return self.title
+

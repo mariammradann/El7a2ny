@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import User, Incident, Location, Initiative
+from .models import User, Incident, Location, HelpInitiative
 
 # 1. Serializer الخاص بالموقع
 class LocationSerializer(serializers.ModelSerializer):
@@ -98,7 +98,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
 
-class InitiativeSerializer(serializers.ModelSerializer):
+class HelpInitiativeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Initiative
-        fields = '__all__'
+        model = HelpInitiative
+        fields = '__all__'

@@ -213,7 +213,7 @@ class _HistoryCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        DateFormat('yyyy/MM/dd - hh:mm a').format(alert.createdAt ?? DateTime.now()),
+                        DateFormat('yyyy/MM/dd - hh:mm a').format((alert.createdAt ?? DateTime.now()).toLocal()),
                         style: TextStyle(
                           fontSize: 12,
                           color: theme.colorScheme.onSurface.withValues(alpha: 0.5),

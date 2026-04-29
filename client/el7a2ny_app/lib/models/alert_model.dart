@@ -68,7 +68,7 @@ class AlertModel {
       latitude: json['lat'] != null ? (json['lat']).toDouble() : null,
       longitude: json['lng'] != null ? (json['lng']).toDouble() : null,
       createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+          ? DateTime.parse(json['created_at']).toLocal() 
           : DateTime.now(),
       isMyAlert: currentUserId != null && alertOwnerId == currentUserId,
       mediaUrls: mediaUrls,

@@ -4,7 +4,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 # ضيف IncidentViewSet هنا
-from .views import UserViewSet, IncidentViewSet, register_user_api , get_device_status, get_first_aid_advice
+from .views import (
+    UserViewSet, IncidentViewSet, HelpInitiativeViewSet, 
+    register_user_api, get_device_status, get_first_aid_advice,
+    verify_password_api, change_password_api
+)
+
 
 # 1. إعداد الـ Router
 router = DefaultRouter()
@@ -12,6 +17,7 @@ router.register(r'users', UserViewSet, basename='user')
 
 # تسجيل مسار البلاغات (Incidents) لربطه بجدول الـ ems_schema.incidents
 router.register(r'incidents', IncidentViewSet, basename='incident')
+router.register(r'initiatives', HelpInitiativeViewSet, basename='initiative')
 
 # 2. المصفوفة النهائية للمسارات
 urlpatterns = [
@@ -26,8 +32,13 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/devices/status/', get_device_status),
     path('api/chat/', get_first_aid_advice),
+    # مسارات تعديل كلمة المرور
+    path('api/auth/password/verify/', verify_password_api),
+    path('api/auth/password/change/', change_password_api),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
