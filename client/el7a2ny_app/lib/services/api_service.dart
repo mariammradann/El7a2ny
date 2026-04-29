@@ -10,16 +10,21 @@ import '../data/models/emergency_contact.dart';
 import '../models/alert_model.dart';
 import '../models/incident_model.dart';
 import '../models/activity_history_model.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb; // Needed for kIsWeb
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart'; // Needed for MediaType
+import 'package:cross_file/cross_file.dart'; // Usually comes with image_picker
 
 // ─────────────────────────────────────────────────────────
 //  API SERVICE
 // ─────────────────────────────────────────────────────────
 
-
 class ApiService {
   // استخدم IP جهازك بدل localhost لو بتجرب من موبايل حقيقي (مثلاً 192.168.1.5)
   // الـ 10.0.2.2 مخصصة للأندرويد إيموليتور للوصول للسيرفر المحلي
-  static const String baseUrl = "http://127.0.0.1:8000"; 
+  static const String baseUrl = "http://127.0.0.1:8000";
   static bool useMock = false;
 
   // --- 1. نظام جلب البروفايل (الديناميكي) ---
@@ -77,11 +82,9 @@ class ApiService {
       body: jsonEncode({
         "user_id": userId,
         "category": type,
-        "location_data": {
-          "latitude": formattedLat,
-          "longitude": formattedLng,
-          "address": "Current Location",
-        },
+        "latitude": formattedLat,
+        "longitude": formattedLng,
+        "address": "Current Location",
         "description": description ?? "",
       }),
     );
@@ -93,70 +96,96 @@ class ApiService {
   }
 
   // --- 2b. إرسال استغاثة مع الملفات (Emergency Alert with Media) ---
-  static Future<void> sendEmergencyAlertWithMedia({
-    required String userId,
-    required String type,
-    required double lat,
-    required double lng,
-    String? description,
-    required List<Map<String, String>> evidenceItems, // List of {path, type}
-  }) async {
-    double formattedLat = double.parse(lat.toStringAsFixed(7));
-    double formattedLng = double.parse(lng.toStringAsFixed(7));
 
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse("$baseUrl/api/incidents/"),
-    );
 
-    // إضافة الحقول الأساسية
-    request.fields['user_id'] = userId;
-    request.fields['category'] = type;
-    request.fields['description'] = description ?? "";
-    request.fields['latitude'] = formattedLat.toString();
-    request.fields['longitude'] = formattedLng.toString();
-    request.fields['address'] = "Current Location";
+// ... other imports ...
 
-    // إضافة الملفات
-    for (int i = 0; i < evidenceItems.length; i++) {
-      final item = evidenceItems[i];
-      final filePath = item['path'] ?? '';
-      final fileType = item['type'] ?? 'image';
-      
-      if (filePath.isNotEmpty && !filePath.startsWith('mock_')) {
-        try {
-          final file = File(filePath);
-          if (file.existsSync()) {
-            request.files.add(
-              await http.MultipartFile.fromPath(
-                'media_files', // اسم الحقل في Django
-                filePath,
-              ),
-            );
-          }
-        } catch (e) {
-          print("⚠️ Error adding file: $e");
-        }
-      }
-    }
+static Future<void> sendEmergencyAlertWithMedia({
+  required String userId,
+  required String type,
+  required double lat,
+  required double lng,
+  String? description,
+  required List<Map<String, String>> evidenceItems,
+}) async {
+  double formattedLat = double.parse(lat.toStringAsFixed(7));
+  double formattedLng = double.parse(lng.toStringAsFixed(7));
+
+  var request = http.MultipartRequest(
+    'POST',
+    Uri.parse("$baseUrl/api/incidents/"),
+  );
+
+  // 1. Add Basic Fields
+  request.fields['user_id'] = userId;
+  request.fields['category'] = type;
+  request.fields['description'] = description ?? "";
+  request.fields['latitude'] = formattedLat.toString();
+  request.fields['longitude'] = formattedLng.toString();
+  request.fields['address'] = "Current Location";
+
+  // 2. Add Media Files
+  print("📸 Processing ${evidenceItems.length} evidence items...");
+
+  for (int i = 0; i < evidenceItems.length; i++) {
+    final item = evidenceItems[i];
+    final filePath = item['path'] ?? '';
+    final fileType = item['type'] ?? 'image';
+
+    if (filePath.isEmpty || filePath.startsWith('mock_')) continue;
 
     try {
-      final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
-      
-      print("📤 Response Status: ${response.statusCode}");
-      print("📤 Response Body: $responseBody");
-      
-      if (response.statusCode != 201 && response.statusCode != 200) {
-        print("🚨 Emergency Alert with Media Error (${response.statusCode}): $responseBody");
-        throw Exception("Failed to send emergency alert with media (Status: ${response.statusCode})");
+      if (kIsWeb) {
+        // --- WEB FIX: Use XFile to read bytes ---
+        final xFile = XFile(filePath);
+        final bytes = await xFile.readAsBytes();
+        
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'media_files', // Must match Django key
+            bytes,
+            filename: xFile.name.isEmpty ? 'upload_$i.jpg' : xFile.name,
+            contentType: MediaType(fileType, fileType == 'video' ? 'mp4' : 'jpeg'),
+          ),
+        );
+        print("✅ Added file via bytes (Web)");
+      } else {
+        // --- MOBILE/DESKTOP: Normal Path Logic ---
+        final file = File(filePath);
+        if (await file.exists()) {
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'media_files',
+              filePath,
+              contentType: MediaType(fileType, fileType == 'video' ? 'mp4' : 'jpeg'),
+            ),
+          );
+          print("✅ Added file via path (Mobile)");
+        }
       }
-      print("✅ Emergency alert with media sent successfully");
     } catch (e) {
-      print("🚨 Error sending emergency alert with media: $e");
-      rethrow;
+      print("❌ Error processing file [$i]: $e");
     }
   }
+
+  print("📸 Final files in request: ${request.files.length}");
+
+  try {
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    print("📤 Response Status: ${response.statusCode}");
+    print("📤 Response Body: ${response.body}");
+
+    if (response.statusCode != 201 && response.statusCode != 200) {
+      throw Exception("Failed to send alert (Status: ${response.statusCode})");
+    }
+    print("✅ Emergency alert sent successfully");
+  } catch (e) {
+    print("🚨 Network Error: $e");
+    rethrow;
+  }
+}
 
   // --- 3. جلب البيانات العامة (Lists) ---
   static Future<List<AlertModel>> fetchAlerts() async {
@@ -216,7 +245,9 @@ class ApiService {
   }
 
   /// GET /api/profile/history/
-  static Future<List<ActivityHistoryModel>> fetchActivityHistory({bool isArabic = false}) async {
+  static Future<List<ActivityHistoryModel>> fetchActivityHistory({
+    bool isArabic = false,
+  }) async {
     if (useMock) {
       await Future.delayed(const Duration(milliseconds: 600));
       return isArabic ? _mockHistoryAr : _mockHistory;
@@ -225,7 +256,9 @@ class ApiService {
     final response = await http.get(Uri.parse("$baseUrl/api/profile/history/"));
     if (response.statusCode == 200) {
       List data = jsonDecode(response.body);
-      return data.map((e) => ActivityHistoryModel.fromJson(e as Map<String, dynamic>)).toList();
+      return data
+          .map((e) => ActivityHistoryModel.fromJson(e as Map<String, dynamic>))
+          .toList();
     }
     return [];
   }
@@ -256,25 +289,44 @@ class ApiService {
   }
 
   static Future<void> respondToAlert(int alertId) async {
-    final response = await http.post(Uri.parse("$baseUrl/api/alerts/$alertId/respond/"));
+    final response = await http.post(
+      Uri.parse("$baseUrl/api/alerts/$alertId/respond/"),
+    );
     if (response.statusCode != 200) throw Exception("Failed to respond");
   }
 
-  static Future<void> updateAlertStatus(String alertId, String newStatus) async {
+  static Future<void> updateAlertStatus(
+    String alertId,
+    String newStatus,
+  ) async {
     final response = await http.patch(
       Uri.parse("$baseUrl/api/incidents/$alertId/"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"status": newStatus}),
     );
-    if (response.statusCode != 200 && response.statusCode != 204 && response.statusCode != 201) {
+    if (response.statusCode != 200 &&
+        response.statusCode != 204 &&
+        response.statusCode != 201) {
       throw Exception("Failed to update alert status");
     }
   }
 
   static final List<EmergencyContact> _mockContacts = [
-    EmergencyContact(name: 'أحمد (الأب)', phone: '+20 10 123 4567', relationship: 'أب'),
-    EmergencyContact(name: 'فاطمة (الأم)', phone: '+20 11 987 6543', relationship: 'أم'),
-    EmergencyContact(name: 'د. محمد (طبيب العائلة)', phone: '+20 12 555 7777', relationship: 'طبيب'),
+    EmergencyContact(
+      name: 'أحمد (الأب)',
+      phone: '+20 10 123 4567',
+      relationship: 'أب',
+    ),
+    EmergencyContact(
+      name: 'فاطمة (الأم)',
+      phone: '+20 11 987 6543',
+      relationship: 'أم',
+    ),
+    EmergencyContact(
+      name: 'د. محمد (طبيب العائلة)',
+      phone: '+20 12 555 7777',
+      relationship: 'طبيب',
+    ),
   ];
 
   static final List<ActivityHistoryModel> _mockHistory = [
@@ -339,4 +391,3 @@ class ApiService {
     ),
   ];
 }
-

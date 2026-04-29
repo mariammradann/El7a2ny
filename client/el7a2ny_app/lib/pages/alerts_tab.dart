@@ -7,6 +7,9 @@ import 'alert_details_page.dart';
 import '../services/session_service.dart';
 import 'package:geolocator/geolocator.dart';
 
+// IMPORTANT: Define your server URL here
+const String BASE_URL = "http://127.0.0.1:8000"; 
+
 class AlertsTab extends StatefulWidget {
   const AlertsTab({super.key});
 
@@ -41,14 +44,12 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
         _error = null;
       });
       final alerts = await ApiService.fetchAlerts();
-      
       Position? pos;
       try {
         pos = await _determinePosition();
       } catch (e) {
         debugPrint("Location error: $e");
       }
-
       if (mounted) {
         setState(() {
           _currentPosition = pos;
@@ -84,7 +85,11 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
     for (var alert in alerts) {
       if (alert.isMyAlert) continue;
       final distance = Geolocator.distanceBetween(
-          userPos.latitude, userPos.longitude, alert.lat, alert.lng);
+        userPos.latitude,
+        userPos.longitude,
+        alert.lat,
+        alert.lng,
+      );
       if (distance <= 5000) {
         _showNearbyNotification(alert);
         break;
@@ -124,11 +129,19 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => AlertDetailsPage(alert: alert)));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => AlertDetailsPage(alert: alert),
+                  ),
+                );
               },
-              child: Text(context.loc.isAr ? 'عرض' : 'View',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: Text(
+                context.loc.isAr ? 'عرض' : 'View',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -157,10 +170,16 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
             child: TabBar(
               controller: _tabController,
               labelColor: Theme.of(context).primaryColor,
-              unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              unselectedLabelColor: theme.colorScheme.onSurface.withValues(
+                alpha: 0.6,
+              ),
               indicatorColor: Theme.of(context).primaryColor,
               indicatorWeight: 3,
-              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'NotoSansArabic'),
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                fontFamily: 'NotoSansArabic',
+              ),
               tabs: [
                 Tab(text: context.loc.activeAlerts),
                 Tab(text: context.loc.myAlerts),
@@ -178,14 +197,20 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
 
   Widget _buildList({required bool isMyAlerts}) {
     if (_loading) {
-      return Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor));
+      return Center(
+        child: CircularProgressIndicator(color: Theme.of(context).primaryColor),
+      );
     }
     if (_error != null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off_rounded, size: 56, color: Color(0xFF94A3B8)),
+            const Icon(
+              Icons.wifi_off_rounded,
+              size: 56,
+              color: Color(0xFF94A3B8),
+            ),
             const SizedBox(height: 12),
             Text(context.loc.cannotReachServer),
             const SizedBox(height: 16),
@@ -198,21 +223,24 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
         ),
       );
     }
-
     final displayAlerts = _alerts.where((a) {
       if (isMyAlerts) return a.isMyAlert;
       final s = a.status.toLowerCase();
       return s != 'resolved' && s != 'completed' && s != 'solved';
     }).where((a) {
       if (isMyAlerts || _currentPosition == null) return true;
-      final dist = Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, a.lat, a.lng);
+      final dist = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        a.lat,
+        a.lng,
+      );
       return dist <= 5000;
     }).toList();
 
     if (displayAlerts.isEmpty) {
       return Center(child: Text(context.loc.noAlerts));
     }
-
     return RefreshIndicator(
       onRefresh: _load,
       color: Theme.of(context).primaryColor,
@@ -220,7 +248,11 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         itemCount: displayAlerts.length,
         separatorBuilder: (_, _) => const SizedBox(height: 24),
-        itemBuilder: (context, i) => _AlertCard(alert: displayAlerts[i], isMyAlerts: isMyAlerts, onRefresh: _load),
+        itemBuilder: (context, i) => _AlertCard(
+          alert: displayAlerts[i],
+          isMyAlerts: isMyAlerts,
+          onRefresh: _load,
+        ),
       ),
     );
   }
@@ -231,16 +263,20 @@ class _AlertCard extends StatelessWidget {
   final bool isMyAlerts;
   final VoidCallback onRefresh;
 
-  const _AlertCard({required this.alert, required this.isMyAlerts, required this.onRefresh});
+  const _AlertCard({
+    required this.alert,
+    required this.isMyAlerts,
+    required this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final onSurface = theme.colorScheme.onSurface;
-
     Color bannerColor;
     IconData largeIcon;
+
     if (alert.type.contains('fire') || alert.type.contains('حريق')) {
       bannerColor = const Color(0xFFEF4444);
       largeIcon = Icons.fire_extinguisher_rounded;
@@ -259,14 +295,16 @@ class _AlertCard extends StatelessWidget {
     final currVols = alert.currentVolunteers;
     final progress = ((currVols / totalVols) * 100).round().clamp(0, 100);
     final isAr = context.loc.isAr;
-    final dateStr = alert.createdAt != null 
-        ? DateFormat('dd/MM/yyyy').format(alert.createdAt!) 
+    final dateStr = alert.createdAt != null
+        ? DateFormat('dd/MM/yyyy').format(alert.createdAt!)
         : DateFormat('dd/MM/yyyy').format(DateTime.now());
 
     return GestureDetector(
       onTap: () async {
         final result = await Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => AlertDetailsPage(alert: alert, isMyAlerts: isMyAlerts)),
+          MaterialPageRoute(
+            builder: (context) => AlertDetailsPage(alert: alert, isMyAlerts: isMyAlerts),
+          ),
         );
         if (result == true) onRefresh();
       },
@@ -299,27 +337,56 @@ class _AlertCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned(
-                    right: -20, bottom: -20,
-                    child: Icon(largeIcon, size: 160, color: Colors.black.withValues(alpha: 0.1)),
-                  ),
-                  Positioned(
-                    top: 16, right: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: (alert.status.toLowerCase() == 'resolved' || alert.status.toLowerCase() == 'completed') 
-                            ? const Color(0xFF22C55E) : const Color(0xFFF97316),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(alert.getLocalizedStatus(context.loc), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    right: -20,
+                    bottom: -20,
+                    child: Icon(
+                      largeIcon,
+                      size: 160,
+                      color: Colors.black.withValues(alpha: 0.1),
                     ),
                   ),
                   Positioned(
-                    top: 16, left: 16,
+                    top: 16,
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: (alert.status.toLowerCase() == 'resolved' ||
+                                alert.status.toLowerCase() == 'completed')
+                            ? const Color(0xFF22C55E)
+                            : const Color(0xFFF97316),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        alert.getLocalizedStatus(context.loc),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 16,
+                    left: 16,
                     child: Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: isMyAlerts ? const Color(0xFFF97316) : theme.primaryColor, shape: BoxShape.circle),
-                      child: Text('$progress%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                      decoration: BoxDecoration(
+                        color: isMyAlerts ? const Color(0xFFF97316) : theme.primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$progress%',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -334,18 +401,29 @@ class _AlertCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          alert.getLocalizedType(context.loc) + (isMyAlerts ? context.loc.pastAlert : context.loc.activeStatus),
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: onSurface),
+                          alert.getLocalizedType(context.loc) +
+                              (isMyAlerts ? context.loc.pastAlert : context.loc.activeStatus),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: onSurface,
+                          ),
                           textAlign: isAr ? TextAlign.right : TextAlign.left,
                         ),
                       ),
-                      Text(alert.timeAgoLocalized(context.loc).isEmpty ? context.loc.justNow : alert.timeAgoLocalized(context.loc),
-                          style: TextStyle(color: theme.primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
+                      Text(
+                        alert.timeAgoLocalized(context.loc).isEmpty
+                            ? context.loc.justNow
+                            : alert.timeAgoLocalized(context.loc),
+                        style: TextStyle(
+                          color: theme.primaryColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  
-                  // --- THE UPDATED ADDRESS UI (MOST IMPORTANT PART) ---
                   Row(
                     mainAxisAlignment: isAr ? MainAxisAlignment.end : MainAxisAlignment.start,
                     children: [
@@ -356,7 +434,10 @@ class _AlertCard extends StatelessWidget {
                           (alert.address != null && alert.address!.isNotEmpty)
                               ? alert.address!
                               : "${alert.lat.toStringAsFixed(4)}, ${alert.lng.toStringAsFixed(4)}",
-                          style: TextStyle(fontSize: 13, color: onSurface.withValues(alpha: 0.6)),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: onSurface.withValues(alpha: 0.6),
+                          ),
                           overflow: TextOverflow.ellipsis,
                           textAlign: isAr ? TextAlign.right : TextAlign.left,
                         ),
@@ -365,26 +446,87 @@ class _AlertCard extends StatelessWidget {
                       if (isAr) Icon(Icons.location_on, size: 16, color: theme.primaryColor),
                     ],
                   ),
-                  // -------------------------------------------------------
-
                   const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: isAr ? MainAxisAlignment.end : MainAxisAlignment.start,
                     children: [
                       if (!isAr) const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF94A3B8)),
                       if (!isAr) const SizedBox(width: 4),
-                      Text(dateStr, style: TextStyle(fontSize: 13, color: onSurface.withValues(alpha: 0.6))),
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
                       if (isAr) const SizedBox(width: 4),
                       if (isAr) const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF94A3B8)),
                     ],
                   ),
                   const SizedBox(height: 16),
                   if (alert.description != null)
-                    Text(alert.description!, style: TextStyle(fontSize: 13, height: 1.5, color: onSurface.withValues(alpha: 0.8)), textAlign: isAr ? TextAlign.right : TextAlign.left),
+                    Text(
+                      alert.description!,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                        color: onSurface.withValues(alpha: 0.8),
+                      ),
+                      textAlign: isAr ? TextAlign.right : TextAlign.left,
+                    ),
+                  
+                  // --- UPDATED IMAGE SECTION FOR WEB ---
+                  if (alert.mediaUrls != null && alert.mediaUrls!.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 120,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: alert.mediaUrls!.length,
+                        itemBuilder: (context, idx) {
+                          String mediaUrl = alert.mediaUrls![idx];
+                          
+                          // Fix for relative paths and CORS
+                          final String fullUrl = mediaUrl.startsWith('http') 
+                            ? mediaUrl 
+                            : "$BASE_URL${mediaUrl.startsWith('/') ? '' : '/'}$mediaUrl";
+
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              right: isAr ? 8 : 0,
+                              left: isAr ? 0 : 8,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                fullUrl,
+                                fit: BoxFit.cover,
+                                width: 100,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  width: 100,
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: theme.dividerColor),
+                                  ),
+                                  child: const Icon(Icons.broken_image, color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  // -------------------------------------
+
                   const SizedBox(height: 20),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(color: isDark ? theme.colorScheme.surface : const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                      color: isDark ? theme.colorScheme.surface : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Row(
                       children: [
                         const Icon(Icons.chevron_left_rounded, color: Color(0xFF94A3B8)),
@@ -392,14 +534,23 @@ class _AlertCard extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Text(context.loc.volunteers, style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 11)),
-                            Text('$currVols ${context.loc.outOfLabel} ${alert.totalVolunteers}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: onSurface)),
+                            Text(
+                              context.loc.volunteers,
+                              style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 11),
+                            ),
+                            Text(
+                              '$currVols ${context.loc.outOfLabel} ${alert.totalVolunteers}',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: onSurface),
+                            ),
                           ],
                         ),
                         const SizedBox(width: 12),
                         Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(color: isDark ? Colors.white10 : Colors.white, shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white10 : Colors.white,
+                            shape: BoxShape.circle,
+                          ),
                           child: Icon(Icons.people_alt_rounded, size: 16, color: theme.primaryColor),
                         ),
                       ],
@@ -410,11 +561,26 @@ class _AlertCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        _AdminActionButton(label: context.loc.actionMonitor, icon: Icons.track_changes_rounded, color: Colors.blue, onTap: () => _showAdminFeedback(context, context.loc.monitoringStartedMsg)),
+                        _AdminActionButton(
+                          label: context.loc.actionMonitor,
+                          icon: Icons.track_changes_rounded,
+                          color: Colors.blue,
+                          onTap: () => _showAdminFeedback(context, context.loc.monitoringStartedMsg),
+                        ),
                         const SizedBox(width: 8),
-                        _AdminActionButton(label: context.loc.actionCancelAlert, icon: Icons.cancel_outlined, color: Colors.orange, onTap: () => _showAdminFeedback(context, context.loc.incidentCancelledMsg)),
+                        _AdminActionButton(
+                          label: context.loc.actionCancelAlert,
+                          icon: Icons.cancel_outlined,
+                          color: Colors.orange,
+                          onTap: () => _showAdminFeedback(context, context.loc.incidentCancelledMsg),
+                        ),
                         const SizedBox(width: 8),
-                        _AdminActionButton(label: context.loc.actionDeleteIncident, icon: Icons.delete_outline_rounded, color: Colors.red, onTap: () => _showAdminFeedback(context, context.loc.incidentDeletedMsg)),
+                        _AdminActionButton(
+                          label: context.loc.actionDeleteIncident,
+                          icon: Icons.delete_outline_rounded,
+                          color: Colors.red,
+                          onTap: () => _showAdminFeedback(context, context.loc.incidentDeletedMsg),
+                        ),
                       ],
                     ),
                   ],
@@ -428,7 +594,9 @@ class _AlertCard extends StatelessWidget {
   }
 
   void _showAdminFeedback(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+    );
   }
 }
 
@@ -437,14 +605,23 @@ class _AdminActionButton extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  const _AdminActionButton({required this.label, required this.icon, required this.color, required this.onTap});
+
+  const _AdminActionButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return TextButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 16, color: color),
-      label: Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+      label: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
+      ),
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         backgroundColor: color.withValues(alpha: 0.08),
