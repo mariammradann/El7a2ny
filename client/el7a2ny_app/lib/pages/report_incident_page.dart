@@ -113,12 +113,14 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
     
     setState(() => _isSubmitting = true);
     try {
-      await ApiService.sendEmergencyAlert(
+      // استخدم الدالة الجديدة التي تدعم الملفات
+      await ApiService.sendEmergencyAlertWithMedia(
         userId: widget.userId,
         type: _selectedType == 'other' ? _customTypeCtrl.text : _selectedType,
         lat: widget.latitude,
         lng: widget.longitude,
         description: "Desc: ${_descriptionCtrl.text}\nVolunteers: ${_volunteersNeededCtrl.text}",
+        evidenceItems: _evidenceItems,
       );
       _makeEmergencyCalls();
       if (mounted) _showSuccessDialog();

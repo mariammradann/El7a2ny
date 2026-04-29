@@ -8,7 +8,7 @@ import google.generativeai as genai
 from .serializers import UserRegistrationSerializer, IncidentSerializer
 
 # Configure Gemini - REPLACE WITH YOUR FRESH API KEY
-genai.configure(api_key="AIzaSyBw1GqymWKUuZ_kdKkTOL3UHXvaxP122IU")
+genai.configure(api_key="AIzaSyDca6bIEtgJT8CUZZR9XPKSaHdSe0pKq7E")
 
 @api_view(['POST'])
 def get_first_aid_advice(request):
@@ -17,7 +17,7 @@ def get_first_aid_advice(request):
         return Response({'reply': 'Please provide a message.'}, status=400)
         
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         prompt = f"As a first aid expert, give short and clear advice in the user's language for: {user_message}"
         response = model.generate_content(prompt)
         return Response({'reply': response.text})
@@ -113,33 +113,110 @@ class IncidentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
-            data = request.data.copy()
-            
-            # 1. تصليح اسم اليوزر
-            if 'user_id' in data:
-                data['user'] = data.pop('user_id')
-            
-            # 2. لم وتقريب الإحداثيات (Rounding)
-            if 'latitude' in data and 'longitude' in data:
-                # هنقرب لـ 8 أرقام عشرية عشان تناسب الـ decimal_places=8
-                lat = round(float(data.pop('latitude')), 8)
-                lng = round(float(data.pop('longitude')), 8)
-                
+        from django.core.files.storage import default_storage
+        from django.core.files.base import ContentFile
+        import os
+        import json
+
+        # Normalize QueryDict values: flatten single-item lists to strings
+        data = {}
+        try:
+            for key in request.data.keys():
+                values = request.data.getlist(key)
+                if len(values) == 1:
+                    v = values[0]
+                    if isinstance(v, bytes):
+                        try:
+                            v = v.decode()
+                        except Exception:
+                            pass
+                    data[key] = v
+                else:
+                    data[key] = values
+        except Exception:
+            # Fallback
+            if hasattr(request.data, 'dict'):
+                data = dict(request.data)
+            else:
+                data = request.data.copy()
+
+        print(f"📦 Received data keys: {list(data.keys())}")
+        print(f"📦 Received files: {list(request.FILES.keys())}")
+        print(f"📦 Raw normalized data: {data}")
+
+        # user_id -> user
+        if 'user_id' in data:
+            user_id = data.pop('user_id')
+            if isinstance(user_id, list) and user_id:
+                user_id = user_id[0]
+            data['user'] = user_id
+
+        # Handle file uploads
+        media_files_urls = []
+        if 'media_files' in request.FILES:
+            files = request.FILES.getlist('media_files')
+            print(f"📦 Processing {len(files)} files")
+            for file in files:
+                try:
+                    filename = f"reports/{data.get('user', 'unknown')}/{file.name}"
+                    path = default_storage.save(filename, ContentFile(file.read()))
+                    media_files_urls.append(f"/media/{path}")
+                    print(f"✅ File saved: {path}")
+                except Exception as e:
+                    print(f"⚠️ Error saving file: {e}")
+        else:
+            print("⚠️ No media_files in request.FILES")
+
+        # Parse coordinates (may be strings)
+        lat_raw = data.pop('latitude', None)
+        lng_raw = data.pop('longitude', None)
+        if isinstance(lat_raw, list) and lat_raw:
+            lat_raw = lat_raw[0]
+        if isinstance(lng_raw, list) and lng_raw:
+            lng_raw = lng_raw[0]
+
+        if lat_raw is not None and lng_raw is not None:
+            try:
+                lat = round(float(lat_raw), 8)
+                lng = round(float(lng_raw), 8)
+                # ensure address is a string
+                addr = data.get('address', None)
+                if isinstance(addr, list) and addr:
+                    addr = addr[0]
                 data['location_data'] = {
                     'latitude': lat,
                     'longitude': lng,
                     'city': data.get('city', 'Unknown'),
                     'region': data.get('region', 'Unknown'),
-                    'address': data.get('address', 'Current Location'),
+                    'address': addr or 'Current Location',
                 }
+                print(f"✅ Coordinates parsed: lat={lat}, lng={lng}")
+            except (ValueError, TypeError) as e:
+                print(f"❌ Error parsing coordinates: {e} (lat={lat_raw}, lng={lng_raw})")
+                return Response({"error": f"Invalid coordinates: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            print(f"⚠️ Missing coordinates: lat={lat_raw}, lng={lng_raw}")
 
-            serializer = self.get_serializer(data=data)
-            if not serializer.is_valid():
-                print("🚨 Final Serializer Errors:", serializer.errors)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-            self.perform_create(serializer)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # Flatten other string fields that may be lists
+        if isinstance(data.get('category'), list) and data['category']:
+            data['category'] = data['category'][0]
+        if isinstance(data.get('description'), list) and data['description']:
+            data['description'] = data['description'][0]
+        if isinstance(data.get('address'), list) and data['address']:
+            data['address'] = data['address'][0]
+
+        data['media_files'] = media_files_urls
+
+        print(f"📤 Sending to serializer: {data}")
+
+        serializer = self.get_serializer(data=data)
+        if not serializer.is_valid():
+            print("🚨 Final Serializer Errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
     def perform_create(self, serializer):
         # This will trigger the Location.save() logic automatically
         serializer.save()

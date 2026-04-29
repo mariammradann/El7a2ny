@@ -95,16 +95,15 @@ class Incident(models.Model):
     location = models.ForeignKey(Location, on_delete=models.CASCADE, db_column='location_id')
     category = models.CharField(max_length=50)
     description = models.TextField(null=True, blank=True)
-    media = models.TextField(null=True, blank=True) # موجود في الصورة
+    media_files = models.JSONField(default=list, null=True, blank=True)  # Store list of file URLs/paths
     status = models.CharField(max_length=20, default='reported')
-    # السطر اللي كان عامل المشكلة:
     created_at = models.DateTimeField(auto_now_add=True) 
     admin_id = models.UUIDField(null=True, blank=True)
-    daleel_id = models.UUIDField(null=True, blank=True) # موجود في الصورة
+    daleel_id = models.UUIDField(null=True, blank=True)
 
     class Meta:
         db_table = 'ems_schema"."incidents'
-        managed = True # لو الجداول موجودة فعلياً وصحيحة
+        managed = True
 
 class Initiative(models.Model):
     id = models.AutoField(primary_key=True)

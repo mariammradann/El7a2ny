@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
@@ -88,6 +89,72 @@ class ApiService {
     if (response.statusCode != 201) {
       print("🚨 SOS Error: ${response.body}");
       throw Exception("Failed to send emergency alert");
+    }
+  }
+
+  // --- 2b. إرسال استغاثة مع الملفات (Emergency Alert with Media) ---
+  static Future<void> sendEmergencyAlertWithMedia({
+    required String userId,
+    required String type,
+    required double lat,
+    required double lng,
+    String? description,
+    required List<Map<String, String>> evidenceItems, // List of {path, type}
+  }) async {
+    double formattedLat = double.parse(lat.toStringAsFixed(7));
+    double formattedLng = double.parse(lng.toStringAsFixed(7));
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse("$baseUrl/api/incidents/"),
+    );
+
+    // إضافة الحقول الأساسية
+    request.fields['user_id'] = userId;
+    request.fields['category'] = type;
+    request.fields['description'] = description ?? "";
+    request.fields['latitude'] = formattedLat.toString();
+    request.fields['longitude'] = formattedLng.toString();
+    request.fields['address'] = "Current Location";
+
+    // إضافة الملفات
+    for (int i = 0; i < evidenceItems.length; i++) {
+      final item = evidenceItems[i];
+      final filePath = item['path'] ?? '';
+      final fileType = item['type'] ?? 'image';
+      
+      if (filePath.isNotEmpty && !filePath.startsWith('mock_')) {
+        try {
+          final file = File(filePath);
+          if (file.existsSync()) {
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'media_files', // اسم الحقل في Django
+                filePath,
+              ),
+            );
+          }
+        } catch (e) {
+          print("⚠️ Error adding file: $e");
+        }
+      }
+    }
+
+    try {
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+      
+      print("📤 Response Status: ${response.statusCode}");
+      print("📤 Response Body: $responseBody");
+      
+      if (response.statusCode != 201 && response.statusCode != 200) {
+        print("🚨 Emergency Alert with Media Error (${response.statusCode}): $responseBody");
+        throw Exception("Failed to send emergency alert with media (Status: ${response.statusCode})");
+      }
+      print("✅ Emergency alert with media sent successfully");
+    } catch (e) {
+      print("🚨 Error sending emergency alert with media: $e");
+      rethrow;
     }
   }
 

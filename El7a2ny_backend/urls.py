@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 # ضيف IncidentViewSet هنا
 from .views import UserViewSet, IncidentViewSet, register_user_api , get_device_status, get_first_aid_advice
@@ -25,3 +27,7 @@ urlpatterns = [
     path('api/devices/status/', get_device_status),
     path('api/chat/', get_first_aid_advice),
 ]
+
+# خدمة ملفات الـ Media في بيئة التطوير
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -18,7 +18,6 @@ import '../subscription_details_page.dart';
 import '../premium_subscription_page.dart';
 import '../../app/main_shell_screen.dart';
 
-
 class ProfileTabPage extends StatefulWidget {
   const ProfileTabPage({super.key});
 
@@ -32,19 +31,22 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
   bool _loading = true;
   String? _error;
   bool? _lastIsAr;
-
+  int _retryCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    // Add a small delay to ensure app initialization is complete
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _load();
+    });
   }
 
   Future<void> _load() async {
     try {
-      setState(() { 
-        _loading = true; 
-        _error = null; 
+      setState(() {
+        _loading = true;
+        _error = null;
       });
       final isAr = context.loc.isAr;
       final data = await ApiService.fetchUserProfile();
@@ -52,19 +54,29 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
 
       if (mounted) {
         SessionService().initFromUser(data);
-        setState(() { 
-          _user = data; 
+        setState(() {
+          _user = data;
           _history = historyData;
-          _loading = false; 
+          _loading = false;
           _lastIsAr = isAr;
+          _retryCount = 0; // Reset retry count on success
         });
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
+        // Auto-retry once on first load if it fails
+        if (_retryCount == 0 && mounted) {
+          _retryCount++;
+          print("Profile load failed, retrying in 1.5 seconds...");
+          await Future.delayed(const Duration(milliseconds: 1500));
+          _load();
+          return;
+        }
         setState(() {
           _error = e.toString();
           _loading = false;
         });
+      }
     }
   }
 
@@ -115,20 +127,26 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _SectionHeader(
-                                title: loc.subscriptionPlan, 
-                                icon: Icons.stars_rounded
+                                title: loc.subscriptionPlan,
+                                icon: Icons.stars_rounded,
                               ),
                               InkWell(
                                 onTap: () {
                                   if (isPlus) {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (_) => const SubscriptionDetailsPage()),
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const SubscriptionDetailsPage(),
+                                      ),
                                     );
                                   } else {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (_) => const PremiumSubscriptionPage()),
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const PremiumSubscriptionPage(),
+                                      ),
                                     );
                                   }
                                 },
@@ -137,17 +155,25 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: isPlus 
-                                        ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
-                                        : [Colors.white, const Color(0xFFF8FAFC)],
+                                      colors: isPlus
+                                          ? [
+                                              const Color(0xFF0F172A),
+                                              const Color(0xFF1E293B),
+                                            ]
+                                          : [
+                                              Colors.white,
+                                              const Color(0xFFF8FAFC),
+                                            ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: isPlus 
-                                        ? const Color(0xFFFFD700).withOpacity(0.3)
-                                        : Colors.grey.withOpacity(0.2)
+                                      color: isPlus
+                                          ? const Color(
+                                              0xFFFFD700,
+                                            ).withOpacity(0.3)
+                                          : Colors.grey.withOpacity(0.2),
                                     ),
                                     boxShadow: [
                                       BoxShadow(
@@ -162,41 +188,58 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                       Container(
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: isPlus 
-                                            ? const Color(0xFFFFD700).withOpacity(0.1)
-                                            : Colors.grey.withOpacity(0.1),
+                                          color: isPlus
+                                              ? const Color(
+                                                  0xFFFFD700,
+                                                ).withOpacity(0.1)
+                                              : Colors.grey.withOpacity(0.1),
                                           shape: BoxShape.circle,
                                         ),
                                         child: Icon(
-                                          isPlus ? Icons.workspace_premium_rounded : Icons.person_outline_rounded, 
-                                          color: isPlus ? const Color(0xFFFFD700) : Colors.grey, 
-                                          size: 28
+                                          isPlus
+                                              ? Icons.workspace_premium_rounded
+                                              : Icons.person_outline_rounded,
+                                          color: isPlus
+                                              ? const Color(0xFFFFD700)
+                                              : Colors.grey,
+                                          size: 28,
                                         ),
                                       ),
                                       const SizedBox(width: 16),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              isPlus ? (loc.isAr ? 'إلحقني بلس' : 'El7a2ny Plus') : loc.freePlan,
+                                              isPlus
+                                                  ? (loc.isAr
+                                                        ? 'إلحقني بلس'
+                                                        : 'El7a2ny Plus')
+                                                  : loc.freePlan,
                                               style: TextStyle(
                                                 fontFamily: 'NotoSansArabic',
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.w900,
-                                                color: isPlus ? const Color(0xFFFFD700) : const Color(0xFF0F172A),
+                                                color: isPlus
+                                                    ? const Color(0xFFFFD700)
+                                                    : const Color(0xFF0F172A),
                                               ),
                                             ),
                                             Text(
-                                              isPlus 
-                                                ? (isYearly 
-                                                  ? '${loc.plusYearly} - ${loc.activePlanStatus}'
-                                                  : '${loc.plusMonthly} - ${loc.activePlanStatus}')
-                                                : loc.basicFeatures,
+                                              isPlus
+                                                  ? (isYearly
+                                                        ? '${loc.plusYearly} - ${loc.activePlanStatus}'
+                                                        : '${loc.plusMonthly} - ${loc.activePlanStatus}')
+                                                  : loc.basicFeatures,
                                               style: TextStyle(
                                                 fontFamily: 'NotoSansArabic',
                                                 fontSize: 13,
-                                                color: isPlus ? Colors.white.withOpacity(0.7) : Colors.grey,
+                                                color: isPlus
+                                                    ? Colors.white.withOpacity(
+                                                        0.7,
+                                                      )
+                                                    : Colors.grey,
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
@@ -204,9 +247,11 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                         ),
                                       ),
                                       Icon(
-                                        Icons.arrow_forward_ios_rounded, 
-                                        color: isPlus ? const Color(0xFFFFD700) : Colors.grey, 
-                                        size: 16
+                                        Icons.arrow_forward_ios_rounded,
+                                        color: isPlus
+                                            ? const Color(0xFFFFD700)
+                                            : Colors.grey,
+                                        size: 16,
                                       ),
                                     ],
                                   ),
@@ -341,11 +386,8 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         ),
                         const SizedBox(height: 24),
                       ],
-                      
-
 
                       // 6. Account & Preferences
-
                       _SectionHeader(
                         title: loc.appPreferences,
                         icon: Icons.settings_rounded,
@@ -358,9 +400,9 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const VerifyCurrentPasswordScreen(),
+                              builder: (_) =>
+                                  const VerifyCurrentPasswordScreen(),
                             ),
-
                           );
                         },
                       ),
@@ -398,27 +440,45 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: Text(loc.logout, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
-                              content: Text(loc.isAr ? 'هل أنت متأكد أنك تريد تسجيل الخروج؟' : 'Are you sure you want to log out?', style: const TextStyle(fontFamily: 'NotoSansArabic')),
+                              title: Text(
+                                loc.logout,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'NotoSansArabic',
+                                ),
+                              ),
+                              content: Text(
+                                loc.isAr
+                                    ? 'هل أنت متأكد أنك تريد تسجيل الخروج؟'
+                                    : 'Are you sure you want to log out?',
+                                style: const TextStyle(
+                                  fontFamily: 'NotoSansArabic',
+                                ),
+                              ),
                               actions: [
                                 TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
                                   child: Text(loc.isAr ? 'إلغاء' : 'Cancel'),
                                 ),
                                 TextButton(
                                   onPressed: () => Navigator.pop(context, true),
-                                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
                                   child: Text(loc.logout),
                                 ),
                               ],
                             ),
                           );
-                          
+
                           if (confirm == true && mounted) {
                             await AuthRepository().logout();
                             if (mounted) {
                               Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                MaterialPageRoute(
+                                  builder: (_) => const LoginScreen(),
+                                ),
                                 (route) => false,
                               );
                             }
@@ -563,7 +623,7 @@ class _HistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    
+
     IconData icon;
     Color color;
     switch (history.type) {
@@ -602,11 +662,17 @@ class _HistoryTile extends StatelessWidget {
         ),
         subtitle: Text(
           history.description,
-          style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+          style: TextStyle(
+            fontSize: 12,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
         ),
         trailing: Text(
           DateFormat(isAr ? 'yyyy/MM/dd' : 'dd MMM').format(history.date),
-          style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+          style: TextStyle(
+            fontSize: 11,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
         ),
       ),
     );
@@ -614,7 +680,6 @@ class _HistoryTile extends StatelessWidget {
 }
 
 class _SectionHeader extends StatelessWidget {
-
   final String title;
   final IconData icon;
   const _SectionHeader({required this.title, required this.icon});
