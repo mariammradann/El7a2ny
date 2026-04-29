@@ -4,6 +4,7 @@ import '../core/auth/auth_token_store.dart';
 class AlertModel {
   final String id;
   final String type;
+  final String category;
   final String location;
   final String severity; // "high" | "medium" | "low"
   final String status;
@@ -11,14 +12,18 @@ class AlertModel {
   final int totalVolunteers;
   final double lat;
   final double lng;
+  final double? latitude;
+  final double? longitude;
   final DateTime? createdAt;
   final String? description;
   final bool isMyAlert;
   final String? address;
+  final List<String>? mediaUrls;
 
   const AlertModel({
     required this.id,
     required this.type,
+    this.category = '',
     required this.location,
     required this.severity,
     required this.status,
@@ -26,32 +31,47 @@ class AlertModel {
     required this.totalVolunteers,
     required this.lat,
     required this.lng,
+    this.latitude,
+    this.longitude,
     this.createdAt,
     this.description,
     this.isMyAlert = false,
     this.address,
+    this.mediaUrls,
   });
 
   factory AlertModel.fromJson(Map<String, dynamic> json) {
     final currentUserId = AuthTokenStore.userId;
     final alertOwnerId = json['user']?.toString();
+    
+    // Parse media files
+    List<String>? mediaUrls;
+    if (json['media_files'] != null) {
+      if (json['media_files'] is List) {
+        mediaUrls = List<String>.from(json['media_files']);
+      }
+    }
 
     return AlertModel(
       id: (json['incident_id'] ?? json['id'] ?? '').toString(),
-      status: json['status'] ?? 'active',
+      status: json['status'] ?? 'reported',
       severity: json['severity'] ?? 'medium',
       totalVolunteers: json['total_volunteers'] ?? 0,
       currentVolunteers: json['current_volunteers'] ?? 0,
       type: json['category'] ?? json['type'] ?? 'emergency',
+      category: json['category'] ?? json['type'] ?? 'emergency',
       description: json['description'] ?? '',
       location: json['location_name'] ?? json['city'] ?? 'Unknown Location',
       address: json['address'], // ✅ Critical fix for the UI update
       lat: (json['lat'] ?? 0.0).toDouble(),
       lng: (json['lng'] ?? 0.0).toDouble(),
+      latitude: json['lat'] != null ? (json['lat']).toDouble() : null,
+      longitude: json['lng'] != null ? (json['lng']).toDouble() : null,
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
       isMyAlert: currentUserId != null && alertOwnerId == currentUserId,
+      mediaUrls: mediaUrls,
     );
   }
 

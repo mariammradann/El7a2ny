@@ -21,6 +21,7 @@ class IncidentSerializer(serializers.ModelSerializer):
     location_data = LocationSerializer(write_only=True)
     lat = serializers.ReadOnlyField(source='location.latitude', default=0.0)
     lng = serializers.ReadOnlyField(source='location.longitude', default=0.0)
+    media_files = serializers.JSONField(required=False, allow_null=True)
     
     # تأكد إن اليوزر بيتقري كـ UUID بشكل سليم
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
@@ -30,13 +31,13 @@ class IncidentSerializer(serializers.ModelSerializer):
         # ضفنا كل الأعمدة الـ 10 عشان الـ Serializer يشوفهم
         fields = [
             'incident_id', 'user', 'location_data', 'category', 
-            'description', 'media', 'status', 'created_at', 
+            'description', 'media_files', 'status', 'created_at', 
             'admin_id', 'daleel_id','lat',  
             'lng','address',
         ]
         # جعل بعض الحقول اختيارية عشان متعملش Bad Request لو متبعتتش
         extra_kwargs = {
-            'media': {'required': False, 'allow_null': True},
+            'media_files': {'required': False, 'allow_null': True},
             'admin_id': {'required': False, 'allow_null': True},
             'daleel_id': {'required': False, 'allow_null': True},
             'description': {'required': False, 'allow_null': True},
