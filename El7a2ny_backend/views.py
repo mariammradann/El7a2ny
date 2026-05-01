@@ -9,7 +9,7 @@ from .serializers import UserRegistrationSerializer, IncidentSerializer, HelpIni
 
 
 # Configure Gemini - REPLACE WITH YOUR FRESH API KEY
-genai.configure(api_key="AIzaSyDca6bIEtgJT8CUZZR9XPKSaHdSe0pKq7E")
+genai.configure(api_key="AIzaSyDR_HnGEg3B_W3o1SgsGb19Y9u5VG-iG90")
 
 @api_view(['POST'])
 def get_first_aid_advice(request):
