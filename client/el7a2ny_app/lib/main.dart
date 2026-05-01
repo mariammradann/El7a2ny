@@ -42,32 +42,27 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return AppConfigProvider(
       notifier: _configNotifier,
-      child: Builder(
-        builder: (ctx) {
-          final config = AppConfigProvider.of(ctx);
-          return MaterialApp(
+      child: ListenableBuilder(
+        listenable: SessionService(),
+        builder: (context, _) {
+          return Builder(
+            builder: (ctx) {
+              final config = AppConfigProvider.of(ctx);
+              final isPlus = SessionService().isPlus;
+              return MaterialApp(
             title: 'El7a2ny App',
             debugShowCheckedModeBanner: false,
             navigatorKey: GlobalFabController.navigatorKey,
             navigatorObservers: [GlobalFabRouteObserver()],
-            theme: AppTheme.lightTheme,
+            theme: isPlus ? AppTheme.premiumTheme : AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: config.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             builder: (context, child) {
-              return ListenableBuilder(
-                listenable: SessionService(),
-                builder: (context, _) {
-                  final isPlus = SessionService().isPlus;
-                  return Theme(
-                    data: isPlus ? AppTheme.premiumTheme : Theme.of(context),
-                    child: GlobalFabOverlay(
-                      child: Directionality(
-                        textDirection: config.isArabic ? TextDirection.rtl : TextDirection.ltr,
-                        child: child!,
-                      ),
-                    ),
-                  );
-                },
+              return GlobalFabOverlay(
+                child: Directionality(
+                  textDirection: config.isArabic ? TextDirection.rtl : TextDirection.ltr,
+                  child: child!,
+                ),
               );
             },
             home: const WelcomeScreen(),
@@ -77,6 +72,8 @@ class _MyAppState extends State<MyApp> {
               '/signup': (context) => SignUpScreen(),
               '/emergency-report': (context) => const EmergencyReportScreen(),
             },
+          );
+        },
           );
         },
       ),

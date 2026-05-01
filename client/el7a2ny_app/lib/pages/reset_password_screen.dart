@@ -5,17 +5,23 @@ import '../core/localization/app_strings.dart';
 import '../widgets/language_toggle_button.dart';
 import 'password_change_success_screen.dart';
 
+class ResetPasswordScreen extends StatefulWidget {
+  final String contact;
+  final bool isEmail;
+  final String code;
 
-class ChangePasswordScreen extends StatefulWidget {
-  final String? oldPassword;
-  const ChangePasswordScreen({super.key, this.oldPassword});
-
+  const ResetPasswordScreen({
+    super.key,
+    required this.contact,
+    required this.isEmail,
+    required this.code,
+  });
 
   @override
-  State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _newPassword = TextEditingController();
   final _confirmPassword = TextEditingController();
@@ -31,26 +37,20 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _change() async {
+  Future<void> _reset() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     
     setState(() => _loading = true);
     try {
-      await _auth.changePassword(
-        oldPassword: widget.oldPassword ?? '',
+      await _auth.confirmPasswordReset(
+        contact: widget.contact,
+        isEmail: widget.isEmail,
+        code: widget.code,
         newPassword: _newPassword.text,
       );
 
       if (!mounted) return;
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.loc.passwordChangedSuccess),
-          backgroundColor: Colors.green,
-        ),
-      );
-      
-      // Navigate to success confirmation screen
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(
           builder: (context) => const PasswordChangeSuccessScreen(),
@@ -226,7 +226,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         height: 52,
                         width: double.infinity,
                         child: FilledButton(
-                          onPressed: _loading ? null : _change,
+                          onPressed: _loading ? null : _reset,
                           style: FilledButton.styleFrom(
                             backgroundColor: primaryRed,
                             foregroundColor: Colors.white,

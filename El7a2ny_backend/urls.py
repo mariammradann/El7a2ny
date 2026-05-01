@@ -34,7 +34,9 @@ urlpatterns = [
     path('api/profile/update/', UserViewSet.as_view({'put': 'update_profile'}), name='update-profile'),
 
     # مسارات الـ Router خليها في الآخر خالص
+    path('api/emergency/reports/', IncidentViewSet.as_view({'post': 'create'}), name='emergency-reports-alias'),
     path('api/', include(router.urls)),
+
     path('api/devices/status/', get_device_status),
     path('api/chat/', get_first_aid_advice),
     

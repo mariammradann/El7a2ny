@@ -3,9 +3,15 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.db.models import Q
 from django.contrib.auth.hashers import check_password, make_password
-from .models import User, Incident, HelpInitiative
+from .models import User, Incident, HelpInitiative, PasswordResetToken
 import google.generativeai as genai
 from .serializers import UserRegistrationSerializer, IncidentSerializer, HelpInitiativeSerializer
+import random
+import string
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 
 
 # Configure Gemini - REPLACE WITH YOUR FRESH API KEY
@@ -18,7 +24,7 @@ def get_first_aid_advice(request):
         return Response({'reply': 'Please provide a message.'}, status=400)
         
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = f"As a first aid expert, give short and clear advice in the user's language for: {user_message}"
         response = model.generate_content(prompt)
         return Response({'reply': response.text})
@@ -305,3 +311,109 @@ def change_password_api(request):
     except Exception as e:
         print(f"ERROR in change_password_api: {str(e)}")
         return Response({"error": str(e)}, status=500)
+
+@api_view(["POST"])
+def password_reset_request(request):
+    """
+    طلب إعادة تعيين الباسورد - يرسل كود 6 أرقام للإيميل
+    """
+    email = request.data.get("email")
+    try:
+        user = User.objects.get(email=email)
+        
+        # 1. توليد كود رقمي
+        code = ''.join(random.choices(string.digits, k=6))
+        
+        # 2. حفظ الكود في الداتابيز (تحديث أو إنشاء جديد)
+        PasswordResetToken.objects.update_or_create(
+            user=user,
+            defaults={
+                'token': code, 
+                'is_used': False,
+                'expires_at': timezone.now() + timedelta(minutes=10)
+            }
+        )
+
+        # 3. إرسال الكود بالإيميل
+        subject = "كود إعادة تعيين كلمة المرور - El7a2ny"
+        message = f"""
+        أهلاً {user.name}،
+        
+        كود إعادة تعيين كلمة المرور الخاص بك هو: {code}
+        
+        هذا الكود صالح لمدة 10 دقائق فقط. لا تشارك هذا الكود مع أحد.
+        
+        تحياتنا،
+        فريق El7a2ny
+        """
+        send_mail(
+            subject, message, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False
+        )
+        
+        return Response({"message": "تم إرسال الكود إلى بريدك الإلكتروني"}, status=status.HTTP_200_OK)
+    
+    except User.DoesNotExist:
+        # للأمان، نرجع نفس الرسالة حتى لو الإيميل مش موجود
+        return Response({"message": "إذا كان الحساب موجوداً، فقد تم إرسال الكود"}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def password_reset_confirm(request):
+    """
+    تغيير الباسورد باستخدام الكود المباشر
+    Expected JSON: { "email": "...", "code": "123456", "new_password": "..." }
+    """
+    email = request.data.get("email")
+    code = request.data.get("code") # أو اسم الحقل "token" حسب الـ Serializer
+    new_password = request.data.get("new_password")
+
+    if not all([email, code, new_password]):
+        return Response({"error": "يرجى تقديم البريد الإلكتروني، الكود، وكلمة المرور الجديدة"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(email=email)
+        reset_token = PasswordResetToken.objects.get(user=user, token=code)
+
+        # التحقق من صلاحية الكود (Expired or Used)
+        if not reset_token.is_valid():
+            return Response({"error": "الكود منتهي الصلاحية أو تم استخدامه من قبل"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # تحديث كلمة المرور
+        user.password = make_password(new_password)
+        user.save()
+
+        # مارك الكود كـ "مستخدم"
+        reset_token.mark_as_used() # تأكد أن الدالة دي موجودة في الموديل عندك
+
+        # إرسال إيميل تأكيد النجاح
+        send_mail(
+            "تم تغيير كلمة المرور بنجاح",
+            f"أهلاً {user.name}، تم تغيير كلمة مرورك بنجاح. إذا لم تكن أنت من قام بهذا، تواصل معنا.",
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=True
+        )
+
+        return Response({"message": "تم إعادة تعيين كلمة المرور بنجاح"}, status=status.HTTP_200_OK)
+
+    except (User.DoesNotExist, PasswordResetToken.DoesNotExist):
+        return Response({"error": "البريد الإلكتروني أو الكود غير صحيح"}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["POST"])
+def password_reset_verify_token(request):
+    """
+    تأكيد صحة الكود (OTP)
+    """
+    email = request.data.get("email")
+    code = request.data.get("token") or request.data.get("code")
+    
+    try:
+        user = User.objects.get(email=email)
+        reset_token = PasswordResetToken.objects.get(user=user, token=code)
+        
+        if reset_token.is_valid():
+            return Response({"message": "Code is valid"}, status=status.HTTP_200_OK)
+        
+        return Response({"error": "Code expired"}, status=status.HTTP_400_BAD_REQUEST)
+    except (User.DoesNotExist, PasswordResetToken.DoesNotExist):
+        return Response({"error": "Invalid email or code"}, status=status.HTTP_400_BAD_REQUEST)

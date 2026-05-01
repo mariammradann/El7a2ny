@@ -5,6 +5,7 @@ import '../core/api/api_exception.dart';
 import '../data/repositories/auth_repository.dart';
 import '../widgets/language_toggle_button.dart';
 import '../core/localization/app_strings.dart';
+import 'reset_password_screen.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({
@@ -62,7 +63,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.loc.verifiedSuccess)),
       );
-      Navigator.of(context).popUntil((r) => r.isFirst);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (context) => ResetPasswordScreen(
+            contact: widget.contact.trim(),
+            isEmail: widget.isEmail,
+            code: _code.text.trim(),
+          ),
+        ),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

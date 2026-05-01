@@ -153,16 +153,13 @@ class GlobalFabRouteObserver extends NavigatorObserver {
     
     debugPrint("GlobalFabRouteObserver: route name=${name}, isExcluded=$isExcluded, routeType=${route.runtimeType}");
     
-    if (isExcluded) {
-      GlobalFabController.hide();
-    } else {
-      GlobalFabController.show();
-    }
-
-    // Hide chatbot button specifically on its own page
-    // We can't always rely on name if it's pushed as a MaterialPageRoute without name
-    // But we can check if the route's widget is EmergencyChatScreen if we have access
-    // For now, let's assume we might need a more robust way or use a custom name
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isExcluded) {
+        GlobalFabController.hide();
+      } else {
+        GlobalFabController.show();
+      }
+    });
   }
 
   @override
@@ -170,13 +167,13 @@ class GlobalFabRouteObserver extends NavigatorObserver {
     super.didPush(route, previousRoute);
     _updateVisibility(route);
     
-    // Check if the route being pushed is the chat screen
-    // We can check the route settings name if provided, or the widget type
-    if (route.settings.name == '/chat' || route is MaterialPageRoute && route.builder(GlobalFabController.navigatorKey.currentContext!) is EmergencyChatScreen) {
-      GlobalFabController.hideChatButton();
-    } else {
-      GlobalFabController.showChatButton();
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (route.settings.name == '/chat') {
+        GlobalFabController.hideChatButton();
+      } else {
+        GlobalFabController.showChatButton();
+      }
+    });
   }
 
   @override
@@ -184,7 +181,9 @@ class GlobalFabRouteObserver extends NavigatorObserver {
     super.didPop(route, previousRoute);
     if (route is PageRoute) {
       _updateVisibility(previousRoute);
-      GlobalFabController.showChatButton();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        GlobalFabController.showChatButton();
+      });
     }
   }
 

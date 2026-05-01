@@ -94,4 +94,17 @@ Future<void> register(Map<String, dynamic> body) async {
       'new_password': newPassword,
     });
   }
+
+  Future<void> confirmPasswordReset({
+    required String contact,
+    required bool isEmail,
+    required String code,
+    required String newPassword,
+  }) async {
+    await _client.post('auth/password/reset/confirm/', {
+      isEmail ? 'email' : 'phone': contact,
+      'code': code,
+      'new_password': newPassword,
+    });
+  }
 }
