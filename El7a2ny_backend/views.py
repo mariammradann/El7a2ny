@@ -3,9 +3,9 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.db.models import Q
 from django.contrib.auth.hashers import check_password, make_password
-from .models import User, Incident, HelpInitiative, PasswordResetToken
+from .models import User, Incident, HelpInitiative, Initiative, PasswordResetToken
 import google.generativeai as genai
-from .serializers import UserRegistrationSerializer, IncidentSerializer, HelpInitiativeSerializer
+from .serializers import UserRegistrationSerializer, IncidentSerializer, HelpInitiativeSerializer, InitiativeSerializer
 import random
 import string
 from django.core.mail import send_mail
@@ -250,9 +250,13 @@ def get_device_status(request):
     })
 
 class HelpInitiativeViewSet(viewsets.ModelViewSet):
-    queryset = HelpInitiative.objects.all().order_by('-created_at')
-    serializer_class = HelpInitiativeSerializer
+    queryset = Initiative.objects.all().order_by('-created_at')
+    serializer_class = InitiativeSerializer
     permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        print(f"Creating initiative with data: {request.data}")
+        return super().create(request, *args, **kwargs)
 
 @api_view(['POST'])
 def verify_password_api(request):
@@ -417,3 +421,52 @@ def password_reset_verify_token(request):
         return Response({"error": "Code expired"}, status=status.HTTP_400_BAD_REQUEST)
     except (User.DoesNotExist, PasswordResetToken.DoesNotExist):
         return Response({"error": "Invalid email or code"}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def get_user_activity_history(request):
+    """
+    Consolidates user activities (Incidents and Initiatives) into a unified history.
+    Query param: user_id
+    """
+    user_id = request.query_params.get('user_id')
+    print(f"Fetching history for user_id: {user_id}")
+    if not user_id:
+        return Response({"error": "user_id is required"}, status=400)
+        
+    try:
+        import uuid
+        uid = uuid.UUID(user_id)
+        
+        history = []
+        
+        # 1. Get Incidents (Emergencies)
+        incidents = Incident.objects.filter(user_id=uid).order_by('-created_at')
+        for inc in incidents:
+            history.append({
+                "id": random.randint(1, 1000000), # Virtual ID for Flutter model
+                "title": f"حالة طوارئ: {inc.category}" if request.query_params.get('lang') == 'ar' else f"Emergency: {inc.category}",
+                "description": inc.description or "",
+                "date": inc.created_at.isoformat(),
+                "type": "emergency"
+            })
+            
+        # 2. Get Initiatives (Community Posts)
+        initiatives = Initiative.objects.filter(user_id=uid).order_by('-created_at')
+        for init in initiatives:
+            history.append({
+                "id": random.randint(1, 1000000),
+                "title": f"مبادرة: {init.title}" if request.query_params.get('lang') == 'ar' else f"Initiative: {init.title}",
+                "description": init.description,
+                "date": init.created_at.isoformat(),
+                "type": "volunteer"
+            })
+            
+        # Sort by date descending
+        history.sort(key=lambda x: x['date'], reverse=True)
+        
+        return Response(history)
+        
+    except ValueError:
+        return Response({"error": "Invalid UUID format"}, status=400)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

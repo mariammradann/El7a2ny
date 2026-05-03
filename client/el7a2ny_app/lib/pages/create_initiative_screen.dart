@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/localization/app_strings.dart';
 import '../models/help_initiative_model.dart';
+import '../services/api_service.dart';
+import '../models/user_model.dart';
 
 class CreateInitiativeScreen extends StatefulWidget {
   const CreateInitiativeScreen({super.key});
@@ -26,15 +28,64 @@ class _CreateInitiativeScreenState extends State<CreateInitiativeScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-      // Since we are not touching the backend, we'll just simulate a success
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Initiative created successfully (Simulated)')),
-      );
-      Navigator.of(context).pop(true);
+      setState(() => _loading = true);
+      
+      try {
+        // 1. Fetch current user to get author info
+        final user = await ApiService.fetchUserProfile();
+        
+        // 2. Create the initiative object
+        final initiative = HelpInitiative(
+          id: 0, // Backend will assign ID
+          title: _titleController.text,
+          description: _descriptionController.text,
+          authorName: user.name,
+          authorRole: user.role, // e.g. normal, volunteer
+          category: _selectedCategory,
+          location: _locationController.text,
+          createdAt: DateTime.now(),
+          contactInfo: [_contactController.text],
+          participantsCount: 0,
+          isActive: true,
+          userId: user.id,
+        );
+
+        // 3. Send to backend
+        final success = await ApiService.createHelpInitiative(initiative);
+
+        if (mounted) {
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(context.loc.isAr ? 'تم نشر المبادرة بنجاح!' : 'Initiative posted successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Navigator.of(context).pop(true);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(context.loc.isAr ? 'فشل في نشر المبادرة' : 'Failed to post initiative'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
     }
   }
+
+  bool _loading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -102,16 +153,18 @@ class _CreateInitiativeScreenState extends State<CreateInitiativeScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _submit,
+                  onPressed: _loading ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(
-                    loc.isAr ? 'نشر المبادرة' : 'Post Initiative',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
+                  child: _loading 
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Text(
+                        loc.isAr ? 'نشر المبادرة' : 'Post Initiative',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
                 ),
               ),
             ],

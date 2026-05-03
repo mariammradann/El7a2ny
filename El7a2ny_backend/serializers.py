@@ -156,6 +156,15 @@ class HelpInitiativeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class InitiativeSerializer(serializers.ModelSerializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source='user', required=False, allow_null=True
+    )
+
     class Meta:
         model = Initiative
-        fields = "__all__"
+        fields = [
+            'id', 'user_id', 'title', 'description', 'author_name', 
+            'author_role', 'category', 'location', 'latitude', 
+            'longitude', 'image_url', 'contact_info', 'is_active', 
+            'participants_count', 'created_at'
+        ]

@@ -8,7 +8,8 @@ from .views import (
     UserViewSet, IncidentViewSet, HelpInitiativeViewSet, 
     register_user_api, get_device_status, get_first_aid_advice,
     verify_password_api, change_password_api,
-    password_reset_request, password_reset_verify_token, password_reset_confirm
+    password_reset_request, password_reset_verify_token, password_reset_confirm,
+    get_user_activity_history
 )
 
 # 1. إعداد الـ Router
@@ -32,6 +33,7 @@ urlpatterns = [
     # الحل الأضمن: هننادي على الـ ViewSet مباشرة بدون Router للمسار ده
     path('api/profile/<uuid:user_id>/', UserViewSet.as_view({'get': 'profile_by_id'}), name='user-profile-detail'),
     path('api/profile/update/', UserViewSet.as_view({'put': 'update_profile'}), name='update-profile'),
+    path('api/profile/history/', get_user_activity_history, name='activity-history'),
 
     # مسارات الـ Router خليها في الآخر خالص
     path('api/emergency/reports/', IncidentViewSet.as_view({'post': 'create'}), name='emergency-reports-alias'),

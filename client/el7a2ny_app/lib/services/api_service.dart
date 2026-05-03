@@ -219,6 +219,21 @@ static Future<void> sendEmergencyAlertWithMedia({
     return [];
   }
 
+  static Future<bool> createHelpInitiative(HelpInitiative initiative) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/initiatives/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(initiative.toJson()),
+      );
+      print("📤 Post Initiative Response: ${response.statusCode} - ${response.body}");
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      print("🚨 Error creating initiative: $e");
+      return false;
+    }
+  }
+
   static Future<List<SponsorModel>> fetchSponsors() async {
     final response = await http.get(Uri.parse("$baseUrl/api/sponsors/"));
     if (response.statusCode == 200) {
@@ -248,12 +263,12 @@ static Future<void> sendEmergencyAlertWithMedia({
   static Future<List<ActivityHistoryModel>> fetchActivityHistory({
     bool isArabic = false,
   }) async {
-    if (useMock) {
-      await Future.delayed(const Duration(milliseconds: 600));
-      return isArabic ? _mockHistoryAr : _mockHistory;
-    }
-    // Using direct fetch if _get helper is missing
-    final response = await http.get(Uri.parse("$baseUrl/api/profile/history/"));
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    if (userId == null) return [];
+    
+    final url = "$baseUrl/api/profile/history/?user_id=$userId&lang=${isArabic ? 'ar' : 'en'}";
+    final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       List data = jsonDecode(response.body);
       return data

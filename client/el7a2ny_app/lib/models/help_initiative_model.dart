@@ -39,6 +39,7 @@ class HelpInitiative {
   final List<String> contactInfo;
   final bool isActive;
   final int participantsCount;
+  final String? userId;
 
   HelpInitiative({
     required this.id,
@@ -55,6 +56,7 @@ class HelpInitiative {
     this.contactInfo = const [],
     this.isActive = true,
     this.participantsCount = 0,
+    this.userId,
   });
 
   factory HelpInitiative.fromJson(Map<String, dynamic> json) => HelpInitiative(
@@ -75,6 +77,7 @@ class HelpInitiative {
         contactInfo: List<String>.from(json['contact_info'] ?? []),
         isActive: json['is_active'] ?? true,
         participantsCount: json['participants_count'] ?? 0,
+        userId: json['user_id']?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -92,6 +95,7 @@ class HelpInitiative {
         'contact_info': contactInfo,
         'is_active': isActive,
         'participants_count': participantsCount,
+        'user_id': userId,
       };
 
   String get categoryIcon {

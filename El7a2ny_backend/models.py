@@ -127,6 +127,7 @@ class HelpInitiative(models.Model):
 
 class Initiative(models.Model):
     id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column="user_id", null=True, blank=True)
     title = models.CharField(max_length=255)
     description = models.TextField()
     author_name = models.CharField(max_length=255)
@@ -143,6 +144,7 @@ class Initiative(models.Model):
     contact_info = models.JSONField(default=list)
     is_active = models.BooleanField(default=True)
     participants_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'ems_schema"."initiatives'

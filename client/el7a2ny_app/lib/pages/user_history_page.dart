@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import '../core/localization/app_strings.dart';
-import '../models/alert_model.dart';
+import '../models/activity_history_model.dart';
 import '../services/api_service.dart';
-import 'alert_details_page.dart';
 
 class UserHistoryPage extends StatefulWidget {
   const UserHistoryPage({super.key});
@@ -13,14 +12,16 @@ class UserHistoryPage extends StatefulWidget {
 }
 
 class _UserHistoryPageState extends State<UserHistoryPage> {
-  List<AlertModel> _myHistory = [];
+  List<ActivityHistoryModel> _myHistory = [];
   bool _loading = true;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadHistory();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadHistory();
+    });
   }
 
   Future<void> _loadHistory() async {
@@ -29,10 +30,12 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
         _loading = true;
         _error = null;
       });
-      final allAlerts = await ApiService.fetchAlerts();
+      final history = await ApiService.fetchActivityHistory(
+        isArabic: context.loc.isAr,
+      );
       if (mounted) {
         setState(() {
-          _myHistory = allAlerts.where((a) => a.isMyAlert).toList();
+          _myHistory = history;
           _loading = false;
         });
       }
@@ -124,18 +127,11 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
       itemCount: _myHistory.length,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-        final alert = _myHistory[index];
+        final item = _myHistory[index];
         return _HistoryCard(
-          alert: alert,
-          onTap: () async {
-            final result = await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => AlertDetailsPage(alert: alert, isMyAlerts: true),
-              ),
-            );
-            if (result == true) {
-              _loadHistory();
-            }
+          item: item,
+          onTap: () {
+            // Optional: Show details or perform action based on type
           },
         );
       },
@@ -144,29 +140,36 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
 }
 
 class _HistoryCard extends StatelessWidget {
-  final AlertModel alert;
+  final ActivityHistoryModel item;
   final VoidCallback onTap;
 
-  const _HistoryCard({required this.alert, required this.onTap});
+  const _HistoryCard({required this.item, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final loc = context.loc;
-    final isAr = loc.isAr;
-    final bool isResolved = alert.status == 'resolved';
-    final bool isCancelled = alert.status == 'cancelled';
-    final bool isActive = !isResolved && !isCancelled;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
-    Color statusColor;
-    if (isActive) statusColor = Colors.orange;
-    else if (isResolved) statusColor = Colors.green;
-    else statusColor = Colors.grey;
+    IconData icon;
+    Color color;
+    String typeLabel;
 
-    String statusText;
-    if (isActive) statusText = isAr ? 'نشط' : 'Active';
-    else if (isResolved) statusText = isAr ? 'تم الحل' : 'Resolved';
-    else statusText = isAr ? 'ملغي' : 'Cancelled';
+    switch (item.type) {
+      case 'emergency':
+        icon = Icons.emergency_rounded;
+        color = Colors.redAccent;
+        typeLabel = isAr ? 'طوارئ' : 'Emergency';
+        break;
+      case 'volunteer':
+        icon = Icons.volunteer_activism_rounded;
+        color = Colors.green;
+        typeLabel = isAr ? 'مبادرة' : 'Initiative';
+        break;
+      default:
+        icon = Icons.info_outline_rounded;
+        color = theme.primaryColor;
+        typeLabel = isAr ? 'أخرى' : 'Other';
+    }
 
     return GestureDetector(
       onTap: onTap,
@@ -184,62 +187,67 @@ class _HistoryCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.crisis_alert_rounded, color: statusColor, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        alert.getLocalizedType(loc),
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface,
-                          fontFamily: 'NotoSansArabic',
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        DateFormat('yyyy/MM/dd - hh:mm a').format((alert.createdAt ?? DateTime.now()).toLocal()),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                        ),
-                        textDirection: TextDirection.ltr,
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    statusText,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
                     style: TextStyle(
-                      color: statusColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.onSurface,
                       fontFamily: 'NotoSansArabic',
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('yyyy/MM/dd - hh:mm a').format(item.date),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    textDirection: TextDirection.ltr,
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                typeLabel,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'NotoSansArabic',
                 ),
-              ],
+              ),
             ),
           ],
         ),
