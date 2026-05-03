@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
@@ -50,7 +53,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
   bool get _permissionsReady =>
       _cameraGranted && _locationGranted && _micGranted;
 
-  Map<String, dynamic> _buildReportBody() {
+  Map<String, dynamic> _buildReportBody([String? clientIp]) {
     return {
       'reporter_name': _name.text.trim(),
       'phone': _phone.text.trim(),
@@ -58,12 +61,17 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
       'permission_camera': _cameraGranted,
       'permission_location': _locationGranted,
       'permission_mic': _micGranted,
+      if (clientIp != null && clientIp.isNotEmpty) 'client_ip': clientIp,
       if (_currentPosition != null) 'location_lat': _currentPosition!.latitude,
       if (_currentPosition != null) 'location_lng': _currentPosition!.longitude,
     };
   }
 
   Future<void> _requestCamera() async {
+    if (kIsWeb) {
+      setState(() => _cameraGranted = true);
+      return;
+    }
     final status = await Permission.camera.request();
     setState(() => _cameraGranted = status.isGranted);
   }
@@ -92,6 +100,10 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
   }
 
   Future<void> _requestMic() async {
+    if (kIsWeb) {
+      setState(() => _micGranted = true);
+      return;
+    }
     final status = await Permission.microphone.request();
     setState(() => _micGranted = status.isGranted);
   }
@@ -105,16 +117,31 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
       );
       return;
     }
-    if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_selectedMedia == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.loc.isAr ? 'الصورة/الفيديو مطلوبة' : 'Media is required')),
+        SnackBar(
+          content: Text(
+            context.loc.isAr ? 'يجب إرفاق صورة أولاً!' : 'Please attach a picture first!',
+          ),
+        ),
       );
       return;
     }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _submitting = true);
     try {
-      await _reports.submitReport(_buildReportBody());
+      String? clientIp;
+      try {
+        final resp = await http.get(Uri.parse('https://api.ipify.org?format=json')).timeout(const Duration(seconds: 2));
+        if (resp.statusCode == 200) {
+          final data = json.decode(resp.body);
+          clientIp = data['ip'];
+        }
+      } catch (e) {
+        debugPrint('IP Fetch Error: $e');
+      }
+
+      await _reports.submitReport(_buildReportBody(clientIp));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.loc.reportSubmitted)),

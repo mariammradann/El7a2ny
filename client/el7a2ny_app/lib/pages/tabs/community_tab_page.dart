@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/localization/app_strings.dart';
 import '../../services/api_service.dart';
 import '../../models/help_initiative_model.dart';
@@ -18,11 +19,26 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
   bool _loading = true;
   String? _error;
   HelpCategory? _selectedCategory;
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
+    _loadUserId();
     _load();
+  }
+
+  Future<void> _loadUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _currentUserId = prefs.getString('user_id');
+        });
+      }
+    } catch (e) {
+      print("🚨 Error loading user id: $e");
+    }
   }
 
   Future<void> _load() async {
@@ -52,6 +68,61 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
         .where((initiative) => initiative.category == _selectedCategory)
         .toList();
   }
+
+  Future<void> _deleteInitiative(HelpInitiative initiative) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.loc.isAr ? 'حذف المبادرة' : 'Delete Initiative'),
+        content: Text(context.loc.isAr ? 'هل أنت متأكد من حذف هذه المبادرة؟' : 'Are you sure you want to delete this initiative?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.loc.isAr ? 'إلغاء' : 'Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(context.loc.isAr ? 'حذف' : 'Delete', style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final success = await ApiService.deleteHelpInitiative(initiative.id);
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(context.loc.isAr ? 'تم حذف المبادرة بنجاح!' : 'Initiative deleted successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _load();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(context.loc.isAr ? 'فشل في حذف المبادرة' : 'Failed to delete initiative'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _editInitiative(HelpInitiative initiative) async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => CreateInitiativeScreen(initiative: initiative),
+        settings: const RouteSettings(name: '/edit-initiative'),
+      ),
+    );
+    if (result == true) {
+      _load();
+    }
+  }
+
 
   Widget _buildCategoryFilters(BuildContext context) {
     final categories = HelpCategory.values;
@@ -137,7 +208,15 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
                     ..._getFilteredInitiatives().map(
                       (initiative) => Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: _HelpInitiativeCard(initiative: initiative),
+                        child: _HelpInitiativeCard(
+                          initiative: initiative,
+                          onDelete: (_currentUserId != null && _currentUserId == initiative.userId)
+                              ? () => _deleteInitiative(initiative)
+                              : null,
+                          onEdit: (_currentUserId != null && _currentUserId == initiative.userId)
+                              ? () => _editInitiative(initiative)
+                              : null,
+                        ),
                       ),
                     ),
                   ],
@@ -412,8 +491,14 @@ class _CategoryChip extends StatelessWidget {
 
 class _HelpInitiativeCard extends StatelessWidget {
   final HelpInitiative initiative;
+  final VoidCallback? onDelete;
+  final VoidCallback? onEdit;
 
-  const _HelpInitiativeCard({required this.initiative});
+  const _HelpInitiativeCard({
+    required this.initiative,
+    this.onDelete,
+    this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -457,6 +542,24 @@ class _HelpInitiativeCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onEdit != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue, size: 18),
+                  onPressed: onEdit,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+              if (onDelete != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                  onPressed: onDelete,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
               const Spacer(),
               Text(
                 _formatTime(initiative.createdAt, loc),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/localization/app_strings.dart';
 import '../widgets/star_rating_bar.dart';
 import '../app/main_shell_screen.dart';
+import 'report_account_screen.dart';
 
 class UserRatingScreen extends StatefulWidget {
   const UserRatingScreen({super.key});
@@ -17,6 +18,7 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
   double _fireDeptRating = 0;
   double _el7a2nyPlusRating = 0;
   bool? _volunteersHelpful;
+  bool? _reportFake;
 
   void _submitRating() {
     // Show success snackbar
@@ -99,6 +101,43 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
                             isSelected: _volunteersHelpful == false,
                             activeColor: Colors.red,
                             onTap: () => setState(() => _volunteersHelpful = false),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 40),
+
+                    Text(
+                      loc.isAr ? 'هل البلاغ كاذب؟' : 'Is the report fake?',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildHelpfulButton(
+                            title: loc.isAr ? 'نعم' : 'Yes',
+                            icon: Icons.report_problem_rounded,
+                            isSelected: _reportFake == true,
+                            activeColor: Colors.red,
+                            onTap: () {
+                              setState(() => _reportFake = true);
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const ReportAccountScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildHelpfulButton(
+                            title: loc.isAr ? 'لا' : 'No',
+                            icon: Icons.check_circle_rounded,
+                            isSelected: _reportFake == false,
+                            activeColor: Colors.green,
+                            onTap: () => setState(() => _reportFake = false),
                           ),
                         ),
                       ],

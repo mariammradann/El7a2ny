@@ -158,6 +158,50 @@ class IncidentViewSet(viewsets.ModelViewSet):
                 user_id = user_id[0]
             data['user'] = user_id
 
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        valid_user = False
+        user_val = data.get('user')
+        if user_val:
+            try:
+                if User.objects.filter(pk=user_val).exists():
+                    valid_user = True
+            except Exception:
+                pass
+
+        if not valid_user:
+            first_user = User.objects.first()
+            if first_user:
+                data['user'] = first_user.pk
+            else:
+                dummy_user = User.objects.create(
+                    name="One Time Report User",
+                    email="one_time_reporter@test.com",
+                    phone_number="01000000000"
+                )
+                data['user'] = dummy_user.pk
+
+        if 'category' not in data or not data['category']:
+            data['category'] = 'other'
+
+        # Extract client IP from data or request headers
+        client_ip = data.pop('client_ip', None)
+        if isinstance(client_ip, list) and client_ip:
+            client_ip = client_ip[0]
+        if not client_ip:
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                client_ip = x_forwarded_for.split(',')[0]
+            else:
+                client_ip = request.META.get('REMOTE_ADDR')
+
+        # Add IP to description
+        desc = data.get('description', '')
+        if isinstance(desc, list) and desc:
+            desc = desc[0]
+        ip_prefix = f"[IP: {client_ip}] " if client_ip else ""
+        data['description'] = f"{ip_prefix}{desc}".strip()
+
         # Handle file uploads
         media_files_urls = []
         if 'media_files' in request.FILES:
@@ -203,6 +247,15 @@ class IncidentViewSet(viewsets.ModelViewSet):
                 return Response({"error": f"Invalid coordinates: {e}"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             print(f"⚠️ Missing coordinates: lat={lat_raw}, lng={lng_raw}")
+            # Add fallback location_data if completely missing
+            if 'location_data' not in data:
+                data['location_data'] = {
+                    'latitude': 30.0444,
+                    'longitude': 31.2357,
+                    'city': 'Cairo',
+                    'region': 'Egypt',
+                    'address': 'Cairo, Egypt',
+                }
 
         # Flatten other string fields that may be lists
         if isinstance(data.get('category'), list) and data['category']:

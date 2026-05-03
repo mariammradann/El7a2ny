@@ -4,6 +4,9 @@ import '../data/models/chat_message.dart';
 import '../data/models/emergency_contact.dart';
 import '../services/api_service.dart';
 import '../services/ai_service.dart';
+import '../services/session_service.dart';
+import 'user_rating_screen.dart';
+import 'volunteer_rating_screen.dart';
 
 class EmergencyChatScreen extends StatefulWidget {
   const EmergencyChatScreen({super.key});
@@ -117,6 +120,96 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
     });
   }
 
+  void _endReportAndShowRatingPopup(BuildContext context) {
+    final isVolunteer = SessionService().currentRole == UserRole.volunteer;
+    
+    if (isVolunteer) {
+      // Show volunteer rating popup
+      showDialog(
+        context: context,
+        builder: (context) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(
+              context.loc.isAr ? 'تقييم البلاغ' : 'Report Evaluation',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
+            ),
+            content: Text(
+              context.loc.isAr ? 'هل كان البلاغ حقيقياً أم كاذباً؟' : 'Was the report real or fake?',
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const VolunteerRatingScreen()),
+                  );
+                },
+                child: Text(
+                  context.loc.isAr ? 'كاذب' : 'Fake',
+                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(context.loc.isAr ? 'تم إرسال التقييم بنجاح!' : 'Rating submitted successfully!')),
+                  );
+                  Navigator.of(context).maybePop();
+                },
+                child: Text(
+                  context.loc.isAr ? 'حقيقي' : 'Real',
+                  style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // Show citizen/user popup
+      showDialog(
+        context: context,
+        builder: (context) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(
+              context.loc.isAr ? 'تقييم الخدمة والمتطوعين' : 'Rate Service and Volunteers',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  context.loc.isAr ? 'كيف تقيم المساعدة التي تلقيتها والمتطوعين؟' : 'How do you rate the help you received and the volunteers?',
+                  style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (index) => IconButton(
+                    icon: const Icon(Icons.star, color: Colors.amber, size: 32),
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(context.loc.isAr ? 'شكراً لتقييمك!' : 'Thank you for your rating!')),
+                      );
+                      Navigator.of(context).maybePop();
+                    },
+                  )),
+                )
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -186,15 +279,34 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
               ),
             ],
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.phone_in_talk_rounded, color: Colors.white),
-              onPressed: () {},
-            ),
+          Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TextButton.icon(
+                  onPressed: () => _endReportAndShowRatingPopup(context),
+                  icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 18),
+                  label: Text(
+                    context.loc.isAr ? 'إنهاء البلاغ' : 'End Report',
+                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.phone_in_talk_rounded, color: Colors.white),
+                  onPressed: () {},
+                ),
+              ),
+            ],
           ),
         ],
       ),

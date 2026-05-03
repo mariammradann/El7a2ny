@@ -5,7 +5,8 @@ import '../services/api_service.dart';
 import '../models/user_model.dart';
 
 class CreateInitiativeScreen extends StatefulWidget {
-  const CreateInitiativeScreen({super.key});
+  final HelpInitiative? initiative;
+  const CreateInitiativeScreen({super.key, this.initiative});
 
   @override
   State<CreateInitiativeScreen> createState() => _CreateInitiativeScreenState();
@@ -13,11 +14,27 @@ class CreateInitiativeScreen extends StatefulWidget {
 
 class _CreateInitiativeScreenState extends State<CreateInitiativeScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _contactController = TextEditingController();
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _contactController;
   HelpCategory _selectedCategory = HelpCategory.other;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.initiative?.title ?? '');
+    _descriptionController = TextEditingController(text: widget.initiative?.description ?? '');
+    _locationController = TextEditingController(text: widget.initiative?.location ?? '');
+    _contactController = TextEditingController(
+      text: (widget.initiative?.contactInfo != null && widget.initiative!.contactInfo.isNotEmpty)
+          ? widget.initiative!.contactInfo.first
+          : '',
+    );
+    if (widget.initiative != null) {
+      _selectedCategory = widget.initiative!.category;
+    }
+  }
 
   @override
   void dispose() {
@@ -38,28 +55,33 @@ class _CreateInitiativeScreenState extends State<CreateInitiativeScreen> {
         
         // 2. Create the initiative object
         final initiative = HelpInitiative(
-          id: 0, // Backend will assign ID
+          id: widget.initiative?.id ?? 0,
           title: _titleController.text,
           description: _descriptionController.text,
           authorName: user.name,
           authorRole: user.role, // e.g. normal, volunteer
           category: _selectedCategory,
           location: _locationController.text,
-          createdAt: DateTime.now(),
+          createdAt: widget.initiative?.createdAt ?? DateTime.now(),
           contactInfo: [_contactController.text],
-          participantsCount: 0,
-          isActive: true,
-          userId: user.id,
+          participantsCount: widget.initiative?.participantsCount ?? 0,
+          isActive: widget.initiative?.isActive ?? true,
+          userId: widget.initiative?.userId ?? user.id,
         );
 
         // 3. Send to backend
-        final success = await ApiService.createHelpInitiative(initiative);
+        final bool success;
+        if (widget.initiative != null) {
+          success = await ApiService.updateHelpInitiative(initiative);
+        } else {
+          success = await ApiService.createHelpInitiative(initiative);
+        }
 
         if (mounted) {
           if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(context.loc.isAr ? 'تم نشر المبادرة بنجاح!' : 'Initiative posted successfully!'),
+                content: Text(context.loc.isAr ? 'تم حفظ المبادرة بنجاح!' : 'Initiative saved successfully!'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -67,7 +89,7 @@ class _CreateInitiativeScreenState extends State<CreateInitiativeScreen> {
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(context.loc.isAr ? 'فشل في نشر المبادرة' : 'Failed to post initiative'),
+                content: Text(context.loc.isAr ? 'فشل في حفظ المبادرة' : 'Failed to save initiative'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -146,7 +168,24 @@ class _CreateInitiativeScreenState extends State<CreateInitiativeScreen> {
               TextFormField(
                 controller: _contactController,
                 decoration: _buildInputDecoration(loc.isAr ? 'رقم الهاتف أو البريد الإلكتروني' : 'Phone number or Email'),
-                validator: (v) => v == null || v.isEmpty ? (loc.isAr ? 'برجاء إدخال بيانات التواصل' : 'Please enter contact info') : null,
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return loc.isAr ? 'برجاء إدخال بيانات التواصل' : 'Please enter contact info';
+                  }
+                  if (v.contains('@')) {
+                    if (!v.contains('.')) {
+                      return loc.isAr ? 'برجاء إدخال بريد إلكتروني صحيح' : 'Please enter a valid email';
+                    }
+                  } else {
+                    if (v.length > 11) {
+                      return loc.isAr ? 'رقم الهاتف لا يمكن أن يزيد عن 11 رقم' : 'Phone number cannot exceed 11 digits';
+                    }
+                    if (v.length < 11) {
+                      return loc.isAr ? 'رقم الهاتف يجب أن يكون 11 رقم' : 'Phone number must be exactly 11 digits';
+                    }
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 40),
 

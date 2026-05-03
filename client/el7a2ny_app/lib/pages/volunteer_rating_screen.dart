@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/localization/app_strings.dart';
 import '../app/main_shell_screen.dart';
+import 'report_account_screen.dart';
 
 class VolunteerRatingScreen extends StatefulWidget {
   const VolunteerRatingScreen({super.key});
@@ -13,6 +14,13 @@ class _VolunteerRatingScreenState extends State<VolunteerRatingScreen> {
   bool? _isRealReport;
 
   void _submitReport() {
+    if (_isRealReport == false) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ReportAccountScreen()),
+      );
+      return;
+    }
+
     // Show success snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

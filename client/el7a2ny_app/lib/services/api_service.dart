@@ -234,6 +234,32 @@ static Future<void> sendEmergencyAlertWithMedia({
     }
   }
 
+  static Future<bool> deleteHelpInitiative(int id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$baseUrl/api/initiatives/$id/"),
+      );
+      return response.statusCode == 204 || response.statusCode == 200;
+    } catch (e) {
+      print("🚨 Error deleting initiative: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> updateHelpInitiative(HelpInitiative initiative) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$baseUrl/api/initiatives/${initiative.id}/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(initiative.toJson()),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("🚨 Error updating initiative: $e");
+      return false;
+    }
+  }
+
   static Future<List<SponsorModel>> fetchSponsors() async {
     final response = await http.get(Uri.parse("$baseUrl/api/sponsors/"));
     if (response.statusCode == 200) {
