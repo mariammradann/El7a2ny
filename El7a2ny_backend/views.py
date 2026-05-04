@@ -65,7 +65,8 @@ class UserViewSet(viewsets.ModelViewSet):
                     "message": "Login successful",
                     "email": user.email,
                     "user_id": user.user_id,
-                    "name": user.name
+                    "name": user.name,
+                    "user_type": user.user_type
                 }, status=status.HTTP_200_OK)
             else:
                 return Response(
@@ -521,5 +522,153 @@ def get_user_activity_history(request):
         
     except ValueError:
         return Response({"error": "Invalid UUID format"}, status=400)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ========== ADMIN ENDPOINTS ==========
+
+@api_view(['GET'])
+def admin_stats(request):
+    """
+    Admin dashboard statistics endpoint.
+    Returns: total_users, active_alerts, avg_response_time, success_rate, weekly_efficiency
+    """
+    from django.db.models import Count, Avg, Q
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    try:
+        # Total users count
+        total_users = User.objects.count()
+        
+        # Active alerts (incidents in last 24 hours)
+        twenty_four_hours_ago = timezone.now() - timedelta(hours=24)
+        active_alerts = Incident.objects.filter(created_at__gte=twenty_four_hours_ago).count()
+        
+        # Average response time (mock data - customize based on your logic)
+        avg_response_time = "3:45"  # Could calculate from actual incident data
+        
+        # Success rate (mock data - customize based on your logic)
+        success_rate = 0.87  # 87% success rate
+        
+        # Weekly efficiency (last 7 days - incident count per day)
+        weekly_efficiency = []
+        for i in range(6, -1, -1):  # Last 7 days
+            date = timezone.now() - timedelta(days=i)
+            start = date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end = date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            count = Incident.objects.filter(created_at__range=[start, end]).count()
+            weekly_efficiency.append(float(count))
+        
+        return Response({
+            "total_users": total_users,
+            "active_alerts": active_alerts,
+            "avg_response_time": avg_response_time,
+            "success_rate": success_rate,
+            "weekly_efficiency": weekly_efficiency,
+        })
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(['GET'])
+def admin_users(request):
+    """
+    Admin users management endpoint.
+    Returns list of all users with their details.
+    Query params: search (optional), status (optional)
+    """
+    try:
+        users = User.objects.all()
+        
+        # Filter by search query
+        search = request.query_params.get('search', '').strip()
+        if search:
+            users = users.filter(
+                Q(name__icontains=search) | 
+                Q(email__icontains=search) | 
+                Q(phone_number__icontains=search)
+            )
+        
+        # Filter by status
+        status_filter = request.query_params.get('status', '').strip()
+        if status_filter:
+            users = users.filter(status=status_filter)
+        
+        # Serialize users
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(['PUT'])
+def admin_update_user(request, user_id):
+    """
+    Update user details by admin.
+    """
+    try:
+        import uuid
+        uid = uuid.UUID(user_id)
+        user = User.objects.get(user_id=uid)
+        
+        # Allow updating specific fields
+        allowed_fields = ['name', 'email', 'phone_number', 'status', 'verification_status', 'user_type']
+        for field in allowed_fields:
+            if field in request.data:
+                setattr(user, field, request.data[field])
+        
+        user.save()
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(['DELETE'])
+def admin_delete_user(request, user_id):
+    """
+    Delete a user (soft delete by marking as inactive).
+    """
+    try:
+        import uuid
+        uid = uuid.UUID(user_id)
+        user = User.objects.get(user_id=uid)
+        
+        # Soft delete - mark as inactive
+        user.status = "inactive"
+        user.save()
+        
+        return Response({"message": f"User {user.name} has been deactivated"})
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(['GET'])
+def admin_incidents(request):
+    """
+    Get all incidents for admin dashboard.
+    Query params: status (optional), user_id (optional)
+    """
+    try:
+        incidents = Incident.objects.all().order_by('-created_at')
+        
+        # Filter by status
+        status_filter = request.query_params.get('status', '').strip()
+        if status_filter:
+            incidents = incidents.filter(status=status_filter)
+        
+        # Filter by user_id
+        user_id_filter = request.query_params.get('user_id', '').strip()
+        if user_id_filter:
+            incidents = incidents.filter(user_id=user_id_filter)
+        
+        serializer = IncidentSerializer(incidents, many=True)
+        return Response(serializer.data)
     except Exception as e:
         return Response({"error": str(e)}, status=500)

@@ -41,6 +41,7 @@ class AuthRepository {
         id: userId,
         name: raw['name']?.toString(),
         email: raw['email']?.toString(),
+        userType: raw['user_type']?.toString(),
       );
     } else {
        throw ApiException(401, 'بيانات المستخدم غير مكتملة في الرد');

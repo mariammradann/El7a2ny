@@ -91,7 +91,10 @@ class UserModel {
       skills: json['skills'],
       smartWatchModel: json['smart_watch_model'],
       sensorModel: json['sensor_model'],
-      emergencyContacts: emergencyList.map((e) => EmergencyContact.fromJson(e as Map<String, dynamic>)).toList(),
+        emergencyContacts: emergencyList
+          .where((e) => e is Map<String, dynamic>)
+          .map((e) => EmergencyContact.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
       certifications: json['certifications'] != null ? List<String>.from(json['certifications']) : null,
       profileImageUrl: json['profile_image_url'],
       isPlus: json['is_plus'] ?? false,

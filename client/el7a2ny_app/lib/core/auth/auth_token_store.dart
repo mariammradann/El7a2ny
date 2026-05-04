@@ -4,17 +4,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthTokenStore {
   static String? _userId;
   static String? _accessToken;
+  static String? _userType;
 
   // --- Getters عشان الصفحات التانية تشوف المتغيرات ---
   static String? get userId => _userId;
   static String? get accessToken => _accessToken;
+  static String? get userType => _userType;
 
   // دالة لتحميل البيانات من الذاكرة عند بداية تشغيل التطبيق (مهمة جداً)
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _userId = prefs.getString('user_id');
     _accessToken = prefs.getString('access_token');
-    debugPrint("📥 AuthTokenStore Initialized: ID=$_userId");
+    _userType = prefs.getString('user_type');
+    debugPrint("📥 AuthTokenStore Initialized: ID=$_userId, Type=$_userType");
   }
 
   // حفظ بيانات اليوزر بشكل دائم
@@ -22,14 +25,17 @@ class AuthTokenStore {
     required String id,
     String? name,
     String? email,
+    String? userType,
   }) async {
     _userId = id;
+    _userType = userType;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_id', id);
     if (name != null) await prefs.setString('user_name', name);
     if (email != null) await prefs.setString('user_email', email);
+    if (userType != null) await prefs.setString('user_type', userType);
     
-    debugPrint("✅ User Data Persisted: ID=$id");
+    debugPrint("✅ User Data Persisted: ID=$id, Type=$userType");
   }
 
   // حفظ التوكنز بشكل دائم
@@ -46,6 +52,7 @@ class AuthTokenStore {
   static Future<void> clear() async {
     _userId = null;
     _accessToken = null;
+    _userType = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     debugPrint("🗑️ Auth Store Cleared");

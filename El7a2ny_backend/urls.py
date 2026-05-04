@@ -9,7 +9,8 @@ from .views import (
     register_user_api, get_device_status, get_first_aid_advice,
     verify_password_api, change_password_api,
     password_reset_request, password_reset_verify_token, password_reset_confirm,
-    get_user_activity_history
+    get_user_activity_history, admin_stats, admin_users, admin_update_user,
+    admin_delete_user, admin_incidents
 )
 
 # 1. إعداد الـ Router
@@ -37,6 +38,14 @@ urlpatterns = [
 
     # مسارات الـ Router خليها في الآخر خالص
     path('api/emergency/reports/', IncidentViewSet.as_view({'post': 'create'}), name='emergency-reports-alias'),
+    
+    # Admin Endpoints
+    path('api/admin/stats/', admin_stats, name='admin-stats'),
+    path('api/admin/users/', admin_users, name='admin-users'),
+    path('api/admin/users/<uuid:user_id>/', admin_update_user, name='admin-update-user'),
+    path('api/admin/users/<uuid:user_id>/delete/', admin_delete_user, name='admin-delete-user'),
+    path('api/admin/incidents/', admin_incidents, name='admin-incidents'),
+    
     path('api/', include(router.urls)),
 
     path('api/devices/status/', get_device_status),

@@ -431,4 +431,102 @@ static Future<void> sendEmergencyAlertWithMedia({
       type: 'account',
     ),
   ];
+
+  // ========== ADMIN METHODS ==========
+  
+  /// Update user by admin
+  static Future<UserModel> adminUpdateUser(String userId, Map<String, dynamic> data) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$baseUrl/api/admin/users/$userId/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(data),
+      );
+      if (response.statusCode == 200) {
+        return UserModel.fromJson(jsonDecode(response.body));
+      }
+      throw Exception("Failed to update user: ${response.statusCode}");
+    } catch (e) {
+      print("Error updating user: $e");
+      rethrow;
+    }
+  }
+
+  /// Delete/deactivate user by admin
+  static Future<void> adminDeleteUser(String userId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$baseUrl/api/admin/users/$userId/delete/"),
+      );
+      if (response.statusCode != 200) {
+        throw Exception("Failed to delete user: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error deleting user: $e");
+      rethrow;
+    }
+  }
+
+  /// Fetch all incidents for admin
+  static Future<List<IncidentModel>> fetchAdminIncidents({String? status, String? userId}) async {
+    try {
+      String url = "$baseUrl/api/admin/incidents/";
+      final params = <String>[];
+      
+      if (status != null && status.isNotEmpty) {
+        params.add("status=$status");
+      }
+      if (userId != null && userId.isNotEmpty) {
+        params.add("user_id=$userId");
+      }
+      
+      if (params.isNotEmpty) {
+        url += "?${params.join('&')}";
+      }
+      
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        List data = jsonDecode(response.body);
+        return data.map((item) => IncidentModel.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Error fetching incidents: $e");
+      return [];
+    }
+  }
+
+  /// Search users with admin filter
+  static Future<List<UserModel>> adminSearchUsers(String query) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/admin/users/?search=$query"),
+      );
+      if (response.statusCode == 200) {
+        List data = jsonDecode(response.body);
+        return data.map((item) => UserModel.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Error searching users: $e");
+      return [];
+    }
+  }
+
+  /// Filter users by status
+  static Future<List<UserModel>> adminFilterUsersByStatus(String status) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/admin/users/?status=$status"),
+      );
+      if (response.statusCode == 200) {
+        List data = jsonDecode(response.body);
+        return data.map((item) => UserModel.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Error filtering users: $e");
+      return [];
+    }
+  }
 }
