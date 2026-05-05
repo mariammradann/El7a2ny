@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'payment_types.dart';
 import 'payment_receipt_page.dart';
 import '../core/localization/app_strings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 
 
 const _kOrange = Color(0xFFFF6B00);
@@ -59,33 +61,65 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
 
-    _runSteps();
+    // ✅ Defer until after first frame so context.loc is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _runSteps();
+    });
   }
 
   Future<void> _runSteps() async {
-    final stepsCount = _steps.length;
-    for (int i = 0; i < stepsCount; i++) {
-      await Future.delayed(Duration(milliseconds: i == 0 ? 800 : 900));
-      if (!mounted) return;
-      setState(() => _step = i);
+  final steps = _steps;
+
+  // Step 0 - Verifying
+  await Future.delayed(const Duration(milliseconds: 800));
+  if (!mounted) return;
+  setState(() => _step = 0);
+
+  // Step 1 - Processing payment
+  await Future.delayed(const Duration(milliseconds: 900));
+  if (!mounted) return;
+  setState(() => _step = 1);
+
+  // Step 2 - Activating subscription  ← actual API call happens here
+  await Future.delayed(const Duration(milliseconds: 900));
+  if (!mounted) return;
+  setState(() => _step = 2);
+
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    if (userId != null) {
+      final planType = widget.isYearly ? 'yearly' : 'monthly';
+      await ApiService.subscribeUser(userId, planType);
     }
-    await Future.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-    _pulseCtrl.stop();
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => PaymentReceiptPage(
-          method: widget.method,
-          amount: widget.amount,
-          methodTitle: widget.methodTitle,
-          isYearly: widget.isYearly,
-        ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 500),
-      ),
-    );
+  } catch (e) {
+    print('Subscription save error: $e');
+    // Still proceed to receipt — don't block the user
   }
+
+  // Step 3 - Success
+  await Future.delayed(const Duration(milliseconds: 900));
+  if (!mounted) return;
+  setState(() => _step = 3);
+
+  await Future.delayed(const Duration(milliseconds: 700));
+  if (!mounted) return;
+  _pulseCtrl.stop();
+
+  Navigator.of(context).pushReplacement(
+    PageRouteBuilder(
+      pageBuilder: (_, __, ___) => PaymentReceiptPage(
+        method: widget.method,
+        amount: widget.amount,
+        methodTitle: widget.methodTitle,
+        isYearly: widget.isYearly,
+      ),
+      transitionsBuilder: (_, anim, __, child) =>
+          FadeTransition(opacity: anim, child: child),
+      transitionDuration: const Duration(milliseconds: 500),
+    ),
+  );
+}
 
   @override
   void dispose() {

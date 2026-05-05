@@ -1060,4 +1060,9 @@ class AppStrings {
   String get basicFeatures =>
       isAr ? 'استمتع بالمميزات الأساسية' : 'Enjoy basic features';
   String get activePlanStatus => isAr ? 'نشط' : 'Active';
+
+  // Admin Actions
+  String get confirmAction => isAr ? 'تأكيد الإجراء' : 'Confirm Action';
+  String get cancel => isAr ? 'إلغاء' : 'Cancel';
+  String get confirm => isAr ? 'تأكيد' : 'Confirm';
 }
