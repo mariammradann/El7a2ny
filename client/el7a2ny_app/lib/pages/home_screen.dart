@@ -7,6 +7,7 @@ import 'alerts_tab.dart';
 import 'sensors_page.dart';
 import 'landing_screen.dart';
 import '../services/session_service.dart';
+import '../services/sensor_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -122,101 +123,113 @@ class _HomeScreenState extends State<HomeScreen>
             right: 20,
             left: 20,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
             children: [
-              // Right side: back arrow + logo + title
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
-                      onPressed: () {
-                        if (Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                        } else {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (_) => const LandingScreen()),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        colors: isPlus 
-                          ? [const Color(0xFFFFD700), const Color(0xFFB8860B)]
-                          : [const Color(0xFFEF4444), const Color(0xFFF97316)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      isPlus ? Icons.workspace_premium_rounded : Icons.warning_amber_rounded,
-                      color: isPlus ? const Color(0xFF0F172A) : Colors.white, 
-                      size: 26
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Right side: back arrow + logo + title
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            context.loc.emergencySystemTitle,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+                          onPressed: () {
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            } else {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => const LandingScreen()),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: LinearGradient(
+                            colors: isPlus 
+                              ? [const Color(0xFFFFD700), const Color(0xFFB8860B)]
+                              : [const Color(0xFFEF4444), const Color(0xFFF97316)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          if (isPlus) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFD700),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'PLUS',
-                                style: TextStyle(
-                                  color: Color(0xFF0F172A),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
                             ),
                           ],
-                        ],
-                      ),
-                      Text(
-                        isPlus ? 'إلحقني بلس مفعل' : context.loc.emergencyServices24_7,
-                        style: TextStyle(
-                          color: isPlus ? const Color(0xFFFFD700).withValues(alpha: 0.8) : const Color(0xFF93C5FD), 
-                          fontSize: 12
+                        ),
+                        child: Icon(
+                          isPlus ? Icons.workspace_premium_rounded : Icons.warning_amber_rounded,
+                          color: isPlus ? const Color(0xFF0F172A) : Colors.white, 
+                          size: 26
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                context.loc.emergencySystemTitle,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (isPlus) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFD700),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'PLUS',
+                                    style: TextStyle(
+                                      color: Color(0xFF0F172A),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          Text(
+                            isPlus ? 'إلحقني بلس مفعل' : context.loc.emergencyServices24_7,
+                            style: TextStyle(
+                              color: isPlus ? const Color(0xFFFFD700).withValues(alpha: 0.8) : const Color(0xFF93C5FD), 
+                              fontSize: 12
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  // Left side: status badges
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _SensorStatusBadge(),
+                      const SizedBox(height: 8),
+                      _SystemStatusBadge(),
                     ],
                   ),
                 ],
               ),
-              // Left side: status badge
-              _PulseBadge(),
             ],
           ),
         );
@@ -269,7 +282,157 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// ── Pulsing badge widget ─────────────────────────────────────────────────────
+// ── Sensor Status Badge Widget ──────────────────────────────────────────────
+class _SensorStatusBadge extends StatelessWidget {
+  const _SensorStatusBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: SensorMonitorService(),
+      builder: (context, _) {
+        final sensorService = SensorMonitorService();
+        final isConnected = sensorService.isSensorConnected;
+        final hasAlerts = sensorService.activeSensorAlerts.isNotEmpty;
+
+        if (hasAlerts) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEF4444).withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.5)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEF4444),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '⚠ ${context.loc.activeAlertsTab}',
+                  style: const TextStyle(
+                    color: Color(0xFFFCA5A5),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isConnected 
+              ? const Color(0xFF10B981).withValues(alpha: 0.2)
+              : const Color(0xFF6B7280).withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isConnected 
+                ? const Color(0xFF10B981).withValues(alpha: 0.4)
+                : const Color(0xFF6B7280).withValues(alpha: 0.4),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isConnected ? const Color(0xFF34D399) : const Color(0xFF9CA3AF),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isConnected ? '🔗 Sensor Connected' : '⚪ No Sensor',
+                style: TextStyle(
+                  color: isConnected 
+                    ? const Color(0xFF6EE7B7)
+                    : const Color(0xFFD1D5DB),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── System Status Badge Widget (Original Pulse) ──────────────────────────────
+class _SystemStatusBadge extends StatefulWidget {
+  @override
+  State<_SystemStatusBadge> createState() => _SystemStatusBadgeState();
+}
+
+class _SystemStatusBadgeState extends State<_SystemStatusBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        duration: const Duration(milliseconds: 900), vsync: this)
+      ..repeat(reverse: true);
+    _opacity = Tween(begin: 0.4, end: 1.0).animate(
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10B981).withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FadeTransition(
+            opacity: _opacity,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Color(0xFF34D399),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            context.loc.allSystemsOperationalStatus,
+            style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Pulsing badge widget (deprecated - replaced by _SensorStatusBadge) ──────
 class _PulseBadge extends StatefulWidget {
   @override
   State<_PulseBadge> createState() => _PulseBadgeState();

@@ -51,6 +51,7 @@ class AlertModel {
         mediaUrls = List<String>.from(json['media_files']);
       }
     }
+    print('RAW created_at: ${json['created_at']}');
 
     return AlertModel(
       id: (json['incident_id'] ?? json['id'] ?? '').toString(),
@@ -67,9 +68,11 @@ class AlertModel {
       lng: (json['lng'] ?? 0.0).toDouble(),
       latitude: json['lat'] != null ? (json['lat']).toDouble() : null,
       longitude: json['lng'] != null ? (json['lng']).toDouble() : null,
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']).toLocal() 
-          : DateTime.now(),
+      createdAt: json['created_at'] != null
+      
+    ? DateTime.parse(json['created_at'].toString().split('+')[0] + 'Z').toLocal()
+    : DateTime.now(),
+          
       isMyAlert: currentUserId != null && alertOwnerId == currentUserId,
       mediaUrls: mediaUrls,
     );
@@ -114,13 +117,23 @@ class AlertModel {
     }
   }
 
-  String timeAgoLocalized(AppStrings loc) {
-    if (createdAt == null) return '';
-    final diff = DateTime.now().difference(createdAt!);
-    final isAr = loc.isAr;
-    if (diff.inMinutes < 1) return isAr ? 'الآن' : 'Just now';
-    if (diff.inMinutes < 60) return isAr ? 'من ${diff.inMinutes} دقيقة' : '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return isAr ? 'من ${diff.inHours} ساعة' : '${diff.inHours}h ago';
-    return isAr ? 'من ${diff.inDays} يوم' : '${diff.inDays}d ago';
-  }
+String timeAgoLocalized(AppStrings loc) {
+  if (createdAt == null) return '';
+  
+  // BOTH must be UTC for the subtraction to work
+  final now = DateTime.now().toUtc(); 
+  final diff = now.difference(createdAt!);
+  
+  final isAr = loc.isAr;
+  final minutes = diff.inMinutes; // Remove .abs() for a second to see if it's negative
+
+  if (minutes < 1) return isAr ? 'الآن' : 'Just now';
+  if (minutes < 60) return isAr ? 'من $minutes دقيقة' : '${minutes}m ago';
+  
+  final hours = diff.inHours;
+  if (hours < 24) return isAr ? 'من $hours ساعة' : '${hours}h ago';
+  
+  final days = diff.inDays;
+  return isAr ? 'من $days يوم' : '${days}d ago';
+}
 } 

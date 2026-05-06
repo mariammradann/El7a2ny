@@ -637,4 +637,15 @@ class ApiService {
       rethrow;
     }
   }
+  static Future<Map<String, dynamic>> getLatestSensorReading(String userId) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/api/sensor/latest/?user_id=$userId'),
+  );
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  }
+  throw Exception('Failed to fetch sensor reading');
 }
+}
+
+
