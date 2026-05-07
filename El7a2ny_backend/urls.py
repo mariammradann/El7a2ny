@@ -4,7 +4,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
-
+from .views import (
     UserViewSet,
     IncidentViewSet,
     HelpInitiativeViewSet,
@@ -26,7 +26,7 @@ from rest_framework.routers import DefaultRouter
     admin_incidents,
     get_user_subscription,
     subscribe_user,
-    detect_accident_view,
+)
 
 # 1. إعداد الـ Router
 router = DefaultRouter()
@@ -100,7 +100,6 @@ urlpatterns = [
     path("api/auth/password/change/", change_password_api),
     path("api/sensor/temperature/",   receive_temperature,      name="receive_temperature"),
     path("api/sensor/latest/",        get_latest_sensor_reading, name="latest_sensor"),
-    path('api/detect-accident/', detect_accident_view, name='detect-accident'),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير

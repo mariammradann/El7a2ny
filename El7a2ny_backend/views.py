@@ -596,35 +596,6 @@ def get_user_activity_history(request):
         return Response({"error": "Invalid UUID format"}, status=400)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
-
-
-from django.core.files.storage import FileSystemStorage
-from .services import detect_accident
-
-@api_view(['POST'])
-def detect_accident_view(request):
-    """
-    API endpoint that accepts an image file upload, processes it using YOLOv8,
-    and returns detection results.
-    """
-    image_file = request.FILES.get('image')
-    if not image_file:
-        return Response({"error": "No image file provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        # Save file locally using FileSystemStorage
-        fs = FileSystemStorage()
-        filename = fs.save(image_file.name, image_file)
-        uploaded_file_path = fs.path(filename)
-
-        # Trigger accident detection
-        results = detect_accident(uploaded_file_path)
-
-        return Response(results, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 # ========== ADMIN ENDPOINTS ==========
 
 
@@ -946,4 +917,3 @@ def get_latest_sensor_reading(request):
             "timestamp": reading.created_at.isoformat(),
         }
     )
->>>>>>> 5360e10bc19a0f217f39df673a29795f8f2e019f
