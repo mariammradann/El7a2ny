@@ -17,15 +17,17 @@ class AdminScreen extends StatefulWidget {
   State<AdminScreen> createState() => _AdminScreenState();
 }
 
-class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
+class _AdminScreenState extends State<AdminScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   AdminStats? _stats;
   List<UserModel> _users = [];
   bool _loadingStats = true;
   bool _loadingUsers = true;
   String? _statsError;
   String? _usersError;
+  Map<String, bool> _actionLoading = {}; // Track loading state per user
 
   @override
   void initState() {
@@ -37,21 +39,43 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
   Future<void> _loadStats() async {
     try {
-      setState(() { _loadingStats = true; _statsError = null; });
+      setState(() {
+        _loadingStats = true;
+        _statsError = null;
+      });
       final data = await ApiService.fetchAdminStats();
-      if (mounted) setState(() { _stats = data; _loadingStats = false; });
+      if (mounted)
+        setState(() {
+          _stats = data;
+          _loadingStats = false;
+        });
     } catch (e) {
-      if (mounted) setState(() { _statsError = e.toString(); _loadingStats = false; });
+      if (mounted)
+        setState(() {
+          _statsError = e.toString();
+          _loadingStats = false;
+        });
     }
   }
 
   Future<void> _loadUsers() async {
     try {
-      setState(() { _loadingUsers = true; _usersError = null; });
+      setState(() {
+        _loadingUsers = true;
+        _usersError = null;
+      });
       final data = await ApiService.fetchUserList();
-      if (mounted) setState(() { _users = data; _loadingUsers = false; });
+      if (mounted)
+        setState(() {
+          _users = data;
+          _loadingUsers = false;
+        });
     } catch (e) {
-      if (mounted) setState(() { _usersError = e.toString(); _loadingUsers = false; });
+      if (mounted)
+        setState(() {
+          _usersError = e.toString();
+          _loadingUsers = false;
+        });
     }
   }
 
@@ -73,10 +97,16 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           TabBar(
             controller: _tabController,
             labelColor: primary,
-            unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            unselectedLabelColor: theme.colorScheme.onSurface.withValues(
+              alpha: 0.5,
+            ),
             indicatorColor: primary,
             indicatorWeight: 3,
-            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, fontFamily: 'NotoSansArabic'),
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              fontFamily: 'NotoSansArabic',
+            ),
             tabs: [
               Tab(text: loc.dashboard),
               Tab(text: loc.userManagement),
@@ -88,8 +118,16 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             child: TabBarView(
               controller: _tabController,
               children: [
-                RefreshIndicator(onRefresh: _loadStats, color: primary, child: _buildDashboardTab(context)),
-                RefreshIndicator(onRefresh: _loadUsers, color: primary, child: _buildUsersTab(context)),
+                RefreshIndicator(
+                  onRefresh: _loadStats,
+                  color: primary,
+                  child: _buildDashboardTab(context),
+                ),
+                RefreshIndicator(
+                  onRefresh: _loadUsers,
+                  color: primary,
+                  child: _buildUsersTab(context),
+                ),
                 _buildResourcesTab(context),
                 _buildLogsTab(context),
               ],
@@ -104,11 +142,19 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        title: Text(loc.adminDashboard, style: const TextStyle(fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
+        title: Text(
+          loc.adminDashboard,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontFamily: 'NotoSansArabic',
+          ),
+        ),
         bottom: TabBar(
           controller: _tabController,
           labelColor: primary,
-          unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+          unselectedLabelColor: theme.colorScheme.onSurface.withValues(
+            alpha: 0.5,
+          ),
           indicatorColor: primary,
           indicatorWeight: 3,
           tabs: [
@@ -122,8 +168,16 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       body: TabBarView(
         controller: _tabController,
         children: [
-          RefreshIndicator(onRefresh: _loadStats, color: primary, child: _buildDashboardTab(context)),
-          RefreshIndicator(onRefresh: _loadUsers, color: primary, child: _buildUsersTab(context)),
+          RefreshIndicator(
+            onRefresh: _loadStats,
+            color: primary,
+            child: _buildDashboardTab(context),
+          ),
+          RefreshIndicator(
+            onRefresh: _loadUsers,
+            color: primary,
+            child: _buildUsersTab(context),
+          ),
           _buildResourcesTab(context),
           _buildLogsTab(context),
         ],
@@ -134,7 +188,9 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   Widget _buildDashboardTab(BuildContext context) {
     final loc = context.loc;
     return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,7 +198,10 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           _SectionHeader(title: loc.systemHealth),
           const SizedBox(height: 16),
           if (_loadingStats)
-            const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator()))
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator()),
+            )
           else if (_statsError != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
@@ -156,7 +215,10 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                     label: loc.totalUsers,
                     value: _stats?.totalUsers.toString() ?? '0',
                     unit: '',
-                    gradientColors: const [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                    gradientColors: const [
+                      Color(0xFF6366F1),
+                      Color(0xFF4F46E5),
+                    ],
                     icon: Icons.people_rounded,
                   ),
                 ),
@@ -166,7 +228,10 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                     label: loc.globalAlerts,
                     value: _stats?.activeAlerts.toString() ?? '0',
                     unit: '',
-                    gradientColors: const [Color(0xFFF43F5E), Color(0xFFE11D48)],
+                    gradientColors: const [
+                      Color(0xFFF43F5E),
+                      Color(0xFFE11D48),
+                    ],
                     icon: Icons.notifications_active_rounded,
                   ),
                 ),
@@ -180,7 +245,10 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                     label: loc.responseTime,
                     value: _stats?.avgResponseTime ?? '0:00',
                     unit: loc.minute,
-                    gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
+                    gradientColors: const [
+                      Color(0xFF10B981),
+                      Color(0xFF059669),
+                    ],
                     icon: Icons.timer_rounded,
                   ),
                 ),
@@ -188,9 +256,14 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                 Expanded(
                   child: StatCard(
                     label: loc.successRate,
-                    value: ((_stats?.successRate ?? 0.0) * 100).toInt().toString(),
+                    value: ((_stats?.successRate ?? 0.0) * 100)
+                        .toInt()
+                        .toString(),
                     unit: '%',
-                    gradientColors: const [Color(0xFFF59E0B), Color(0xFFD97706)],
+                    gradientColors: const [
+                      Color(0xFFF59E0B),
+                      Color(0xFFD97706),
+                    ],
                     icon: Icons.verified_rounded,
                   ),
                 ),
@@ -209,10 +282,16 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             builder: (context, _) {
               final logs = SessionService().activityLog;
               if (logs.isEmpty) {
-                return Text(loc.noRecentActivity, style: const TextStyle(color: Colors.grey, fontSize: 13));
+                return Text(
+                  loc.noRecentActivity,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                );
               }
               return Column(
-                children: logs.take(3).map((log) => _buildActivityItem(log, '')).toList(),
+                children: logs
+                    .take(3)
+                    .map((log) => _buildActivityItem(log, ''))
+                    .toList(),
               );
             },
           ),
@@ -267,7 +346,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           padding: const EdgeInsets.all(20),
           itemCount: logs.length,
           itemBuilder: (context, index) {
-             return _buildActivityItem(logs[index], '');
+            return _buildActivityItem(logs[index], '');
           },
         );
       },
@@ -284,7 +363,9 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           subtitle: loc.addEditRemoveSponsor,
           icon: Icons.handshake_rounded,
           onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SponsorsPage()));
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SponsorsPage()));
           },
         ),
         const SizedBox(height: 16),
@@ -293,7 +374,11 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           subtitle: loc.modifyPricing,
           icon: Icons.card_membership_rounded,
           onTap: () {
-             Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PremiumSubscriptionPage()));
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const PremiumSubscriptionPage(),
+              ),
+            );
           },
         ),
         const SizedBox(height: 16),
@@ -302,7 +387,9 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
           subtitle: loc.viewHeatmaps,
           icon: Icons.analytics_rounded,
           onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const IncidentAnalysisPage()));
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const IncidentAnalysisPage()),
+            );
           },
         ),
       ],
@@ -321,7 +408,11 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.red,
+              size: 48,
+            ),
             const SizedBox(height: 12),
             Text('Error: $_usersError'),
             TextButton(onPressed: _loadUsers, child: Text(loc.retry)),
@@ -339,22 +430,27 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
       itemCount: _users.length,
       itemBuilder: (context, index) {
         final user = _users[index];
+        final isLoading = _actionLoading[user.id] ?? false;
         return _AdminCard(
           title: user.name,
           subtitle: user.email,
           trailingText: user.role.toUpperCase(),
           statusText: user.status.toUpperCase(),
-          icon: user.role == 'volunteer' ? Icons.volunteer_activism_rounded : Icons.person_rounded,
+          icon: user.role == 'volunteer'
+              ? Icons.volunteer_activism_rounded
+              : Icons.person_rounded,
           actions: [
             _AdminAction(
-              label: loc.actionVerify,
+              label: context.loc.actionVerify,
               color: Colors.green,
-              onTap: () => _showActionFeedback(context, loc.userVerifiedMsg),
+              isLoading: isLoading,
+              onTap: isLoading ? null : () => _verifyUser(context, user),
             ),
             _AdminAction(
-              label: loc.actionSuspend,
+              label: context.loc.actionSuspend,
               color: Colors.red,
-              onTap: () => _showActionFeedback(context, loc.userSuspendedMsg),
+              isLoading: isLoading,
+              onTap: isLoading ? null : () => _suspendUser(context, user),
             ),
           ],
         );
@@ -362,14 +458,117 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     );
   }
 
-  void _showActionFeedback(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: const TextStyle(fontFamily: 'NotoSansArabic')),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Theme.of(context).primaryColor,
-      ),
-    );
+  Future<void> _verifyUser(BuildContext context, UserModel user) async {
+    final loc = context.loc;
+    setState(() => _actionLoading[user.id] = true);
+    try {
+      await ApiService.adminVerifyUser(user.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              loc.userVerifiedMsg,
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        _loadUsers(); // Refresh the user list
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error: $e',
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _actionLoading[user.id] = false);
+      }
+    }
+  }
+
+  Future<void> _suspendUser(BuildContext context, UserModel user) async {
+    final loc = context.loc;
+
+    // Show confirmation dialog
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(
+              loc.confirmAction,
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            content: Text(
+              'Are you sure you want to suspend ${user.name}?',
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(loc.cancel ?? 'Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text(
+                  loc.confirm ?? 'Confirm',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) return;
+
+    setState(() => _actionLoading[user.id] = true);
+    try {
+      await ApiService.adminSuspendUser(user.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              loc.userSuspendedMsg,
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        _loadUsers(); // Refresh the user list
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error: $e',
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _actionLoading[user.id] = false);
+      }
+    }
   }
 
   Widget _buildActivityItem(String text, String time) {
@@ -388,11 +587,23 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
               color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.history_rounded, size: 16, color: Theme.of(context).primaryColor),
+            child: Icon(
+              Icons.history_rounded,
+              size: 16,
+              color: Theme.of(context).primaryColor,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
-          Text(time, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))),
+          Text(
+            time,
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
         ],
       ),
     );
@@ -405,7 +616,12 @@ class _AreaStatusCard extends StatelessWidget {
   final Color color;
   final IconData icon;
 
-  const _AreaStatusCard({required this.title, required this.areas, required this.color, required this.icon});
+  const _AreaStatusCard({
+    required this.title,
+    required this.areas,
+    required this.color,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -422,7 +638,10 @@ class _AreaStatusCard extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 16),
@@ -430,20 +649,43 @@ class _AreaStatusCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: color, fontFamily: 'NotoSansArabic')),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                    color: color,
+                    fontFamily: 'NotoSansArabic',
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: areas.map((area) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-                    ),
-                    child: Text(area, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  )).toList(),
+                  children: areas
+                      .map(
+                        (area) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: theme.dividerColor.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: Text(
+                            area,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
             ),
@@ -498,7 +740,11 @@ class _AdminCard extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -513,14 +759,34 @@ class _AdminCard extends StatelessWidget {
               ),
               child: Icon(icon, color: theme.primaryColor),
             ),
-            title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            subtitle: Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+            title: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            subtitle: Text(
+              subtitle,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(trailingText, style: TextStyle(fontWeight: FontWeight.bold, color: theme.primaryColor)),
-                Text(statusText, style: TextStyle(fontSize: 12, color: _getStatusColor(context, statusText))),
+                Text(
+                  trailingText,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.primaryColor,
+                  ),
+                ),
+                Text(
+                  statusText,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _getStatusColor(context, statusText),
+                  ),
+                ),
               ],
             ),
           ),
@@ -529,7 +795,9 @@ class _AdminCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
-              children: actions.map((a) => _buildActionButton(context, a)).toList(),
+              children: actions
+                  .map((a) => _buildActionButton(context, a))
+                  .toList(),
             ),
           ),
         ],
@@ -539,12 +807,32 @@ class _AdminCard extends StatelessWidget {
 
   Color _getStatusColor(BuildContext context, String status) {
     final loc = context.loc;
-    if (status == loc.statusActiveAdmin || status == loc.statusResolvedAdmin) return Colors.green;
-    if (status == loc.statusPending || status == loc.statusDispatched || status == loc.statusInProgress) return Colors.orange;
+    if (status == loc.statusActiveAdmin || status == loc.statusResolvedAdmin)
+      return Colors.green;
+    if (status == loc.statusPending ||
+        status == loc.statusDispatched ||
+        status == loc.statusInProgress)
+      return Colors.orange;
     return Colors.red;
   }
 
   Widget _buildActionButton(BuildContext context, _AdminAction action) {
+    if (action.isLoading) {
+      return SizedBox(
+        width: 80,
+        height: 36,
+        child: Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(action.color),
+            ),
+          ),
+        ),
+      );
+    }
     return TextButton(
       onPressed: action.onTap,
       child: Text(
@@ -558,8 +846,14 @@ class _AdminCard extends StatelessWidget {
 class _AdminAction {
   final String label;
   final Color color;
-  final VoidCallback onTap;
-  _AdminAction({required this.label, required this.color, required this.onTap});
+  final VoidCallback? onTap;
+  final bool isLoading;
+  _AdminAction({
+    required this.label,
+    required this.color,
+    this.onTap,
+    this.isLoading = false,
+  });
 }
 
 class _ResourceLink extends StatelessWidget {
@@ -567,7 +861,12 @@ class _ResourceLink extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _ResourceLink({required this.title, required this.subtitle, required this.icon, required this.onTap});
+  const _ResourceLink({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -586,7 +885,10 @@ class _ResourceLink extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: theme.primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: theme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Icon(icon, color: theme.primaryColor),
             ),
             const SizedBox(width: 16),
@@ -594,8 +896,20 @@ class _ResourceLink extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 13)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -646,7 +960,13 @@ class _CustomBarChart extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               if (index < days.length)
-                Text(days[index], style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                Text(
+                  days[index],
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
             ],
           );
         }),

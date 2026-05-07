@@ -49,6 +49,17 @@ class User(models.Model):
     smart_watch_model = models.CharField(max_length=255, null=True, blank=True)
     sensor_model = models.CharField(max_length=255, null=True, blank=True)
 
+    # Subscription fields
+    is_plus = models.BooleanField(default=False)
+    plan_type = models.CharField(
+        max_length=20,
+        choices=[("monthly", "Monthly"), ("yearly", "Yearly")],
+        null=True,
+        blank=True,
+    )  # 'monthly' or 'yearly'
+    subscription_date = models.DateTimeField(null=True, blank=True)
+    renewal_date = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         managed = True
         db_table = 'ems_schema"."users'  # تأكد من كتابتها كده عشان الـ schema
@@ -112,22 +123,28 @@ class Incident(models.Model):
 
     class Meta:
         db_table = 'ems_schema"."incidents'
-        managed = True # لو الجداول موجودة فعلياً وصحيحة
+        managed = True  # لو الجداول موجودة فعلياً وصحيحة
+
 
 class HelpInitiative(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     author_name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
-    author_role = models.CharField(max_length=50, default='citizen')
-    category = models.CharField(max_length=50) # food, clothing, financial, medical, education, other
-    
+    author_role = models.CharField(max_length=50, default="citizen")
+    category = models.CharField(
+        max_length=50
+    )  # food, clothing, financial, medical, education, other
+
     def __str__(self):
         return self.title
 
+
 class Initiative(models.Model):
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column="user_id", null=True, blank=True)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, db_column="user_id", null=True, blank=True
+    )
     title = models.CharField(max_length=255)
     description = models.TextField()
     author_name = models.CharField(max_length=255)
@@ -149,6 +166,7 @@ class Initiative(models.Model):
     class Meta:
         db_table = 'ems_schema"."initiatives'
         managed = True
+
 
 class PasswordResetToken(models.Model):
     """Model to store password reset tokens for users"""
@@ -174,3 +192,14 @@ class PasswordResetToken(models.Model):
         """Mark token as used"""
         self.is_used = True
         self.save()
+
+
+class SensorReading(models.Model):
+    user        = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sensor_readings")
+    temperature = models.FloatField()
+    humidity    = models.FloatField(null=True, blank=True)
+    is_alert    = models.BooleanField(default=False)
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

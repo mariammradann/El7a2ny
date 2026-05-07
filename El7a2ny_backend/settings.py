@@ -56,9 +56,11 @@ MIDDLEWARE = [
 ]
 CORS_ALLOW_ALL_ORIGINS = True
 REST_FRAMEWORK = {
+    
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    )
+    ),
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S%z'
 }
 
 ROOT_URLCONF = "El7a2ny_backend.urls"
@@ -123,9 +125,10 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = 'Africa/Cairo'
+USE_TZ = True
+
 USE_I18N = True
 
-USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)

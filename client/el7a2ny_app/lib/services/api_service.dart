@@ -97,95 +97,102 @@ class ApiService {
 
   // --- 2b. إرسال استغاثة مع الملفات (Emergency Alert with Media) ---
 
+  // ... other imports ...
 
-// ... other imports ...
+  static Future<void> sendEmergencyAlertWithMedia({
+    required String userId,
+    required String type,
+    required double lat,
+    required double lng,
+    String? description,
+    required List<Map<String, String>> evidenceItems,
+  }) async {
+    double formattedLat = double.parse(lat.toStringAsFixed(7));
+    double formattedLng = double.parse(lng.toStringAsFixed(7));
 
-static Future<void> sendEmergencyAlertWithMedia({
-  required String userId,
-  required String type,
-  required double lat,
-  required double lng,
-  String? description,
-  required List<Map<String, String>> evidenceItems,
-}) async {
-  double formattedLat = double.parse(lat.toStringAsFixed(7));
-  double formattedLng = double.parse(lng.toStringAsFixed(7));
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse("$baseUrl/api/incidents/"),
+    );
 
-  var request = http.MultipartRequest(
-    'POST',
-    Uri.parse("$baseUrl/api/incidents/"),
-  );
+    // 1. Add Basic Fields
+    request.fields['user_id'] = userId;
+    request.fields['category'] = type;
+    request.fields['description'] = description ?? "";
+    request.fields['latitude'] = formattedLat.toString();
+    request.fields['longitude'] = formattedLng.toString();
+    request.fields['address'] = "Current Location";
 
-  // 1. Add Basic Fields
-  request.fields['user_id'] = userId;
-  request.fields['category'] = type;
-  request.fields['description'] = description ?? "";
-  request.fields['latitude'] = formattedLat.toString();
-  request.fields['longitude'] = formattedLng.toString();
-  request.fields['address'] = "Current Location";
+    // 2. Add Media Files
+    print("📸 Processing ${evidenceItems.length} evidence items...");
 
-  // 2. Add Media Files
-  print("📸 Processing ${evidenceItems.length} evidence items...");
+    for (int i = 0; i < evidenceItems.length; i++) {
+      final item = evidenceItems[i];
+      final filePath = item['path'] ?? '';
+      final fileType = item['type'] ?? 'image';
 
-  for (int i = 0; i < evidenceItems.length; i++) {
-    final item = evidenceItems[i];
-    final filePath = item['path'] ?? '';
-    final fileType = item['type'] ?? 'image';
+      if (filePath.isEmpty || filePath.startsWith('mock_')) continue;
 
-    if (filePath.isEmpty || filePath.startsWith('mock_')) continue;
+      try {
+        if (kIsWeb) {
+          // --- WEB FIX: Use XFile to read bytes ---
+          final xFile = XFile(filePath);
+          final bytes = await xFile.readAsBytes();
 
-    try {
-      if (kIsWeb) {
-        // --- WEB FIX: Use XFile to read bytes ---
-        final xFile = XFile(filePath);
-        final bytes = await xFile.readAsBytes();
-        
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            'media_files', // Must match Django key
-            bytes,
-            filename: xFile.name.isEmpty ? 'upload_$i.jpg' : xFile.name,
-            contentType: MediaType(fileType, fileType == 'video' ? 'mp4' : 'jpeg'),
-          ),
-        );
-        print("✅ Added file via bytes (Web)");
-      } else {
-        // --- MOBILE/DESKTOP: Normal Path Logic ---
-        final file = File(filePath);
-        if (await file.exists()) {
           request.files.add(
-            await http.MultipartFile.fromPath(
-              'media_files',
-              filePath,
-              contentType: MediaType(fileType, fileType == 'video' ? 'mp4' : 'jpeg'),
+            http.MultipartFile.fromBytes(
+              'media_files', // Must match Django key
+              bytes,
+              filename: xFile.name.isEmpty ? 'upload_$i.jpg' : xFile.name,
+              contentType: MediaType(
+                fileType,
+                fileType == 'video' ? 'mp4' : 'jpeg',
+              ),
             ),
           );
-          print("✅ Added file via path (Mobile)");
+          print("✅ Added file via bytes (Web)");
+        } else {
+          // --- MOBILE/DESKTOP: Normal Path Logic ---
+          final file = File(filePath);
+          if (await file.exists()) {
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'media_files',
+                filePath,
+                contentType: MediaType(
+                  fileType,
+                  fileType == 'video' ? 'mp4' : 'jpeg',
+                ),
+              ),
+            );
+            print("✅ Added file via path (Mobile)");
+          }
         }
+      } catch (e) {
+        print("❌ Error processing file [$i]: $e");
       }
+    }
+
+    print("📸 Final files in request: ${request.files.length}");
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print("📤 Response Status: ${response.statusCode}");
+      print("📤 Response Body: ${response.body}");
+
+      if (response.statusCode != 201 && response.statusCode != 200) {
+        throw Exception(
+          "Failed to send alert (Status: ${response.statusCode})",
+        );
+      }
+      print("✅ Emergency alert sent successfully");
     } catch (e) {
-      print("❌ Error processing file [$i]: $e");
+      print("🚨 Network Error: $e");
+      rethrow;
     }
   }
-
-  print("📸 Final files in request: ${request.files.length}");
-
-  try {
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-
-    print("📤 Response Status: ${response.statusCode}");
-    print("📤 Response Body: ${response.body}");
-
-    if (response.statusCode != 201 && response.statusCode != 200) {
-      throw Exception("Failed to send alert (Status: ${response.statusCode})");
-    }
-    print("✅ Emergency alert sent successfully");
-  } catch (e) {
-    print("🚨 Network Error: $e");
-    rethrow;
-  }
-}
 
   // --- 3. جلب البيانات العامة (Lists) ---
   static Future<List<AlertModel>> fetchAlerts() async {
@@ -226,7 +233,9 @@ static Future<void> sendEmergencyAlertWithMedia({
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(initiative.toJson()),
       );
-      print("📤 Post Initiative Response: ${response.statusCode} - ${response.body}");
+      print(
+        "📤 Post Initiative Response: ${response.statusCode} - ${response.body}",
+      );
       return response.statusCode == 201 || response.statusCode == 200;
     } catch (e) {
       print("🚨 Error creating initiative: $e");
@@ -292,8 +301,9 @@ static Future<void> sendEmergencyAlertWithMedia({
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('user_id');
     if (userId == null) return [];
-    
-    final url = "$baseUrl/api/profile/history/?user_id=$userId&lang=${isArabic ? 'ar' : 'en'}";
+
+    final url =
+        "$baseUrl/api/profile/history/?user_id=$userId&lang=${isArabic ? 'ar' : 'en'}";
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       List data = jsonDecode(response.body);
@@ -431,4 +441,211 @@ static Future<void> sendEmergencyAlertWithMedia({
       type: 'account',
     ),
   ];
+
+  // ========== ADMIN METHODS ==========
+
+  /// Update user by admin
+  static Future<UserModel> adminUpdateUser(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$baseUrl/api/admin/users/$userId/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(data),
+      );
+      if (response.statusCode == 200) {
+        return UserModel.fromJson(jsonDecode(response.body));
+      }
+      throw Exception("Failed to update user: ${response.statusCode}");
+    } catch (e) {
+      print("Error updating user: $e");
+      rethrow;
+    }
+  }
+
+  /// Delete/deactivate user by admin
+  static Future<void> adminDeleteUser(String userId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$baseUrl/api/admin/users/$userId/delete/"),
+      );
+      if (response.statusCode != 200) {
+        throw Exception("Failed to delete user: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error deleting user: $e");
+      rethrow;
+    }
+  }
+
+  /// Verify user by admin
+  static Future<void> adminVerifyUser(String userId) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$baseUrl/api/admin/users/$userId/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"verification_status": "verified"}),
+      );
+      if (response.statusCode != 200) {
+        throw Exception(
+          "Failed to verify user: ${response.statusCode} - ${response.body}",
+        );
+      }
+    } catch (e) {
+      print("Error verifying user: $e");
+      rethrow;
+    }
+  }
+
+  /// Suspend user by admin
+  static Future<void> adminSuspendUser(String userId) async {
+    try {
+      final response = await http.put(
+        Uri.parse("$baseUrl/api/admin/users/$userId/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"status": "inactive"}),
+      );
+      if (response.statusCode != 200) {
+        throw Exception(
+          "Failed to suspend user: ${response.statusCode} - ${response.body}",
+        );
+      }
+    } catch (e) {
+      print("Error suspending user: $e");
+      rethrow;
+    }
+  }
+
+  /// Fetch all incidents for admin
+  static Future<List<IncidentModel>> fetchAdminIncidents({
+    String? status,
+    String? userId,
+  }) async {
+    try {
+      String url = "$baseUrl/api/admin/incidents/";
+      final params = <String>[];
+
+      if (status != null && status.isNotEmpty) {
+        params.add("status=$status");
+      }
+      if (userId != null && userId.isNotEmpty) {
+        params.add("user_id=$userId");
+      }
+
+      if (params.isNotEmpty) {
+        url += "?${params.join('&')}";
+      }
+
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        List data = jsonDecode(response.body);
+        return data.map((item) => IncidentModel.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Error fetching incidents: $e");
+      return [];
+    }
+  }
+
+  /// Search users with admin filter
+  static Future<List<UserModel>> adminSearchUsers(String query) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/admin/users/?search=$query"),
+      );
+      if (response.statusCode == 200) {
+        List data = jsonDecode(response.body);
+        return data.map((item) => UserModel.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Error searching users: $e");
+      return [];
+    }
+  }
+
+  /// Filter users by status
+  static Future<List<UserModel>> adminFilterUsersByStatus(String status) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/admin/users/?status=$status"),
+      );
+      if (response.statusCode == 200) {
+        List data = jsonDecode(response.body);
+        return data.map((item) => UserModel.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Error filtering users: $e");
+      return [];
+    }
+  }
+
+  // ========== SUBSCRIPTION METHODS ==========
+
+  /// Get user's subscription status
+  static Future<Map<String, dynamic>> getUserSubscription(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/subscription/$userId/"),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return {
+        "is_plus": false,
+        "plan_type": null,
+        "subscription_date": null,
+        "renewal_date": null,
+      };
+    } catch (e) {
+      print("Error fetching subscription: $e");
+      return {
+        "is_plus": false,
+        "plan_type": null,
+        "subscription_date": null,
+        "renewal_date": null,
+      };
+    }
+  }
+
+  /// Subscribe or upgrade user plan
+  static Future<Map<String, dynamic>> subscribeUser(
+    String userId,
+    String planType,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/subscription/subscribe/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "user_id": userId,
+          "plan_type": planType, // 'monthly' or 'yearly'
+        }),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      throw Exception(
+        "Failed to subscribe: ${response.statusCode} - ${response.body}",
+      );
+    } catch (e) {
+      print("Error subscribing user: $e");
+      rethrow;
+    }
+  }
+  static Future<Map<String, dynamic>> getLatestSensorReading(String userId) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/api/sensor/latest/?user_id=$userId'),
+  );
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  }
+  throw Exception('Failed to fetch sensor reading');
 }
+}
+
+

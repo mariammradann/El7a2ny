@@ -19,6 +19,19 @@ class IncidentModel {
     this.address,
   });
 
+  // ✅ Add this
+  factory IncidentModel.fromJson(Map<String, dynamic> json) {
+    return IncidentModel(
+      id: json['id']?.toString(),
+      userId: json['user_id']?.toString() ?? '',
+      latitude: (json['latitude'] ?? 0).toDouble(),
+      longitude: (json['longitude'] ?? 0).toDouble(),
+      category: json['category'] ?? '',
+      description: json['description'],
+      status: json['status'] ?? 'reported',
+      address: json['address'],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
     'user_id': userId,
@@ -27,6 +40,5 @@ class IncidentModel {
     'category': category,
     'description': description,
     'status': status,
-    
   };
 }

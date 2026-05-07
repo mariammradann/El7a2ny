@@ -8,6 +8,8 @@ import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
 import 'package:el7a2ny_app/core/localization/app_strings.dart';
 import 'package:el7a2ny_app/pages/forgot_password_screen.dart';
 import 'package:el7a2ny_app/pages/sign_up_screen.dart';
+import 'package:el7a2ny_app/pages/admin_screen.dart';
+import 'package:el7a2ny_app/core/auth/auth_token_store.dart';
 import '../widgets/language_toggle_button.dart';
 import '../services/session_service.dart';
 import '../widgets/global_fab_overlay.dart';
@@ -50,9 +52,18 @@ class _LoginScreenState extends State<LoginScreen> {
         rememberMe: _rememberMe,
       );
       if (!mounted) return;
-      await Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(builder: (context) => MainShellScreen()),
-      );
+      
+      // Check user type and route accordingly
+      final userType = AuthTokenStore.userType;
+      if (userType == "admin") {
+        await Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(builder: (context) => const AdminScreen()),
+        );
+      } else {
+        await Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(builder: (context) => MainShellScreen()),
+        );
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
