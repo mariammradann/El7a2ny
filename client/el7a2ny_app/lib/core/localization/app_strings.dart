@@ -740,6 +740,21 @@ class AppStrings {
       : 'or 2,990 EGP / Year (Save 17%)';
   String get payNow => isAr ? 'دفع الآن' : 'Pay Now';
 
+  // Free Plan
+  String get freePlanTitle => isAr ? 'الخطة المجانية' : 'Free Plan';
+  String get freePlanSubtitle => isAr ? 'المميزات الأساسية المجانية' : 'Basic Free Features';
+  String get freePlanPrice => isAr ? 'مجانًا' : 'Free';
+  String get freePlanPriceDesc => isAr ? 'مدى الحياة' : 'Forever';
+  String get standardResponse => isAr ? 'استجابة قياسية' : 'Standard Response';
+  String get standardResponseDesc => isAr ? 'توصيل بخدمات الطوارئ' : 'Connect to emergency services';
+  String get communityHelp => isAr ? 'مساعدة مجتمعية' : 'Community Help';
+  String get communityHelpDesc => isAr ? 'طلب مساعدة من المتطوعين القريبين' : 'Request help from nearby volunteers';
+  String get standardMedicalAdvice => isAr ? 'نصائح طبية أساسية' : 'Basic Medical Advice';
+  String get standardMedicalAdviceDesc => isAr ? 'وصول لمعلومات الإسعافات الأولية' : 'Access to first aid information';
+  String get normalSOSAlerts => isAr ? 'تنبيهات طوارئ عادية' : 'Normal SOS Alerts';
+  String get normalSOSAlertsDesc => isAr ? 'إرسال واستقبال تنبيهات الخطر' : 'Send and receive danger alerts';
+  String get freeCurrentPlan => isAr ? 'خطتك الحالية (مجانية)' : 'Your Current Plan (Free)';
+
   // Premium Subscription
   String get premiumPlusTitle => isAr ? 'إلحقني بلس' : 'El7a2ny Plus';
   String get premiumPlusSubtitle =>

@@ -15,7 +15,7 @@ class PremiumSubscriptionPage extends StatefulWidget {
 }
 
 class _PremiumSubscriptionPageState extends State<PremiumSubscriptionPage> {
-  bool _isYearly = false;
+  int _selectedPlanIndex = 1; // 0: Free, 1: Monthly, 2: Yearly
   bool _isLoading = true;
   String? _currentPlan;
   bool _isSubscribed = false;
@@ -38,7 +38,11 @@ class _PremiumSubscriptionPageState extends State<PremiumSubscriptionPage> {
           _currentPlan = subscription['plan_type'];
           // If user has monthly, default toggle to yearly so they see the upgrade option.
           // If yearly, lock on yearly.
-          _isYearly = _currentPlan == 'yearly' ? true : false;
+          if (!_isSubscribed) {
+            _selectedPlanIndex = 0;
+          } else {
+            _selectedPlanIndex = _currentPlan == 'yearly' ? 2 : 1;
+          }
           _isLoading = false;
         });
       } else {
@@ -64,11 +68,8 @@ class _PremiumSubscriptionPageState extends State<PremiumSubscriptionPage> {
               child: Column(
                 children: [
                   _PremiumHeader(
-                    isYearly: _isYearly,
-                    // Yearly subscribers: lock the toggle (pass null to disable it)
-                    onToggleYearly: _isSubscribed && _currentPlan == 'yearly'
-                        ? null
-                        : (val) => setState(() => _isYearly = val),
+                    selectedPlanIndex: _selectedPlanIndex,
+                    onPlanSelected: (val) => setState(() => _selectedPlanIndex = val),
                     currentPlan: _currentPlan,
                     isSubscribed: _isSubscribed,
                   ),
@@ -80,7 +81,37 @@ class _PremiumSubscriptionPageState extends State<PremiumSubscriptionPage> {
                         padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
+                          children: _selectedPlanIndex == 0 ? [
+                            _SectionHeader(
+                              title: context.loc.freePlanSubtitle,
+                              icon: Icons.star_border_rounded,
+                            ),
+                            const SizedBox(height: 20),
+                            _FeatureItemCard(
+                              icon: Icons.timer_rounded,
+                              title: context.loc.standardResponse,
+                              subtitle: context.loc.standardResponseDesc,
+                            ),
+                            const SizedBox(height: 14),
+                            _FeatureItemCard(
+                              icon: Icons.people_alt_rounded,
+                              title: context.loc.communityHelp,
+                              subtitle: context.loc.communityHelpDesc,
+                            ),
+                            const SizedBox(height: 14),
+                            _FeatureItemCard(
+                              icon: Icons.medical_information_rounded,
+                              title: context.loc.standardMedicalAdvice,
+                              subtitle: context.loc.standardMedicalAdviceDesc,
+                            ),
+                            const SizedBox(height: 14),
+                            _FeatureItemCard(
+                              icon: Icons.sos_rounded,
+                              title: context.loc.normalSOSAlerts,
+                              subtitle: context.loc.normalSOSAlertsDesc,
+                            ),
+                            const SizedBox(height: 40),
+                          ] : [
                             _SectionHeader(
                               title: context.loc.exclusiveFeaturesTitle,
                               icon: Icons.auto_awesome_rounded,
@@ -212,7 +243,7 @@ class _PremiumSubscriptionPageState extends State<PremiumSubscriptionPage> {
                     ),
                   ),
                   _StickyFooter(
-                    isYearly: _isYearly,
+                    selectedPlanIndex: _selectedPlanIndex,
                     currentPlan: _currentPlan,
                     isSubscribed: _isSubscribed,
                   ),
@@ -228,23 +259,45 @@ class _PremiumSubscriptionPageState extends State<PremiumSubscriptionPage> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PremiumHeader extends StatelessWidget {
-  final bool isYearly;
-  // null means toggle is locked (yearly subscribers)
-  final ValueChanged<bool>? onToggleYearly;
+  final int selectedPlanIndex;
+  final ValueChanged<int> onPlanSelected;
   final String? currentPlan;
   final bool isSubscribed;
 
   const _PremiumHeader({
-    required this.isYearly,
-    required this.onToggleYearly,
+    required this.selectedPlanIndex,
+    required this.onPlanSelected,
     this.currentPlan,
     this.isSubscribed = false,
   });
 
+  Widget _buildToggleItem(BuildContext context, int index, String label, int selectedIndex, ValueChanged<int> onSelect) {
+    final isSelected = selectedIndex == index;
+    return GestureDetector(
+      onTap: () => onSelect(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? const Color(0xFF0F172A) : Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = context.loc.isAr;
-    final toggleLocked = onToggleYearly == null;
+    
 
     return Container(
       decoration: BoxDecoration(
@@ -368,66 +421,20 @@ class _PremiumHeader extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // Toggle — dimmed & disabled for yearly subscribers
-            Opacity(
-              opacity: toggleLocked ? 0.45 : 1.0,
-              child: Center(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black12,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GestureDetector(
-                        onTap: toggleLocked ? null : () => onToggleYearly!(false),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: !isYearly ? Colors.white : Colors.transparent,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Text(
-                            context.loc.monthly,
-                            style: TextStyle(
-                              fontFamily: 'NotoSansArabic',
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: !isYearly
-                                  ? const Color(0xFFFFD700)
-                                  : Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: toggleLocked ? null : () => onToggleYearly!(true),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isYearly
-                                ? const Color(0xFFFFD700)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Text(
-                            context.loc.yearly,
-                            style: TextStyle(
-                              fontFamily: 'NotoSansArabic',
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: isYearly
-                                  ? const Color(0xFF0F172A)
-                                  : Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            // 3-Way Toggle
+            Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black12,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildToggleItem(context, 0, context.loc.freePlanTitle, selectedPlanIndex, onPlanSelected),
+                    _buildToggleItem(context, 1, context.loc.monthly, selectedPlanIndex, onPlanSelected),
+                    _buildToggleItem(context, 2, context.loc.yearly, selectedPlanIndex, onPlanSelected),
+                  ],
                 ),
               ),
             ),
@@ -441,13 +448,13 @@ class _PremiumHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (isAr) ...[
-                    _LargePriceAr(isYearly: isYearly),
+                    _LargePriceAr(selectedPlanIndex: selectedPlanIndex),
                     const SizedBox(width: 16),
-                    _PriceDetailsAr(isYearly: isYearly),
+                    _PriceDetailsAr(selectedPlanIndex: selectedPlanIndex),
                   ] else ...[
-                    _PriceBlock(isYearly: isYearly),
+                    _PriceBlock(selectedPlanIndex: selectedPlanIndex),
                     const SizedBox(width: 16),
-                    _PriceDetailsEn(isYearly: isYearly),
+                    _PriceDetailsEn(selectedPlanIndex: selectedPlanIndex),
                   ],
                 ],
               ),
@@ -482,8 +489,8 @@ class _PlusIconBadge extends StatelessWidget {
 }
 
 class _PriceBlock extends StatelessWidget {
-  final bool isYearly;
-  const _PriceBlock({required this.isYearly});
+  final int selectedPlanIndex;
+  const _PriceBlock({required this.selectedPlanIndex});
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -491,7 +498,7 @@ class _PriceBlock extends StatelessWidget {
       textBaseline: TextBaseline.alphabetic,
       children: [
         Text(
-          isYearly ? '2990' : '299',
+          selectedPlanIndex == 2 ? '2990' : (selectedPlanIndex == 1 ? '299' : context.loc.freePlanPrice),
           style: const TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 54,
@@ -501,7 +508,7 @@ class _PriceBlock extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
+        if (selectedPlanIndex != 0) Text(
           context.loc.egp,
           style: const TextStyle(
             fontFamily: 'NotoSansArabic',
@@ -516,8 +523,8 @@ class _PriceBlock extends StatelessWidget {
 }
 
 class _PriceDetailsEn extends StatelessWidget {
-  final bool isYearly;
-  const _PriceDetailsEn({required this.isYearly});
+  final int selectedPlanIndex;
+  const _PriceDetailsEn({required this.selectedPlanIndex});
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
@@ -525,7 +532,7 @@ class _PriceDetailsEn extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isYearly ? 'Yearly' : loc.monthlyLabelSmall,
+          selectedPlanIndex == 2 ? 'Yearly' : (selectedPlanIndex == 1 ? loc.monthlyLabelSmall : ''),
           style: const TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 16,
@@ -535,7 +542,7 @@ class _PriceDetailsEn extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          loc.paymentYearlySavings,
+          selectedPlanIndex == 0 ? loc.freePlanPriceDesc : loc.paymentYearlySavings,
           style: TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 12,
@@ -549,8 +556,8 @@ class _PriceDetailsEn extends StatelessWidget {
 }
 
 class _PriceDetailsAr extends StatelessWidget {
-  final bool isYearly;
-  const _PriceDetailsAr({required this.isYearly});
+  final int selectedPlanIndex;
+  const _PriceDetailsAr({required this.selectedPlanIndex});
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
@@ -558,7 +565,7 @@ class _PriceDetailsAr extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          isYearly ? context.loc.yearly : context.loc.monthlyLabelSmall,
+          selectedPlanIndex == 2 ? context.loc.yearly : (selectedPlanIndex == 1 ? context.loc.monthlyLabelSmall : ''),
           style: const TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 16,
@@ -568,7 +575,7 @@ class _PriceDetailsAr extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          loc.paymentYearlySavings,
+          selectedPlanIndex == 0 ? loc.freePlanPriceDesc : loc.paymentYearlySavings,
           textAlign: TextAlign.right,
           style: TextStyle(
             fontFamily: 'NotoSansArabic',
@@ -583,14 +590,12 @@ class _PriceDetailsAr extends StatelessWidget {
 }
 
 class _LargePriceAr extends StatelessWidget {
-  final bool isYearly;
-  const _LargePriceAr({required this.isYearly});
+  final int selectedPlanIndex;
+  const _LargePriceAr({required this.selectedPlanIndex});
   @override
   Widget build(BuildContext context) {
     return Text(
-      isYearly
-          ? '${context.loc.yearlyPrice} ${context.loc.egp}'
-          : '${context.loc.monthlyPrice} ${context.loc.egp}',
+      selectedPlanIndex == 0 ? context.loc.freePlanPrice : (selectedPlanIndex == 2 ? '${context.loc.yearlyPrice} ${context.loc.egp}' : '${context.loc.monthlyPrice} ${context.loc.egp}'),
       textAlign: TextAlign.right,
       textDirection: TextDirection.rtl,
       style: const TextStyle(
@@ -871,12 +876,12 @@ class _CheckIcon extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _StickyFooter extends StatelessWidget {
-  final bool isYearly;
+  final int selectedPlanIndex;
   final String? currentPlan;
   final bool isSubscribed;
 
   const _StickyFooter({
-    required this.isYearly,
+    required this.selectedPlanIndex,
     this.currentPlan,
     this.isSubscribed = false,
   });
@@ -966,14 +971,33 @@ class _StickyFooter extends StatelessWidget {
       );
     }
 
-    // ── Case 2: monthly subscriber → force upgrade to yearly only ──────────
-    // ── Case 3: not subscribed → normal subscribe flow ─────────────────────
-    final isMonthlyUpgrade = isSubscribed && currentPlan == 'monthly';
-    final buttonLabel = isMonthlyUpgrade
-        ? (isAr ? 'ترقية إلى السنوي' : 'Upgrade to Yearly')
-        : context.loc.upgradeToPlus;
-    // Monthly upgraders always go to yearly regardless of toggle
-    final targetIsYearly = isMonthlyUpgrade ? true : isYearly;
+    // ── Case 2: Downgrade to Free ─────────────────────────────────────────
+    if (selectedPlanIndex == 0 && isSubscribed) {
+      return Container(
+        decoration: BoxDecoration(color: theme.colorScheme.surface),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 52,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              onPressed: () {
+                // Downgrade logic if needed or just go back
+                Navigator.of(context).pop();
+              },
+              child: Text(isAr ? 'تغيير إلى الخطة المجانية' : 'Downgrade to Free Plan'),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── Case 3: normal subscribe flow ─────────────────────────────────────
+    final buttonLabel = context.loc.upgradeToPlus;
+    final targetIsYearly = selectedPlanIndex == 2;
     final price = targetIsYearly ? 2990.0 : 299.0;
 
     return Container(
