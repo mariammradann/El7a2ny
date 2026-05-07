@@ -9,7 +9,7 @@ from .views import (
     register_user_api, get_device_status, get_first_aid_advice,
     verify_password_api, change_password_api,
     password_reset_request, password_reset_verify_token, password_reset_confirm,
-    get_user_activity_history
+    get_user_activity_history, detect_accident_view
 )
 
 # 1. إعداد الـ Router
@@ -42,9 +42,9 @@ urlpatterns = [
     path('api/devices/status/', get_device_status),
     path('api/chat/', get_first_aid_advice),
     
-    # مسارات تعديل كلمة المرور
     path('api/auth/password/verify/', verify_password_api),
     path('api/auth/password/change/', change_password_api),
+    path('api/detect-accident/', detect_accident_view, name='detect-accident'),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير
