@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
+import 'sensor_service.dart';
 
 enum UserRole { citizen, volunteer, admin }
 
@@ -23,9 +24,17 @@ class SessionService extends ChangeNotifier {
   DateTime? get renewalDate {
     if (_subscriptionDate == null) return null;
     if (_isYearlyPlan) {
-      return DateTime(_subscriptionDate!.year + 1, _subscriptionDate!.month, _subscriptionDate!.day);
+      return DateTime(
+        _subscriptionDate!.year + 1,
+        _subscriptionDate!.month,
+        _subscriptionDate!.day,
+      );
     } else {
-      return DateTime(_subscriptionDate!.year, _subscriptionDate!.month + 1, _subscriptionDate!.day);
+      return DateTime(
+        _subscriptionDate!.year,
+        _subscriptionDate!.month + 1,
+        _subscriptionDate!.day,
+      );
     }
   }
 
@@ -48,14 +57,21 @@ class SessionService extends ChangeNotifier {
     _isYearlyPlan = user.planType == 'yearly';
     _subscriptionDate = user.subscriptionDate;
     _currentRole = _roleFromString(user.role);
+
+    // Start sensor monitoring when user logs in
+    SensorMonitorService().startMonitoring();
+
     notifyListeners();
   }
 
   UserRole _roleFromString(String role) {
     switch (role) {
-      case 'admin': return UserRole.admin;
-      case 'volunteer': return UserRole.volunteer;
-      default: return UserRole.citizen;
+      case 'admin':
+        return UserRole.admin;
+      case 'volunteer':
+        return UserRole.volunteer;
+      default:
+        return UserRole.citizen;
     }
   }
 
