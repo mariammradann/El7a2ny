@@ -47,7 +47,6 @@ class IncidentSerializer(serializers.ModelSerializer):
             "lng",
             "address",
         ]
-
     def create(self, validated_data):
         # 1. Pop 'location_data' so it doesn't go into the Incident constructor
         location_payload = validated_data.pop("location_data")
@@ -168,3 +167,21 @@ class InitiativeSerializer(serializers.ModelSerializer):
             'longitude', 'image_url', 'contact_info', 'is_active', 
             'participants_count', 'created_at'
         ]
+
+from .models import UserRating, VolunteerRating
+
+class UserRatingSerializer(serializers.ModelSerializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source='user', required=False, allow_null=True
+    )
+    class Meta:
+        model = UserRating
+        fields = '__all__'
+
+class VolunteerRatingSerializer(serializers.ModelSerializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source='user', required=False, allow_null=True
+    )
+    class Meta:
+        model = VolunteerRating
+        fields = '__all__'

@@ -1008,3 +1008,27 @@ def fetch_sensors(request):
         ]
 
     return Response(sensors)
+
+from .serializers import UserRatingSerializer, VolunteerRatingSerializer
+
+@api_view(['POST'])
+def submit_user_rating(request):
+    """
+    Submit a user rating.
+    """
+    serializer = UserRatingSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def submit_volunteer_rating(request):
+    """
+    Submit a volunteer rating.
+    """
+    serializer = VolunteerRatingSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

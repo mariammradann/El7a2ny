@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../core/localization/app_strings.dart';
 import '../widgets/star_rating_bar.dart';
 import '../app/main_shell_screen.dart';
+import '../services/api_service.dart';
 import 'report_account_screen.dart';
-
 class UserRatingScreen extends StatefulWidget {
   const UserRatingScreen({super.key});
 
@@ -20,20 +20,43 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
   bool? _volunteersHelpful;
   bool? _reportFake;
 
-  void _submitRating() {
-    // Show success snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(context.loc.ratingSuccess),
-        backgroundColor: Colors.green,
-      ),
-    );
+  bool _isSubmitting = false;
 
-    // Return to main app shell
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => MainShellScreen()),
-      (route) => false,
-    );
+  Future<void> _submitRating() async {
+    setState(() => _isSubmitting = true);
+    
+    final success = await ApiService.submitUserRating({
+      "app_rating": _appRating,
+      "police_rating": _policeRating,
+      "ambulance_rating": _ambulanceRating,
+      "fire_dept_rating": _fireDeptRating,
+      "el7a2ny_plus_rating": _el7a2nyPlusRating,
+      "volunteers_helpful": _volunteersHelpful,
+      "report_fake": _reportFake,
+    });
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.loc.ratingSuccess),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => MainShellScreen()),
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.loc.isAr ? 'حدث خطأ أثناء إرسال التقييم' : 'Error submitting rating'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -145,17 +168,23 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
                     const SizedBox(height: 40),
                     
                     ElevatedButton(
-                      onPressed: _submitRating,
+                      onPressed: _isSubmitting ? null : _submitRating,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1E3A8A),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: Text(
-                        loc.submitRating,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : Text(
+                              loc.submitRating,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
                     ),
                     const SizedBox(height: 20),
                   ],

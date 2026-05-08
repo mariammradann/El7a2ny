@@ -203,3 +203,25 @@ class SensorReading(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+class UserRating(models.Model):
+    user = models.ForeignKey(User, related_name='user_ratings', on_delete=models.SET_NULL, null=True, blank=True)
+    app_rating = models.FloatField(default=0.0)
+    police_rating = models.FloatField(default=0.0)
+    ambulance_rating = models.FloatField(default=0.0)
+    fire_dept_rating = models.FloatField(default=0.0)
+    el7a2ny_plus_rating = models.FloatField(default=0.0)
+    volunteers_helpful = models.BooleanField(null=True, blank=True)
+    report_fake = models.BooleanField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+class VolunteerRating(models.Model):
+    user = models.ForeignKey(User, related_name='volunteer_ratings', on_delete=models.SET_NULL, null=True, blank=True)
+    is_real_report = models.BooleanField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]

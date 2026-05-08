@@ -646,6 +646,52 @@ class ApiService {
   }
   throw Exception('Failed to fetch sensor reading');
 }
+
+  // ========== RATING METHODS ==========
+
+  static Future<bool> submitUserRating(Map<String, dynamic> ratingData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      
+      final dataToSend = Map<String, dynamic>.from(ratingData);
+      if (userId != null) {
+        dataToSend['user_id'] = userId;
+      }
+
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/ratings/user/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(dataToSend),
+      );
+      return response.statusCode == 201;
+    } catch (e) {
+      print("Error submitting user rating: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> submitVolunteerRating(Map<String, dynamic> ratingData) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      
+      final dataToSend = Map<String, dynamic>.from(ratingData);
+      if (userId != null) {
+        dataToSend['user_id'] = userId;
+      }
+
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/ratings/volunteer/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(dataToSend),
+      );
+      return response.statusCode == 201;
+    } catch (e) {
+      print("Error submitting volunteer rating: $e");
+      return false;
+    }
+  }
 }
 
 

@@ -26,6 +26,8 @@ from .views import (
     admin_incidents,
     get_user_subscription,
     subscribe_user,
+    submit_user_rating,
+    submit_volunteer_rating,
 )
 
 # 1. إعداد الـ Router
@@ -100,6 +102,8 @@ urlpatterns = [
     path("api/auth/password/change/", change_password_api),
     path("api/sensor/temperature/",   receive_temperature,      name="receive_temperature"),
     path("api/sensor/latest/",        get_latest_sensor_reading, name="latest_sensor"),
+    path("api/ratings/user/", submit_user_rating, name="submit_user_rating"),
+    path("api/ratings/volunteer/", submit_volunteer_rating, name="submit_volunteer_rating"),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير

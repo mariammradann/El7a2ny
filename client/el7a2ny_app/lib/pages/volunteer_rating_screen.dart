@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/localization/app_strings.dart';
 import '../app/main_shell_screen.dart';
+import '../services/api_service.dart';
 import 'report_account_screen.dart';
 
 class VolunteerRatingScreen extends StatefulWidget {
@@ -12,8 +13,9 @@ class VolunteerRatingScreen extends StatefulWidget {
 
 class _VolunteerRatingScreenState extends State<VolunteerRatingScreen> {
   bool? _isRealReport;
+  bool _isSubmitting = false;
 
-  void _submitReport() {
+  Future<void> _submitReport() async {
     if (_isRealReport == false) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ReportAccountScreen()),
@@ -21,19 +23,33 @@ class _VolunteerRatingScreenState extends State<VolunteerRatingScreen> {
       return;
     }
 
-    // Show success snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(context.loc.ratingSuccess),
-        backgroundColor: Colors.green,
-      ),
-    );
+    setState(() => _isSubmitting = true);
+    final success = await ApiService.submitVolunteerRating({
+      "is_real_report": _isRealReport,
+    });
 
-    // Return to main app shell
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => MainShellScreen()),
-      (route) => false,
-    );
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.loc.ratingSuccess),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => MainShellScreen()),
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.loc.isAr ? 'حدث خطأ أثناء إرسال التقييم' : 'Error submitting rating'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -80,7 +96,9 @@ class _VolunteerRatingScreenState extends State<VolunteerRatingScreen> {
                     ),
                     const SizedBox(height: 64),
                     ElevatedButton(
-                      onPressed: _isRealReport != null ? _submitReport : null,
+                      onPressed: _isRealReport != null 
+                          ? (_isSubmitting ? null : _submitReport) 
+                          : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0F172A),
                         foregroundColor: Colors.white,
@@ -88,10 +106,16 @@ class _VolunteerRatingScreenState extends State<VolunteerRatingScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         elevation: 4,
                       ),
-                      child: Text(
-                        loc.submitRating,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : Text(
+                              loc.submitRating,
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
                     ),
                   ],
                 ),
