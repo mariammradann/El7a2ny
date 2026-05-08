@@ -343,7 +343,24 @@ def register_user_api(request):
 
 @api_view(["GET"])
 def get_device_status(request):
-    return Response({"smartwatchConnected": True, "homeSensorConnected": False})
+    from django.utils import timezone
+    from datetime import timedelta
+
+    user_id = request.query_params.get("user_id")
+    
+    # Check if sensor sent a reading in the last 30 seconds
+    cutoff = timezone.now() - timedelta(seconds=30)
+    
+    sensor_query = SensorReading.objects.filter(created_at__gte=cutoff)
+    if user_id:
+        sensor_query = sensor_query.filter(user__user_id=user_id)
+    
+    home_sensor_connected = sensor_query.exists()
+
+    return Response({
+        "smartwatchConnected": False,
+        "homeSensorConnected": home_sensor_connected,
+    })
 
 
 class HelpInitiativeViewSet(viewsets.ModelViewSet):
@@ -874,6 +891,7 @@ def receive_temperature(request):
         except Exception as e:
             print(f"❌ Error creating incident: {e}")
             import traceback
+
             traceback.print_exc()
 
     return Response(
@@ -895,6 +913,7 @@ def get_latest_sensor_reading(request):
     """
     Flutter polls this to show live temp + check for alerts.
     Query param: user_id
+    Returns mock data if no real readings exist.
     """
     user_id = request.query_params.get("user_id")
     if not user_id:
@@ -907,7 +926,15 @@ def get_latest_sensor_reading(request):
     )
 
     if not reading:
-        return Response({"error": "No readings yet"}, status=404)
+        # Return mock data for testing
+        return Response(
+            {
+                "temperature": 28.5,
+                "humidity": 65.0,
+                "is_alert": False,
+                "timestamp": timezone.now().isoformat(),
+            }
+        )
 
     return Response(
         {
@@ -917,3 +944,67 @@ def get_latest_sensor_reading(request):
             "timestamp": reading.created_at.isoformat(),
         }
     )
+
+
+@api_view(["GET"])
+def fetch_sensors(request):
+    """
+    Returns list of all sensors with latest readings.
+    Format matches SensorModel expectations from Flutter app.
+    """
+    # Get the latest reading for each user
+    from django.db.models import Max
+
+    # Get all distinct users with sensor readings
+    users_with_readings = (
+        SensorReading.objects.values("user")
+        .annotate(latest_id=Max("id"))
+        .values_list("latest_id", flat=True)
+    )
+
+    latest_readings = SensorReading.objects.filter(id__in=users_with_readings)
+
+    sensors = []
+    sensor_id = 1
+
+    for reading in latest_readings.order_by("-created_at"):
+        # Determine status based on temperature and alert flag
+        if reading.is_alert:
+            status = "danger"
+        elif reading.temperature >= 30.0:  # Warning threshold
+            status = "warning"
+        else:
+            status = "normal"
+
+        # Determine sensor type (heat sensor for temperature)
+        sensor_type = "heat"
+
+        sensor_data = {
+            "id": sensor_id,
+            "type": sensor_type,
+            "value": str(round(reading.temperature, 1)),
+            "unit": "°C",
+            "status": status,
+            "lat": 30.0444,  # Default Cairo location
+            "lng": 31.2357,
+            "updated_at": reading.created_at.isoformat(),
+        }
+        sensors.append(sensor_data)
+        sensor_id += 1
+
+    # If no real sensors, return mock data for testing
+    if not sensors:
+        sensors = [
+            {
+                "id": 1,
+                "type": "heat",
+                "value": "28.5",
+                "unit": "°C",
+                "status": "normal",
+                "lat": 30.0444,
+                "lng": 31.2357,
+                "updated_at": timezone.now().isoformat(),
+            }
+        ]
+
+    return Response(sensors)
