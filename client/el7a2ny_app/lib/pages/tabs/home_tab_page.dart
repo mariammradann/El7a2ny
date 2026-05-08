@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/api/api_exception.dart';
@@ -29,13 +30,25 @@ class _HomeTabPageState extends State<HomeTabPage> {
   DeviceStatus? _status;
   Object? _error;
   bool _loading = true;
+  Timer? _pollingTimer;
 
   @override
   void initState() {
     super.initState();
     _loadDevices();
+    // Poll every 15 seconds to match sensor update interval
+    _pollingTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      _refreshSilently();
+    });
   }
 
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Initial load — shows full loading spinner
   Future<void> _loadDevices() async {
     setState(() {
       _loading = true;
@@ -55,6 +68,22 @@ class _HomeTabPageState extends State<HomeTabPage> {
         _error = e;
         _loading = false;
       });
+    }
+  }
+
+  /// Silent background refresh — no spinner, just updates status in place
+  Future<void> _refreshSilently() async {
+    try {
+      final s = await _deviceRepository.fetchDeviceStatus();
+      if (!mounted) return;
+      setState(() {
+        _status = s;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      // On silent refresh failure, keep showing last known status
+      // but you could optionally mark devices as disconnected here
     }
   }
 
