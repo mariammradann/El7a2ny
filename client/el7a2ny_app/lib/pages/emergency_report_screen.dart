@@ -11,6 +11,7 @@ import '../core/api/api_exception.dart';
 import '../core/localization/app_strings.dart';
 import '../data/repositories/emergency_report_repository.dart';
 import '../widgets/global_fab_overlay.dart';
+import 'active_incident_tracking_screen.dart';
 
 /// أحمر العنوان والزر الرئيسي.
 Color _kEmergencyRed(BuildContext context) => Theme.of(context).primaryColor;
@@ -146,7 +147,17 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.loc.reportSubmitted)),
       );
-      Navigator.of(context).maybePop();
+      
+      // Navigate to the live tracking screen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => ActiveIncidentTrackingScreen(
+            incidentId: 'mock_id_${DateTime.now().millisecondsSinceEpoch}',
+            initialLat: _currentPosition?.latitude,
+            initialLng: _currentPosition?.longitude,
+          ),
+        ),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

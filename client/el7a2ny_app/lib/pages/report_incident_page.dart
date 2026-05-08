@@ -8,6 +8,7 @@ import '../core/localization/app_strings.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
+import 'active_incident_tracking_screen.dart';
 
 class ReportIncidentPage extends StatefulWidget {
   final String userId;
@@ -205,7 +206,18 @@ Future<void> _pickMedia(ImageSource source, bool isVideo) async {
         evidenceItems: _evidenceItems,
       );
       _makeEmergencyCalls();
-      if (mounted) _showSuccessDialog();
+      if (mounted) {
+        // Navigate to the live tracking screen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => ActiveIncidentTrackingScreen(
+              incidentId: 'mock_id_${DateTime.now().millisecondsSinceEpoch}',
+              initialLat: widget.latitude,
+              initialLng: widget.longitude,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       print("❌ Submission error: $e");
       ScaffoldMessenger.of(
@@ -509,26 +521,7 @@ Future<void> _pickMedia(ImageSource source, bool isVideo) async {
   }
 
   void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(context.loc.helpOnWayTitle, textAlign: TextAlign.center),
-        content: Text(context.loc.helpOnWayDesc, textAlign: TextAlign.center),
-        actions: [
-          Center(
-            child: FilledButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: Text(context.loc.readInstructionsBtn),
-            ),
-          ),
-        ],
-      ),
-    );
+    // Kept to avoid breaking any other references, but it is no longer used directly.
   }
 }
 
