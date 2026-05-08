@@ -1,4 +1,3 @@
-﻿/// حالة الأجهزة كما يعيدها الـ API (اضبطي أسماء الحقول لتطابق الـ serializer في Django).
 class DeviceStatus {
   const DeviceStatus({
     required this.smartwatchConnected,
@@ -11,11 +10,13 @@ class DeviceStatus {
   factory DeviceStatus.fromJson(Map<String, dynamic> json) {
     return DeviceStatus(
       smartwatchConnected: _readBool(json, const [
+        'smartwatchConnected',       // ← camelCase (what Django currently returns)
         'smartwatch_connected',
         'smartwatch',
         'watch_connected',
       ]),
       homeSensorConnected: _readBool(json, const [
+        'homeSensorConnected',       // ← camelCase (what Django currently returns)
         'home_sensor_connected',
         'sensor_connected',
         'home_sensor',
