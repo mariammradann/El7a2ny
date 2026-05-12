@@ -12,6 +12,7 @@ from .models import (
     SensorReading,
 )
 import google.generativeai as genai
+from .ai_utils import analyze_incident_media, get_chatbot_response_with_media
 from .serializers import (
     UserRegistrationSerializer,
     IncidentSerializer,
@@ -24,22 +25,37 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
+import uuid
 
-# Configure Gemini
-genai.configure(api_key="AIzaSyDR_HnGEg3B_W3o1SgsGb19Y9u5VG-iG90")
+# AI logic is handled in ai_utils.py
 
 
 @api_view(["POST"])
 def get_first_aid_advice(request):
     user_message = request.data.get("message")
-    if not user_message:
-        return Response({"reply": "Please provide a message."}, status=400)
+    media_file = request.FILES.get("media")
+    
+    if not user_message and not media_file:
+        return Response({"reply": "Please provide a message or media."}, status=400)
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        prompt = f"As a first aid expert, give short and clear advice in the user's language for: {user_message}"
-        response = model.generate_content(prompt)
-        return Response({"reply": response.text})
+        media_path = None
+        if media_file:
+            from django.core.files.storage import default_storage
+            from django.core.files.base import ContentFile
+            import os
+            
+            # Save temporary file for analysis
+            temp_name = f"temp/chat_{uuid.uuid4()}_{media_file.name}"
+            path = default_storage.save(temp_name, ContentFile(media_file.read()))
+            media_path = os.path.join(settings.MEDIA_ROOT, path)
+
+        reply = get_chatbot_response_with_media(user_message or "", media_path)
+        
+        # Clean up temp file if needed (optional)
+        # if media_path: os.remove(media_path)
+        
+        return Response({"reply": reply})
     except Exception as e:
         print(f"AI Error: {e}")
         return Response(
@@ -326,7 +342,21 @@ class IncidentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
-        serializer.save()
+        incident = serializer.save()
+        # Trigger AI analysis after creation in a background thread
+        import threading
+        import time
+        def run_analysis(inc_id):
+            try:
+                # Wait a bit for the DB transaction to commit
+                time.sleep(2)
+                print(f"🚀 Starting background AI analysis for incident {inc_id}")
+                from .ai_utils import analyze_incident_media
+                analyze_incident_media(inc_id)
+            except Exception as e:
+                print(f"🚨 Async AI Analysis Error: {e}")
+        
+        threading.Thread(target=run_analysis, args=(incident.incident_id,)).start()
 
 
 @api_view(["POST"])
@@ -753,6 +783,47 @@ def admin_incidents(request):
             incidents = incidents.filter(user_id=user_id_filter)
 
         serializer = IncidentSerializer(incidents, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(["PATCH", "DELETE"])
+def admin_update_incident(request, incident_id):
+    """
+    Admin action on a specific incident.
+    PATCH body: {"action": "monitor" | "cancel" | "resolve"}
+    DELETE: soft-delete the incident (status = 'deleted')
+    """
+    try:
+        incident = Incident.objects.get(incident_id=incident_id)
+    except Incident.DoesNotExist:
+        return Response({"error": "Incident not found"}, status=404)
+    except Exception:
+        # Try integer pk fallback
+        try:
+            incident = Incident.objects.get(pk=incident_id)
+        except Incident.DoesNotExist:
+            return Response({"error": "Incident not found"}, status=404)
+
+    try:
+        if request.method == "DELETE":
+            incident.status = "deleted"
+            incident.save()
+            return Response({"message": f"Incident {incident_id} deleted"})
+
+        action = request.data.get("action", "").strip().lower()
+        if action == "monitor":
+            incident.status = "active"
+        elif action == "cancel":
+            incident.status = "cancelled"
+        elif action == "resolve":
+            incident.status = "resolved"
+        else:
+            return Response({"error": f"Unknown action: {action}"}, status=400)
+
+        incident.save()
+        serializer = IncidentSerializer(incident)
         return Response(serializer.data)
     except Exception as e:
         return Response({"error": str(e)}, status=500)

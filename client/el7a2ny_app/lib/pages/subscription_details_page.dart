@@ -14,8 +14,10 @@ class SubscriptionDetailsPage extends StatelessWidget {
     final isYearly = session.isYearlyPlan;
     final subDate = session.subscriptionDate ?? DateTime.now();
     final renDate = session.renewalDate ?? DateTime.now();
-    
-    final dateFormat = isAr ? DateFormat('yyyy/MM/dd') : DateFormat('dd MMM yyyy');
+
+    final dateFormat = isAr
+        ? DateFormat('yyyy/MM/dd')
+        : DateFormat('dd MMM yyyy');
 
     return Directionality(
       textDirection: isAr ? ui.TextDirection.rtl : ui.TextDirection.ltr,
@@ -25,7 +27,10 @@ class SubscriptionDetailsPage extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFFFFD700)),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: Color(0xFFFFD700),
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
@@ -52,7 +57,9 @@ class SubscriptionDetailsPage extends StatelessWidget {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.4),
@@ -69,7 +76,11 @@ class SubscriptionDetailsPage extends StatelessWidget {
                         color: const Color(0xFFFFD700).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFFD700), size: 48),
+                      child: const Icon(
+                        Icons.workspace_premium_rounded,
+                        color: Color(0xFFFFD700),
+                        size: 48,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     const Text(
@@ -83,7 +94,10 @@ class SubscriptionDetailsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFFD700),
                         borderRadius: BorderRadius.circular(20),
@@ -100,27 +114,29 @@ class SubscriptionDetailsPage extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
 
               // Plan Info Section
               _buildSectionTitle(isAr ? 'معلومات الخطة' : 'Plan Information'),
               _buildInfoCard([
                 _buildInfoRow(
-                  isAr ? 'نوع الخطة' : 'Plan Type', 
-                  isYearly ? (isAr ? 'سنوي' : 'Yearly') : (isAr ? 'شهري' : 'Monthly'),
-                  Icons.calendar_today_rounded
+                  isAr ? 'نوع الخطة' : 'Plan Type',
+                  isYearly
+                      ? (isAr ? 'سنوي' : 'Yearly')
+                      : (isAr ? 'شهري' : 'Monthly'),
+                  Icons.calendar_today_rounded,
                 ),
                 _buildInfoRow(
-                  isAr ? 'تاريخ الاشتراك' : 'Subscription Date', 
+                  isAr ? 'تاريخ الاشتراك' : 'Subscription Date',
                   dateFormat.format(subDate),
-                  Icons.event_available_rounded
+                  Icons.event_available_rounded,
                 ),
                 _buildInfoRow(
-                  isAr ? 'تاريخ التجديد' : 'Renewal Date', 
+                  isAr ? 'تاريخ التجديد' : 'Renewal Date',
                   dateFormat.format(renDate),
                   Icons.event_repeat_rounded,
-                  isLast: true
+                  isLast: true,
                 ),
               ]),
 
@@ -128,11 +144,25 @@ class SubscriptionDetailsPage extends StatelessWidget {
 
               // Features Section
               _buildSectionTitle(isAr ? 'مميزاتك النشطة' : 'Active Features'),
-              _buildFeatureItem(isAr ? 'أولوية قصوى في الاستجابة' : 'Top Priority Response', Icons.speed_rounded),
-              _buildFeatureItem(isAr ? 'استشارات طبية غير محدودة' : 'Unlimited Medical Consults', Icons.medical_services_rounded),
-              _buildFeatureItem(isAr ? 'تغطية عائلية شاملة' : 'Full Family Coverage', Icons.family_restroom_rounded),
-              _buildFeatureItem(isAr ? 'خصومات حصرية على التحاليل' : 'Exclusive Lab Discounts', Icons.percent_rounded),
-              
+              _buildFeatureItem(
+                isAr ? 'أولوية قصوى في الاستجابة' : 'Top Priority Response',
+                Icons.speed_rounded,
+              ),
+              _buildFeatureItem(
+                isAr
+                    ? 'استشارات طبية غير محدودة'
+                    : 'Unlimited Medical Consults',
+                Icons.medical_services_rounded,
+              ),
+              _buildFeatureItem(
+                isAr ? 'تغطية عائلية شاملة' : 'Full Family Coverage',
+                Icons.family_restroom_rounded,
+              ),
+              _buildFeatureItem(
+                isAr ? 'خصومات حصرية على التحاليل' : 'Exclusive Lab Discounts',
+                Icons.percent_rounded,
+              ),
+
               const SizedBox(height: 40),
 
               // Manage Button
@@ -142,11 +172,16 @@ class SubscriptionDetailsPage extends StatelessWidget {
                   onPressed: () {},
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.white24),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: Text(
                     isAr ? 'إدارة الاشتراك' : 'Manage Subscription',
-                    style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -184,21 +219,42 @@ class SubscriptionDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, IconData icon, {bool isLast = false}) {
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    IconData icon, {
+    bool isLast = false,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: isLast ? null : const Border(bottom: BorderSide(color: Colors.white10)),
+        border: isLast
+            ? null
+            : const Border(bottom: BorderSide(color: Colors.white10)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFFFFD700).withValues(alpha: 0.6), size: 20),
+          Icon(
+            icon,
+            color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+            size: 20,
+          ),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white38, fontSize: 11),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ],
@@ -219,9 +275,19 @@ class SubscriptionDetailsPage extends StatelessWidget {
         children: [
           Icon(icon, color: const Color(0xFFFFD700), size: 20),
           const SizedBox(width: 12),
-          Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const Spacer(),
-          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+          const Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF10B981),
+            size: 18,
+          ),
         ],
       ),
     );

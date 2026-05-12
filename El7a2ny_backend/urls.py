@@ -24,6 +24,7 @@ from .views import (
     admin_update_user,
     admin_delete_user,
     admin_incidents,
+    admin_update_incident,
     get_user_subscription,
     subscribe_user,
     submit_user_rating,
@@ -87,6 +88,11 @@ urlpatterns = [
         name="admin-delete-user",
     ),
     path("api/admin/incidents/", admin_incidents, name="admin-incidents"),
+    path(
+        "api/admin/incidents/<str:incident_id>/",
+        admin_update_incident,
+        name="admin-update-incident",
+    ),
     # Subscription Endpoints
     path(
         "api/subscription/<uuid:user_id>/",
