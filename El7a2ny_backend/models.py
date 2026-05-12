@@ -136,6 +136,10 @@ class HelpInitiative(models.Model):
         max_length=50
     )  # food, clothing, financial, medical, education, other
 
+    class Meta:
+        db_table = 'ems_schema"."help_initiatives'
+        managed = True
+
     def __str__(self):
         return self.title
 
@@ -202,6 +206,8 @@ class SensorReading(models.Model):
     created_at  = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'ems_schema"."sensor_readings'
+        managed = True
         ordering = ["-created_at"]
 
 class UserRating(models.Model):
@@ -216,6 +222,8 @@ class UserRating(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'ems_schema"."user_ratings'
+        managed = True
         ordering = ["-created_at"]
 
 class VolunteerRating(models.Model):
@@ -224,4 +232,6 @@ class VolunteerRating(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        db_table = 'ems_schema"."volunteer_ratings'
+        managed = True
+        ordering = ["-created_at"]
