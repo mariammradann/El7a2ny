@@ -12,14 +12,17 @@ abstract final class ApiConfig {
     defaultValue: '',
   );
 
-  static String get baseUrl {
-    if (_envBaseUrl.isNotEmpty) return _envBaseUrl;
-    if (kIsWeb) return 'http://127.0.0.1:8000';
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000';
-    }
-    return 'http://127.0.0.1:8000';
+static String get baseUrl {
+  if (_envBaseUrl.isNotEmpty) return _envBaseUrl;
+  if (kIsWeb) return 'http://127.0.0.1:8000';
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    // 10.0.2.2 = Android emulator loopback to host machine
+    // For a real device on the same Wi-Fi, use your machine's LAN IP
+    const bool isEmulator = bool.fromEnvironment('IS_EMULATOR', defaultValue: false);
+    return isEmulator ? 'http://10.0.2.2:8000' : 'http://10.1.2.35:8000';
   }
+  return 'http://127.0.0.1:8000';
+}
 
   /// بادئة مسارات الـ REST (مثال: `/api/v1` كما في Django DRF).
   static const String apiPrefix = String.fromEnvironment(

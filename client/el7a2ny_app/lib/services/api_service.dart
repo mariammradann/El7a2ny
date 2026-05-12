@@ -16,6 +16,8 @@ import 'package:flutter/foundation.dart' show kIsWeb; // Needed for kIsWeb
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart'; // Needed for MediaType
 import 'package:cross_file/cross_file.dart'; // Usually comes with image_picker
+import '../core/config/api_config.dart';
+
 
 // ─────────────────────────────────────────────────────────
 //  API SERVICE
@@ -24,7 +26,7 @@ import 'package:cross_file/cross_file.dart'; // Usually comes with image_picker
 class ApiService {
   // استخدم IP جهازك بدل localhost لو بتجرب من موبايل حقيقي (مثلاً 192.168.1.5)
   // الـ 10.0.2.2 مخصصة للأندرويد إيموليتور للوصول للسيرفر المحلي
-  static const String baseUrl = "http://127.0.0.1:8000";
+static String get baseUrl => ApiConfig.baseUrl;
   static bool useMock = false;
 
   // --- 1. نظام جلب البروفايل (الديناميكي) ---
