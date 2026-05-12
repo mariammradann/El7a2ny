@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
@@ -88,6 +88,27 @@ class ApiClient {
         body: jsonEncode(body),
       );
       return _handleResponse(r);
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(0, 'فشل الاتصال: $e');
+    }
+  }
+
+  Future<dynamic> postMultipart(
+      String path, Map<String, String> fields, List<http.MultipartFile> files) async {
+    try {
+      final request = http.MultipartRequest('POST', _uri(path));
+      request.headers.addAll(_headers(extra: {'Content-Type': 'multipart/form-data'}));
+      request.headers.remove('Content-Type'); // http handles this automatically for multipart
+      
+      request.fields.addAll(fields);
+      request.files.addAll(files);
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      return _handleResponse(response);
     } on ApiException {
       rethrow;
     } catch (e) {

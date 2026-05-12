@@ -99,7 +99,7 @@ class ApiService {
 
   // ... other imports ...
 
-  static Future<void> sendEmergencyAlertWithMedia({
+  static Future<Map<String, dynamic>> sendEmergencyAlertWithMedia({
     required String userId,
     required String type,
     required double lat,
@@ -188,6 +188,7 @@ class ApiService {
         );
       }
       print("✅ Emergency alert sent successfully");
+      return json.decode(response.body);
     } catch (e) {
       print("🚨 Network Error: $e");
       rethrow;
@@ -206,6 +207,18 @@ class ApiService {
       print("Error fetching alerts: $e");
     }
     return [];
+  }
+
+  static Future<AlertModel?> fetchAlertDetails(String alertId) async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/api/incidents/$alertId/"));
+      if (response.statusCode == 200) {
+        return AlertModel.fromJson(jsonDecode(response.body));
+      }
+    } catch (e) {
+      print("Error fetching alert details: $e");
+    }
+    return null;
   }
 
   static Future<List<SensorModel>> fetchSensors() async {
@@ -581,6 +594,45 @@ class ApiService {
     } catch (e) {
       print("Error filtering users: $e");
       return [];
+    }
+  }
+
+  /// Admin: update incident status (action: monitor | cancel | resolve)
+  static Future<void> adminUpdateIncident(
+    String incidentId,
+    String action,
+  ) async {
+    try {
+      final response = await http.patch(
+        Uri.parse("$baseUrl/api/admin/incidents/$incidentId/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"action": action}),
+      );
+      if (response.statusCode != 200) {
+        throw Exception(
+          "Failed to update incident: ${response.statusCode} - ${response.body}",
+        );
+      }
+    } catch (e) {
+      print("Error updating incident: $e");
+      rethrow;
+    }
+  }
+
+  /// Admin: delete (soft-delete) incident
+  static Future<void> adminDeleteIncident(String incidentId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("$baseUrl/api/admin/incidents/$incidentId/"),
+      );
+      if (response.statusCode != 200) {
+        throw Exception(
+          "Failed to delete incident: ${response.statusCode} - ${response.body}",
+        );
+      }
+    } catch (e) {
+      print("Error deleting incident: $e");
+      rethrow;
     }
   }
 

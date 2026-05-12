@@ -56,10 +56,16 @@ class _LoginScreenState extends State<LoginScreen> {
       // Check user type and route accordingly
       final userType = AuthTokenStore.userType;
       if (userType == "admin") {
+        SessionService().setRole(UserRole.admin);
         await Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(builder: (context) => const AdminScreen()),
         );
       } else {
+        if (userType == "volunteer") {
+          SessionService().setRole(UserRole.volunteer);
+        } else {
+          SessionService().setRole(UserRole.citizen);
+        }
         await Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(builder: (context) => MainShellScreen()),
         );

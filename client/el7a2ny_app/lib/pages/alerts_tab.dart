@@ -258,7 +258,7 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
   }
 }
 
-class _AlertCard extends StatelessWidget {
+class _AlertCard extends StatefulWidget {
   final AlertModel alert;
   final bool isMyAlerts;
   final VoidCallback onRefresh;
@@ -268,6 +268,89 @@ class _AlertCard extends StatelessWidget {
     required this.isMyAlerts,
     required this.onRefresh,
   });
+
+  @override
+  State<_AlertCard> createState() => _AlertCardState();
+}
+
+class _AlertCardState extends State<_AlertCard> {
+  bool _adminActionLoading = false;
+
+  AlertModel get alert => widget.alert;
+  bool get isMyAlerts => widget.isMyAlerts;
+
+  Future<void> _doAdminAction(String action) async {
+    setState(() => _adminActionLoading = true);
+    try {
+      await ApiService.adminUpdateIncident(alert.id, action);
+      if (mounted) {
+        final msg = action == 'monitor'
+            ? context.loc.monitoringStartedMsg
+            : context.loc.incidentCancelledMsg;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(msg, style: const TextStyle(fontFamily: 'NotoSansArabic')),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: action == 'monitor' ? Colors.blue : Colors.orange,
+        ));
+        widget.onRefresh();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _adminActionLoading = false);
+    }
+  }
+
+  Future<void> _doAdminDelete() async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('حذف البلاغ', style: TextStyle(fontFamily: 'NotoSansArabic')),
+            content: const Text('هل أنت متأكد من حذف هذا البلاغ؟',
+                style: TextStyle(fontFamily: 'NotoSansArabic')),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('إلغاء')),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('حذف', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed) return;
+    setState(() => _adminActionLoading = true);
+    try {
+      await ApiService.adminDeleteIncident(alert.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(context.loc.incidentDeletedMsg,
+              style: const TextStyle(fontFamily: 'NotoSansArabic')),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ));
+        widget.onRefresh();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _adminActionLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +389,7 @@ class _AlertCard extends StatelessWidget {
             builder: (context) => AlertDetailsPage(alert: alert, isMyAlerts: isMyAlerts),
           ),
         );
-        if (result == true) onRefresh();
+        if (result == true) widget.onRefresh();
       },
       child: Container(
         decoration: BoxDecoration(
@@ -558,31 +641,35 @@ class _AlertCard extends StatelessWidget {
                   ),
                   if (SessionService().isAdmin) ...[
                     const Divider(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _AdminActionButton(
-                          label: context.loc.actionMonitor,
-                          icon: Icons.track_changes_rounded,
-                          color: Colors.blue,
-                          onTap: () => _showAdminFeedback(context, context.loc.monitoringStartedMsg),
-                        ),
-                        const SizedBox(width: 8),
-                        _AdminActionButton(
-                          label: context.loc.actionCancelAlert,
-                          icon: Icons.cancel_outlined,
-                          color: Colors.orange,
-                          onTap: () => _showAdminFeedback(context, context.loc.incidentCancelledMsg),
-                        ),
-                        const SizedBox(width: 8),
-                        _AdminActionButton(
-                          label: context.loc.actionDeleteIncident,
-                          icon: Icons.delete_outline_rounded,
-                          color: Colors.red,
-                          onTap: () => _showAdminFeedback(context, context.loc.incidentDeletedMsg),
-                        ),
-                      ],
-                    ),
+                    if (_adminActionLoading)
+                      const Center(child: SizedBox(width: 20, height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2)))
+                    else
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          _AdminActionButton(
+                            label: context.loc.actionMonitor,
+                            icon: Icons.track_changes_rounded,
+                            color: Colors.blue,
+                            onTap: () => _doAdminAction('monitor'),
+                          ),
+                          const SizedBox(width: 8),
+                          _AdminActionButton(
+                            label: context.loc.actionCancelAlert,
+                            icon: Icons.cancel_outlined,
+                            color: Colors.orange,
+                            onTap: () => _doAdminAction('cancel'),
+                          ),
+                          const SizedBox(width: 8),
+                          _AdminActionButton(
+                            label: context.loc.actionDeleteIncident,
+                            icon: Icons.delete_outline_rounded,
+                            color: Colors.red,
+                            onTap: _doAdminDelete,
+                          ),
+                        ],
+                      ),
                   ],
                 ],
               ),
@@ -593,12 +680,8 @@ class _AlertCard extends StatelessWidget {
     );
   }
 
-  void _showAdminFeedback(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
-    );
-  }
 }
+
 
 class _AdminActionButton extends StatelessWidget {
   final String label;

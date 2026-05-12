@@ -196,7 +196,7 @@ Future<void> _pickMedia(ImageSource source, bool isVideo) async {
     try {
       print("📤 Sending to API with ${realFiles.length} files...");
       // استخدم الدالة الجديدة التي تدعم الملفات
-      await ApiService.sendEmergencyAlertWithMedia(
+      final response = await ApiService.sendEmergencyAlertWithMedia(
         userId: widget.userId,
         type: _selectedType == 'other' ? _customTypeCtrl.text : _selectedType,
         lat: widget.latitude,
@@ -207,11 +207,20 @@ Future<void> _pickMedia(ImageSource source, bool isVideo) async {
       );
       _makeEmergencyCalls();
       if (mounted) {
+        // Extract ID from various possible response formats
+        final incidentId = response['incident_id']?.toString() ?? 
+                           response['id']?.toString() ?? 
+                           'mock_id_${DateTime.now().millisecondsSinceEpoch}';
+                           
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.loc.reportSubmitted)),
+        );
+        
         // Navigate to the live tracking screen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => ActiveIncidentTrackingScreen(
-              incidentId: 'mock_id_${DateTime.now().millisecondsSinceEpoch}',
+              incidentId: incidentId,
               initialLat: widget.latitude,
               initialLng: widget.longitude,
             ),

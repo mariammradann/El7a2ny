@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import '../core/auth/auth_token_store.dart';
+import '../services/session_service.dart';
 
 import '../core/api/api_exception.dart';
 import '../core/localization/app_strings.dart';
@@ -40,6 +42,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
 
   final _reports = EmergencyReportRepository();
   final ImagePicker _picker = ImagePicker();
+  String _selectedCategory = 'medical'; // Default
   XFile? _selectedMedia;
   Position? _currentPosition;
 
@@ -58,13 +61,15 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
     return {
       'reporter_name': _name.text.trim(),
       'phone': _phone.text.trim(),
+      'category': _selectedCategory,
       'description': _description.text.trim(),
       'permission_camera': _cameraGranted,
       'permission_location': _locationGranted,
       'permission_mic': _micGranted,
       if (clientIp != null && clientIp.isNotEmpty) 'client_ip': clientIp,
-      if (_currentPosition != null) 'location_lat': _currentPosition!.latitude,
-      if (_currentPosition != null) 'location_lng': _currentPosition!.longitude,
+      if (_currentPosition != null) 'latitude': _currentPosition!.latitude,
+      if (_currentPosition != null) 'longitude': _currentPosition!.longitude,
+      'user_id': AuthTokenStore.userId,
     };
   }
 
@@ -142,8 +147,13 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
         debugPrint('IP Fetch Error: $e');
       }
 
-      await _reports.submitReport(_buildReportBody(clientIp));
+      final response = await _reports.submitReport(_buildReportBody(clientIp), mediaFile: _selectedMedia);
       if (!mounted) return;
+      
+      final incidentId = response['incident_id']?.toString() ?? 
+                         response['id']?.toString() ?? 
+                         'mock_id_${DateTime.now().millisecondsSinceEpoch}';
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.loc.reportSubmitted)),
       );
@@ -152,7 +162,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => ActiveIncidentTrackingScreen(
-            incidentId: 'mock_id_${DateTime.now().millisecondsSinceEpoch}',
+            incidentId: incidentId,
             initialLat: _currentPosition?.latitude,
             initialLng: _currentPosition?.longitude,
           ),
@@ -332,6 +342,13 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                             size: 22,
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 16),
+                      _FieldLabel(context.loc.isAr ? 'نوع الحادث' : 'Incident Category'),
+                      const SizedBox(height: 8),
+                      _CategorySelector(
+                        selectedCategory: _selectedCategory,
+                        onChanged: (val) => setState(() => _selectedCategory = val),
                       ),
                       const SizedBox(height: 16),
                       _FieldLabel(context.loc.emergencyDesc),
@@ -639,4 +656,45 @@ class _DashedRRectPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DashedRRectPainter oldDelegate) =>
       oldDelegate.color != color || oldDelegate.radius != radius;
+}
+
+class _CategorySelector extends StatelessWidget {
+  const _CategorySelector({required this.selectedCategory, required this.onChanged});
+  final String selectedCategory;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = [
+      {'id': 'medical', 'label': context.loc.typeMedicalAlt, 'icon': Icons.medical_services_rounded},
+      {'id': 'fire', 'label': context.loc.typeFireAlt, 'icon': Icons.local_fire_department_rounded},
+      {'id': 'accident', 'label': context.loc.typeAccident, 'icon': Icons.car_crash_rounded},
+      {'id': 'theft', 'label': context.loc.typeTheft, 'icon': Icons.security_rounded},
+    ];
+
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final cat = categories[index];
+          final isSelected = selectedCategory == cat['id'];
+          return ChoiceChip(
+            label: Text(cat['label'] as String, style: const TextStyle(fontFamily: 'NotoSansArabic', fontSize: 13)),
+            avatar: Icon(cat['icon'] as IconData, size: 18, color: isSelected ? Colors.white : Theme.of(context).primaryColor),
+            selected: isSelected,
+            onSelected: (selected) {
+              if (selected) onChanged(cat['id'] as String);
+            },
+            selectedColor: Theme.of(context).primaryColor,
+            labelStyle: TextStyle(color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface),
+            showCheckmark: false,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          );
+        },
+      ),
+    );
+  }
 }

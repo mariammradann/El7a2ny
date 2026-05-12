@@ -116,6 +116,10 @@ class Incident(models.Model):
     media_files = models.JSONField(
         default=list, null=True, blank=True
     )  # Store list of file URLs/paths
+    ai_summary = models.TextField(null=True, blank=True)
+    ai_instructions = models.TextField(null=True, blank=True)
+    ai_analysis = models.JSONField(null=True, blank=True)  # Full structured analysis
+    image_hash = models.CharField(max_length=64, null=True, blank=True)  # For duplicate detection
     status = models.CharField(max_length=20, default="reported")
     created_at = models.DateTimeField(auto_now_add=True)
     admin_id = models.UUIDField(null=True, blank=True)

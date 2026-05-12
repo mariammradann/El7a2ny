@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import '../services/ai_service.dart';
 import '../services/session_service.dart';
 import 'user_rating_screen.dart';
+import 'package:image_picker/image_picker.dart';
 import 'volunteer_rating_screen.dart';
 
 class EmergencyChatScreen extends StatefulWidget {
@@ -22,6 +23,9 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
   final List<ChatMessage> _messages = [];
   List<EmergencyContact> _contacts = [];
   bool _loadingContacts = false;
+  
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedMedia;
 
   @override
   void initState() {
@@ -67,15 +71,16 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
   }
 
   Future<void> _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
-    
     final userText = _messageController.text.trim();
+    final mediaToSend = _selectedMedia;
+    
     setState(() {
       _messages.add(ChatMessage(
-        text: userText,
+        text: mediaToSend != null ? (userText.isEmpty ? (context.loc.isAr ? '[صورة/فيديو]' : '[Image/Video]') : userText) : userText,
         source: MessageSource.user,
         timestamp: DateTime.now(),
       ));
+      _selectedMedia = null; // Clear after sending
     });
     
     _messageController.clear();
@@ -92,7 +97,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
     _scrollToBottom();
 
     // Get real response from Gemini
-    final response = await AiService.getResponse(userText);
+    final response = await AiService.getResponse(userText, mediaFile: mediaToSend);
     
     if (!mounted) return;
     
@@ -106,6 +111,23 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
       ));
     });
     _scrollToBottom();
+  }
+
+  Future<void> _pickMedia(ImageSource source, {bool isVideo = false}) async {
+    try {
+      final XFile? file = isVideo 
+          ? await _picker.pickVideo(source: source)
+          : await _picker.pickImage(source: source);
+          
+      if (file != null) {
+        setState(() => _selectedMedia = file);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.loc.isAr ? 'تم اختيار الملف!' : 'File selected!')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error picking media: $e');
+    }
   }
 
   void _scrollToBottom() {
@@ -497,20 +519,20 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.image_outlined, size: 20),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(context.loc.isAr ? 'فتح المعرض...' : 'Opening gallery...')),
-                              );
-                            },
+                            icon: Icon(
+                              Icons.image_outlined, 
+                              size: 20, 
+                              color: _selectedMedia != null ? Colors.green : null
+                            ),
+                            onPressed: () => _pickMedia(ImageSource.gallery),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.videocam_outlined, size: 20),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(context.loc.isAr ? 'فتح الكاميرا...' : 'Opening camera...')),
-                              );
-                            },
+                            icon: Icon(
+                              Icons.videocam_outlined, 
+                              size: 20,
+                              color: _selectedMedia != null ? Colors.green : null
+                            ),
+                            onPressed: () => _pickMedia(ImageSource.gallery, isVideo: true),
                           ),
                         ],
                       ),
@@ -533,7 +555,11 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                  onPressed: _sendMessage,
+                  onPressed: () {
+                    if (_messageController.text.trim().isNotEmpty || _selectedMedia != null) {
+                      _sendMessage();
+                    }
+                  },
                 ),
               ),
             ],

@@ -19,6 +19,9 @@ class AlertModel {
   final bool isMyAlert;
   final String? address;
   final List<String>? mediaUrls;
+  final String? aiSummary;
+  final String? aiInstructions;
+  final Map<String, dynamic>? aiAnalysis;
 
   const AlertModel({
     required this.id,
@@ -38,6 +41,9 @@ class AlertModel {
     this.isMyAlert = false,
     this.address,
     this.mediaUrls,
+    this.aiSummary,
+    this.aiInstructions,
+    this.aiAnalysis,
   });
 
   factory AlertModel.fromJson(Map<String, dynamic> json) {
@@ -75,6 +81,11 @@ class AlertModel {
           
       isMyAlert: currentUserId != null && alertOwnerId == currentUserId,
       mediaUrls: mediaUrls,
+      aiSummary: json['ai_summary'],
+      aiInstructions: json['ai_instructions'],
+      aiAnalysis: json['ai_analysis'] is Map
+          ? Map<String, dynamic>.from(json['ai_analysis'])
+          : null,
     );
   }
 

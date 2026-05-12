@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/localization/app_strings.dart';
+import 'emergency_report_screen.dart';
 
 class EmergencyTab extends StatefulWidget {
   const EmergencyTab({super.key});
@@ -167,6 +168,9 @@ class _EmergencyTabState extends State<EmergencyTab>
             ),
             const SizedBox(height: 16),
   
+            // ── AI Incident Report Card ─────────────────────────────
+            _AIReportCard(),
+            const SizedBox(height: 16),
             // ── Quick actions ────────────────────────────────────────
             Row(
               children: [
@@ -297,6 +301,76 @@ class _QuickActionCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AIReportCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isAr = context.loc.isAr;
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const EmergencyReportScreen()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 32),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAr ? 'بلاغ ذكي بالذكاء الاصطناعي' : 'AI-Powered Emergency Report',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'NotoSansArabic',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isAr 
+                      ? 'صور الحادث وسيقوم النظام بتحليله فوراً وإعطاء تعليمات السلامة'
+                      : 'Capture the incident for instant AI analysis and safety instructions',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 13,
+                      fontFamily: 'NotoSansArabic',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 20),
+          ],
+        ),
       ),
     );
   }
