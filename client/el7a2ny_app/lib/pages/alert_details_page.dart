@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import '../core/localization/app_strings.dart';
 import '../models/alert_model.dart';
@@ -24,6 +26,14 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
   late int _currVols;
   late int _progress;
   bool _joined = false;
+  bool _isJoining = false;
+  Timer? _locationTimer;
+
+  @override
+  void dispose() {
+    _locationTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -71,15 +81,42 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
   }
 
   Future<void> _joinVolunteers() async {
-    if (_joined) return;
+    if (_joined || _isJoining) return;
+    setState(() => _isJoining = true);
     try {
-      await ApiService.respondToAlert(int.parse(widget.alert.id));
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+await ApiService.respondToAlert(
+  widget.alert.id,
+  lat: position.latitude,
+  lng: position.longitude,
+);
+
       if (!mounted) return;
       setState(() {
         _joined = true;
+        _isJoining = false;
         _currVols++;
         _progress = min(100, (_currVols / _totalVols * 100).round());
       });
+
+      _locationTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+          );
+          await ApiService.updateResponderLocation(
+            widget.alert.id,
+            pos.latitude,
+            pos.longitude,
+          );
+        } catch (e) {
+          debugPrint('Location update failed: $e');
+        }
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -93,6 +130,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
       );
     } catch (e) {
       if (!mounted) return;
+      setState(() => _isJoining = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -195,7 +233,6 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             ),
                           ),
                         ),
-                        // Active Pill
                         Positioned(
                           top: 45,
                           left: isAr ? 16 : null,
@@ -239,7 +276,6 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             ),
                           ),
                         ),
-                        // Percentage Box
                         Positioned(
                           top: 100,
                           left: isAr ? 16 : null,
@@ -353,8 +389,6 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-
-                        // Updated Row with Address logic
                         Row(
                           children: [
                             Expanded(
@@ -484,7 +518,6 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        // Volunteers Card
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -582,9 +615,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                       child: Container(
                                         decoration: BoxDecoration(
                                           color: const Color(0xFF10B981),
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
                                         ),
                                       ),
                                     ),
@@ -599,7 +631,6 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Details
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -640,8 +671,6 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                     fontSize: 13,
                                   ),
                                 ),
-
-                              // AI Summary Section (For Volunteers)
                               if (widget.alert.aiSummary != null &&
                                   widget.alert.aiSummary!.isNotEmpty) ...[
                                 const SizedBox(height: 16),
@@ -682,9 +711,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                       Text(
                                         widget.alert.aiSummary!,
                                         style: TextStyle(
-                                          color: onSurface.withValues(
-                                            alpha: 0.8,
-                                          ),
+                                          color:
+                                              onSurface.withValues(alpha: 0.8),
                                           fontSize: 13,
                                           height: 1.5,
                                         ),
@@ -693,8 +721,6 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                   ),
                                 ),
                               ],
-
-                              // Display media files if available
                               if (widget.alert.mediaUrls != null &&
                                   widget.alert.mediaUrls!.isNotEmpty) ...[
                                 const SizedBox(height: 16),
@@ -723,33 +749,25 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                           left: isAr ? 0 : 8,
                                         ),
                                         child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           child: Image.network(
                                             mediaUrl,
                                             fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (
-                                                  context,
-                                                  error,
-                                                  stackTrace,
-                                                ) => Container(
-                                                  width: 120,
-                                                  decoration: BoxDecoration(
-                                                    color: theme
-                                                        .colorScheme
-                                                        .surface,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.broken_image,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
+                                            errorBuilder: (context, error,
+                                                    stackTrace) =>
+                                                Container(
+                                              width: 120,
+                                              decoration: BoxDecoration(
+                                                color: theme.colorScheme.surface,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const Icon(
+                                                Icons.broken_image,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       );
@@ -766,59 +784,160 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                 ],
               ),
             ),
-            // Bottom Action Button
+
+            // ── Bottom Action Button ──────────────────────────────────────
             if (!(widget.isMyAlerts || widget.alert.isMyAlert))
               Positioned(
                 bottom: 24,
                 left: 20,
                 right: 20,
-                child: Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: _joined
-                            ? Colors.grey.withValues(alpha: 0.4)
-                            : const Color(0xFF10B981).withValues(alpha: 0.4),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  transitionBuilder: (child, animation) => ScaleTransition(
+                    scale: animation,
+                    child: FadeTransition(opacity: animation, child: child),
                   ),
-                  child: ElevatedButton(
-                    onPressed: _joined ? null : _joinVolunteers,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _joined
-                          ? Colors.grey.shade400
-                          : const Color(0xFF10B981),
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _joined
-                              ? Icons.check_circle_rounded
-                              : Icons.person_add_alt_1_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          _joined
-                              ? context.loc.joinedBtn
-                              : (isAr ? ' انا جي ' : 'I am coming'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                  child: _isJoining
+                      // ── Loading state ──
+                      ? Container(
+                          key: const ValueKey('loading'),
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF10B981)
+                                    .withValues(alpha: 0.4),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                'Getting your location...',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _joined
+                          // ── Joined state ──
+                          ? Container(
+                              key: const ValueKey('joined'),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 18, horizontal: 24),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF10B981)
+                                        .withValues(alpha: 0.4),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: Colors.white,
+                                    size: 26,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isAr
+                                            ? '🎉 أنت في الطريق!'
+                                            : '🎉 You are on the way!',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        isAr
+                                            ? 'شكراً لمساعدتك • موقعك يُحدَّث'
+                                            : 'Thank you • Location updating',
+                                        style: TextStyle(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.85),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            )
+                          // ── Default state ──
+                          : Container(
+                              key: const ValueKey('join'),
+                              decoration: BoxDecoration(
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF10B981)
+                                        .withValues(alpha: 0.4),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: _joinVolunteers,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF10B981),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 18),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.person_add_alt_1_rounded,
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      isAr ? 'أنا جي' : 'I am coming',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                 ),
               )
             else if (widget.alert.status.toLowerCase() != 'resolved' &&

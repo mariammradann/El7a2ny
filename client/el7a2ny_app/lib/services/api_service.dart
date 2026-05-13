@@ -354,12 +354,39 @@ static String get baseUrl => ApiConfig.baseUrl;
     if (response.statusCode != 200) throw Exception("Failed to update profile");
   }
 
-  static Future<void> respondToAlert(int alertId) async {
-    final response = await http.post(
-      Uri.parse("$baseUrl/api/alerts/$alertId/respond/"),
-    );
-    if (response.statusCode != 200) throw Exception("Failed to respond");
-  }
+
+static Future<void> respondToAlert(String alertId, {double? lat, double? lng}) async {
+  final prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getString('user_id');
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/alerts/$alertId/respond/'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'user_id': userId,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+    }),
+  );
+
+  if (response.statusCode == 409) throw Exception('Already responded');
+  if (response.statusCode != 201) throw Exception('Failed to respond');
+}
+
+static Future<void> updateResponderLocation(
+  String incidentId,
+  double lat,
+  double lng,
+) async {
+  final prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getString('user_id');
+
+  await http.patch(
+    Uri.parse('$baseUrl/alerts/$incidentId/responders/location/'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({'user_id': userId, 'lat': lat, 'lng': lng}),
+  );
+}
 
   static Future<void> updateAlertStatus(
     String alertId,
@@ -746,6 +773,19 @@ static String get baseUrl => ApiConfig.baseUrl;
       return false;
     }
   }
+  static Future<List<Map<String, dynamic>>> fetchIncidentResponders(String incidentId) async {
+
+  final response = await http.get(
+    Uri.parse('$baseUrl/alerts/$incidentId/responders/'),
+    headers: {"Content-Type": "application/json"},
+  );
+  if (response.statusCode == 200) {
+    final List data = jsonDecode(response.body);
+    return data.cast<Map<String, dynamic>>();
+  }
+  return [];
+}
+
 }
 
 
