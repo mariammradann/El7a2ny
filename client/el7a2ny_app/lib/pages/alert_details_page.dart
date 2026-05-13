@@ -212,7 +212,10 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                             child: Row(
                               children: [
                                 Text(
-                                  widget.isMyAlerts
+                                  widget.alert.status.toLowerCase() ==
+                                              'resolved' ||
+                                          widget.alert.status.toLowerCase() ==
+                                              'cancelled'
                                       ? context.loc.completed
                                       : context.loc.activeStatusNow,
                                   style: TextStyle(
@@ -639,24 +642,34 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                 ),
 
                               // AI Summary Section (For Volunteers)
-                              if (widget.alert.aiSummary != null && widget.alert.aiSummary!.isNotEmpty) ...[
+                              if (widget.alert.aiSummary != null &&
+                                  widget.alert.aiSummary!.isNotEmpty) ...[
                                 const SizedBox(height: 16),
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
                                     color: Colors.blue.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                                    border: Border.all(
+                                      color: Colors.blue.withValues(alpha: 0.3),
+                                    ),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
-                                          const Icon(Icons.auto_awesome, color: Colors.blue, size: 20),
+                                          const Icon(
+                                            Icons.auto_awesome,
+                                            color: Colors.blue,
+                                            size: 20,
+                                          ),
                                           const SizedBox(width: 8),
                                           Text(
-                                            isAr ? 'ملخص الذكاء الاصطناعي (للمتطوعين)' : 'AI Summary (For Volunteers)',
+                                            isAr
+                                                ? 'ملخص الذكاء الاصطناعي (للمتطوعين)'
+                                                : 'AI Summary (For Volunteers)',
                                             style: const TextStyle(
                                               color: Colors.blue,
                                               fontWeight: FontWeight.bold,
@@ -669,7 +682,9 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                                       Text(
                                         widget.alert.aiSummary!,
                                         style: TextStyle(
-                                          color: onSurface.withValues(alpha: 0.8),
+                                          color: onSurface.withValues(
+                                            alpha: 0.8,
+                                          ),
                                           fontSize: 13,
                                           height: 1.5,
                                         ),
