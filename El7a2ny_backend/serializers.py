@@ -50,6 +50,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             "ai_instructions",
             "ai_analysis",
             "image_hash",
+            "device_id",
         ]
     def create(self, validated_data):
         # 1. Pop 'location_data' so it doesn't go into the Incident constructor

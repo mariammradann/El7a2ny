@@ -11,7 +11,6 @@ from .models import (
     PasswordResetToken,
     SensorReading,
 )
-import google.generativeai as genai
 from .ai_utils import analyze_incident_media, get_chatbot_response_with_media
 from .serializers import (
     UserRegistrationSerializer,
@@ -243,6 +242,34 @@ class IncidentViewSet(viewsets.ModelViewSet):
 
             data["user"] = str(resolved_user.user_id)
             print(f"✅ Resolved user UUID: {data['user']}")
+        else:
+            # If no user_id is provided, check if it's a guest report
+            # but first we need a user to assign to the incident (ForeignKey requirement)
+            resolved_user = UserModel.objects.first()
+            if resolved_user:
+                data["user"] = str(resolved_user.user_id)
+            else:
+                return Response(
+                    {"error": "No valid user found. Please log in again."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # 🚨 Limit for Guest Devices: One report only
+        device_id = data.get("device_id")
+        # Consider a "Guest" as someone who didn't provide a user_id or we used the fallback
+        is_guest = "user_id" not in request.data 
+        
+        if is_guest and device_id:
+            existing_report = Incident.objects.filter(device_id=device_id).exists()
+            if existing_report:
+                return Response(
+                    {
+                        "error": "Guest Limit Reached",
+                        "message": "عذراً، يمكنك إرسال بلاغ واحد فقط كزائر. يرجى تسجيل الدخول للاستمرار في استخدام التطبيق.",
+                        "requires_auth": True
+                    },
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
         if "category" not in data or not data["category"]:
             data["category"] = "other"
