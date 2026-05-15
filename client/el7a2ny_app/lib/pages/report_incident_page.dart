@@ -83,27 +83,27 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   }
 
   // --- الميديا (صور وفيديو وصوت) ---
-Future<void> _pickMedia(ImageSource source, bool isVideo) async {
-  try {
-    final XFile? file = isVideo 
-        ? await _picker.pickVideo(source: source) 
-        : await _picker.pickImage(source: source);
+  Future<void> _pickMedia(ImageSource source, bool isVideo) async {
+    try {
+      final XFile? file = isVideo
+          ? await _picker.pickVideo(source: source)
+          : await _picker.pickImage(source: source);
 
-    if (file != null) {
-      // ✅ DO NOT use File(file.path) here. It will crash on Web.
-      setState(() {
-        _evidenceItems.add({
-          'path': file.path, 
-          'type': isVideo ? 'video' : 'image',
-          'name': file.name, // Store the name for the upload
+      if (file != null) {
+        // ✅ DO NOT use File(file.path) here. It will crash on Web.
+        setState(() {
+          _evidenceItems.add({
+            'path': file.path,
+            'type': isVideo ? 'video' : 'image',
+            'name': file.name, // Store the name for the upload
+          });
         });
-      });
-      print("📸 File picked successfully: ${file.name}");
+        print("📸 File picked successfully: ${file.name}");
+      }
+    } catch (e) {
+      print("❌ Error picking media: $e");
     }
-  } catch (e) {
-    print("❌ Error picking media: $e");
   }
-}
 
   void _mockPickAudio() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -201,21 +201,23 @@ Future<void> _pickMedia(ImageSource source, bool isVideo) async {
         type: _selectedType == 'other' ? _customTypeCtrl.text : _selectedType,
         lat: widget.latitude,
         lng: widget.longitude,
-        description:
-            "Desc: ${_descriptionCtrl.text}\nVolunteers: ${_volunteersNeededCtrl.text}",
+        description: _descriptionCtrl.text, // ← clean description only
+        totalVolunteers:
+            int.tryParse(_volunteersNeededCtrl.text.trim()) ?? 0, // ← new param
         evidenceItems: _evidenceItems,
       );
       _makeEmergencyCalls();
       if (mounted) {
         // Extract ID from various possible response formats
-        final incidentId = response['incident_id']?.toString() ?? 
-                           response['id']?.toString() ?? 
-                           'mock_id_${DateTime.now().millisecondsSinceEpoch}';
-                           
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.loc.reportSubmitted)),
-        );
-        
+        final incidentId =
+            response['incident_id']?.toString() ??
+            response['id']?.toString() ??
+            'mock_id_${DateTime.now().millisecondsSinceEpoch}';
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.loc.reportSubmitted)));
+
         // Navigate to the live tracking screen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(

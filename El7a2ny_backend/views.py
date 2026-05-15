@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.contrib.auth.hashers import check_password, make_password
 from .models import (
+    Responder,
     User,
     Incident,
     HelpInitiative,
@@ -13,6 +14,7 @@ from .models import (
 )
 from .ai_utils import analyze_incident_media, get_chatbot_response_with_media
 from .serializers import (
+    ResponderSerializer,
     UserRegistrationSerializer,
     IncidentSerializer,
     HelpInitiativeSerializer,
@@ -1130,3 +1132,100 @@ def submit_volunteer_rating(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def respond_to_alert(request, incident_id):
+    """
+    Respond to an alert as a volunteer.
+    """
+    user_id = request.data.get('user_id')
+    lat = request.data.get('lat')
+    lng = request.data.get('lng')
+    response_seconds = request.data.get('response_seconds', 0)
+
+    if not user_id:
+        return Response({'detail': 'user_id is required.'}, status=400)
+
+    try:
+        user = User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        return Response({'detail': 'User not found.'}, status=404)
+
+    already_responded = Responder.objects.filter(
+        incident_id=incident_id,
+        user_id=user.user_id
+    ).exists()
+
+    if already_responded:
+        return Response({'detail': 'Already responded.'}, status=409)
+
+    response_time = timedelta(seconds=int(response_seconds))
+
+    responder = Responder.objects.create(
+        incident_id=incident_id,
+        user_id=user.user_id,
+        response_time=response_time,
+        lat=lat,
+        lng=lng,
+        last_location_updated=timezone.now() if lat else None,
+    )
+    incident = Incident.objects.get(incident_id=responder.incident_id)
+    incident.current_volunteers = Responder.objects.filter(
+        incident_id=incident.incident_id
+    ).count()
+    incident.save()
+
+    serializer = ResponderSerializer(responder)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def get_incident_responders(request, incident_id):
+    """
+    Get all responders for an incident with their details.
+    """
+    responders = Responder.objects.filter(incident_id=incident_id)
+    data = []
+    for r in responders:
+        try:
+            user = User.objects.get(user_id=r.user_id)
+            name = user.name or ''
+            phone = user.phone_number if hasattr(user, 'phone_number') else ''
+        except User.DoesNotExist:
+            name = 'Unknown'
+            phone = ''
+
+        data.append({
+            'id': str(r.responder_id),
+            'user_id': str(r.user_id),
+            'name': name,
+            'phone': phone,
+            'lat': r.lat,
+            'lng': r.lng,
+            'response_time': str(r.response_time),
+        })
+    return Response(data, status=status.HTTP_200_OK)
+
+
+@api_view(['PATCH'])
+def update_responder_location(request, incident_id):
+    """
+    Update responder's live location.
+    """
+    user_id = request.data.get('user_id')
+
+    if not user_id:
+        return Response({'detail': 'user_id is required.'}, status=400)
+
+    try:
+        responder = Responder.objects.get(
+            incident_id=incident_id,
+            user_id=user_id
+        )
+        responder.lat = request.data.get('lat')
+        responder.lng = request.data.get('lng')
+        responder.last_location_updated = timezone.now()
+        responder.save(update_fields=['lat', 'lng', 'last_location_updated'])
+        return Response({'status': 'ok'})
+    except Responder.DoesNotExist:
+        return Response({'detail': 'Not a responder for this incident.'}, status=404)

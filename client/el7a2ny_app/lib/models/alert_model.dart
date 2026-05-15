@@ -57,7 +57,7 @@ class AlertModel {
         mediaUrls = List<String>.from(json['media_files']);
       }
     }
-    print('RAW created_at: ${json['created_at']}');
+    // print('RAW created_at: ${json['created_at']}');
 
     return AlertModel(
       id: (json['incident_id'] ?? json['id'] ?? '').toString(),

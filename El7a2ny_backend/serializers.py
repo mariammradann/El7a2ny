@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import User, Incident, Location, Initiative, HelpInitiative, PasswordResetToken
+from .models import Responder, User, Incident, Location, Initiative, HelpInitiative, PasswordResetToken
 
 
 # 1. Serializer الخاص بالموقع
@@ -50,7 +50,9 @@ class IncidentSerializer(serializers.ModelSerializer):
             "ai_instructions",
             "ai_analysis",
             "image_hash",
-            "device_id",
+            "current_volunteers",
+            "total_volunteers",
+            # "device_id",
         ]
     def create(self, validated_data):
         # 1. Pop 'location_data' so it doesn't go into the Incident constructor
@@ -190,3 +192,12 @@ class VolunteerRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = VolunteerRating
         fields = '__all__'
+
+class ResponderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Responder
+        fields = ['responder_id', 'incident_id', 'user_id', 'response_time', 'lat', 'lng', 'last_location_updated']
+        read_only_fields = ['responder_id']
+
+    def create(self, validated_data):
+        return Responder.objects.create(**validated_data)

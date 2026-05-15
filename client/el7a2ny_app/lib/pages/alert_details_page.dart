@@ -28,6 +28,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
   bool _joined = false;
   bool _isJoining = false;
   Timer? _locationTimer;
+    late DateTime _pageOpenedAt; // ← ADD THIS
+
 
   @override
   void dispose() {
@@ -41,6 +43,8 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
     _totalVols = widget.alert.totalVolunteers;
     _currVols = widget.alert.currentVolunteers;
     _progress = (_totalVols > 0) ? (_currVols / _totalVols * 100).round() : 0;
+    _pageOpenedAt = DateTime.now(); // ← ADD THIS
+
   }
 
   bool _updatingStatus = false;
@@ -88,10 +92,13 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
         desiredAccuracy: LocationAccuracy.high,
       );
 
+final secondsElapsed = DateTime.now().difference(_pageOpenedAt).inSeconds;
+
 await ApiService.respondToAlert(
   widget.alert.id,
-  lat: position.latitude,
-  lng: position.longitude,
+  lat: position.latitude.isFinite ? position.latitude : 0.0,
+  lng: position.longitude.isFinite ? position.longitude : 0.0,
+  responseSeconds: secondsElapsed,
 );
 
       if (!mounted) return;
@@ -129,6 +136,7 @@ await ApiService.respondToAlert(
         ),
       );
     } catch (e) {
+      debugPrint('🚨 JOIN ERROR: $e');
       if (!mounted) return;
       setState(() => _isJoining = false);
       ScaffoldMessenger.of(context).showSnackBar(

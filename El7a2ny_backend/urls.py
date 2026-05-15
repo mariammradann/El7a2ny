@@ -8,11 +8,14 @@ from .views import (
     UserViewSet,
     IncidentViewSet,
     HelpInitiativeViewSet,
+    get_incident_responders,
     get_latest_sensor_reading,
     receive_temperature,
     register_user_api,
     get_device_status,
     get_first_aid_advice,
+    respond_to_alert,
+    update_responder_location,
     verify_password_api,
     change_password_api,
     password_reset_request,
@@ -110,6 +113,10 @@ urlpatterns = [
     path("api/sensor/latest/",        get_latest_sensor_reading, name="latest_sensor"),
     path("api/ratings/user/", submit_user_rating, name="submit_user_rating"),
     path("api/ratings/volunteer/", submit_volunteer_rating, name="submit_volunteer_rating"),
+    path('alerts/<uuid:incident_id>/respond/', respond_to_alert, name='respond-to-alert'),
+path('alerts/<uuid:incident_id>/responders/', get_incident_responders, name='incident-responders'),
+path('alerts/<uuid:incident_id>/responders/location/', update_responder_location, name='update-responder-location'),
+
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير

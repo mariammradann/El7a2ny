@@ -120,11 +120,14 @@ class Incident(models.Model):
     ai_instructions = models.TextField(null=True, blank=True)
     ai_analysis = models.JSONField(null=True, blank=True)  # Full structured analysis
     image_hash = models.CharField(max_length=64, null=True, blank=True)  # For duplicate detection
-    device_id = models.CharField(max_length=255, null=True, blank=True)
+    # device_id = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=20, default="reported")
     created_at = models.DateTimeField(auto_now_add=True)
     admin_id = models.UUIDField(null=True, blank=True)
     daleel_id = models.UUIDField(null=True, blank=True)
+    current_volunteers = models.IntegerField(default=0)
+    total_volunteers = models.IntegerField(default=0)
+
 
     class Meta:
         db_table = 'ems_schema"."incidents'
@@ -240,3 +243,36 @@ class VolunteerRating(models.Model):
         db_table = 'ems_schema"."volunteer_ratings'
         managed = True
         ordering = ["-created_at"]
+
+
+import uuid
+from django.db import models
+
+class Responder(models.Model):
+    # Primary Key from image
+    responder_id = models.UUIDField(
+        primary_key=True, 
+        default=uuid.uuid4, 
+        editable=False
+    )
+    
+    # Foreign Key / Reference fields from image
+    incident_id = models.UUIDField()
+    user_id = models.UUIDField()
+    
+    # Interval type from image (maps to DurationField)
+    response_time = models.DurationField(null=True, blank=True)
+    
+    # New Location fields
+    lat = models.FloatField(null=True, blank=True)
+    lng = models.FloatField(null=True, blank=True)
+    last_location_updated = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        # We use just the table name here. 
+        # Ensure your search_path is set to 'ems_schema' in settings.py
+        db_table = 'responders'
+        managed = True
+
+    def __str__(self):
+        return f"Responder {self.responder_id} (User: {self.user_id})"

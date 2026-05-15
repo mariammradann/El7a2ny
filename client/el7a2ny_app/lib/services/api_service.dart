@@ -107,6 +107,7 @@ static String get baseUrl => ApiConfig.baseUrl;
     required double lat,
     required double lng,
     String? description,
+    required int totalVolunteers,
     required List<Map<String, String>> evidenceItems,
   }) async {
     double formattedLat = double.parse(lat.toStringAsFixed(7));
@@ -124,6 +125,8 @@ static String get baseUrl => ApiConfig.baseUrl;
     request.fields['latitude'] = formattedLat.toString();
     request.fields['longitude'] = formattedLng.toString();
     request.fields['address'] = "Current Location";
+    request.fields['total_volunteers'] = totalVolunteers.toString();
+
 
     // 2. Add Media Files
     print("📸 Processing ${evidenceItems.length} evidence items...");
@@ -355,7 +358,12 @@ static String get baseUrl => ApiConfig.baseUrl;
   }
 
 
-static Future<void> respondToAlert(String alertId, {double? lat, double? lng}) async {
+static Future<void> respondToAlert(
+  String alertId, {
+  double? lat,
+  double? lng,
+  int responseSeconds = 0,
+}) async {
   final prefs = await SharedPreferences.getInstance();
   final userId = prefs.getString('user_id');
 
@@ -364,6 +372,7 @@ static Future<void> respondToAlert(String alertId, {double? lat, double? lng}) a
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({
       'user_id': userId,
+      'response_seconds': responseSeconds,
       if (lat != null) 'lat': lat,
       if (lng != null) 'lng': lng,
     }),

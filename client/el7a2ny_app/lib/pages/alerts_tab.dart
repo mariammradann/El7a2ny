@@ -604,41 +604,90 @@ class _AlertCardState extends State<_AlertCard> {
                   // -------------------------------------
 
                   const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isDark ? theme.colorScheme.surface : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.chevron_left_rounded, color: Color(0xFF94A3B8)),
-                        const Spacer(),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              context.loc.volunteers,
-                              style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 11),
-                            ),
-                            Text(
-                              '$currVols ${context.loc.outOfLabel} ${alert.totalVolunteers}',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: onSurface),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white10 : Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.people_alt_rounded, size: 16, color: theme.primaryColor),
-                        ),
-                      ],
-                    ),
+Container(
+  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  decoration: BoxDecoration(
+    color: isDark ? theme.colorScheme.surface : const Color(0xFFF8FAFC),
+    borderRadius: BorderRadius.circular(12),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white10 : Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.people_alt_rounded, size: 16, color: theme.primaryColor),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            context.loc.volunteers,
+            style: TextStyle(color: onSurface.withValues(alpha: 0.5), fontSize: 12),
+          ),
+          const Spacer(),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: '$currVols',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: theme.primaryColor,
                   ),
+                ),
+                TextSpan(
+                  text: ' / ${alert.totalVolunteers}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: LinearProgressIndicator(
+          value: alert.totalVolunteers > 0
+              ? (currVols / alert.totalVolunteers).clamp(0.0, 1.0)
+              : 0.0,
+          minHeight: 6,
+          backgroundColor: isDark
+              ? Colors.white12
+              : theme.primaryColor.withValues(alpha: 0.12),
+          valueColor: AlwaysStoppedAnimation<Color>(
+            currVols >= alert.totalVolunteers
+                ? const Color(0xFF22C55E)
+                : theme.primaryColor,
+          ),
+        ),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        currVols >= alert.totalVolunteers
+            ? (isAr ? 'اكتمل العدد المطلوب' : 'Full capacity reached')
+            : (isAr
+                ? 'متبقي ${alert.totalVolunteers - currVols} متطوع'
+                : '${alert.totalVolunteers - currVols} more needed'),
+        style: TextStyle(
+          fontSize: 11,
+          color: currVols >= alert.totalVolunteers
+              ? const Color(0xFF22C55E)
+              : onSurface.withValues(alpha: 0.45),
+        ),
+        textAlign: isAr ? TextAlign.right : TextAlign.left,
+      ),
+    ],
+  ),
+),
                   if (SessionService().isAdmin) ...[
                     const Divider(height: 32),
                     if (_adminActionLoading)
