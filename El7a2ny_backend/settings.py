@@ -153,7 +153,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "yahmed062@gmail.com"  # Your email
 EMAIL_HOST_PASSWORD = (
-    "lgyh thur qazf amty"  # Use Gmail App Password (not your regular password)
+    "btlk eppj cuoo kxap"  # Use Gmail App Password (not your regular password)
 )
 DEFAULT_FROM_EMAIL = "yahmed062@gmail.com"
 

@@ -25,6 +25,7 @@ class IncidentSerializer(serializers.ModelSerializer):
     address = serializers.ReadOnlyField(source="location.address")
     lat = serializers.ReadOnlyField(source="location.latitude")
     lng = serializers.ReadOnlyField(source="location.longitude")
+    reporter_name = serializers.ReadOnlyField(source="user.name")
 
     # media_files is a JSONField in your model, so this works perfectly
     media_files = serializers.JSONField(required=False, allow_null=True)
@@ -35,6 +36,7 @@ class IncidentSerializer(serializers.ModelSerializer):
         fields = [
             "incident_id",
             "user",
+            "reporter_name",
             "location_data",
             "category",
             "description",
@@ -46,10 +48,6 @@ class IncidentSerializer(serializers.ModelSerializer):
             "lat",
             "lng",
             "address",
-            "ai_summary",
-            "ai_instructions",
-            "ai_analysis",
-            "image_hash",
             "current_volunteers",
             "total_volunteers",
             # "device_id",

@@ -159,6 +159,13 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
       );
       
       // Navigate to the live tracking screen
+      SessionService().setActiveIncident(
+        incidentId,
+        lat: _currentPosition?.latitude,
+        lng: _currentPosition?.longitude,
+        role: IncidentRole.reporter,
+      );
+      
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => ActiveIncidentTrackingScreen(
@@ -166,6 +173,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
             initialLat: _currentPosition?.latitude,
             initialLng: _currentPosition?.longitude,
           ),
+          settings: const RouteSettings(name: '/active-incident'),
         ),
       );
     } on ApiException catch (e) {

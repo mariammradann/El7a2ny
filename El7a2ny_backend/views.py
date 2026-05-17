@@ -12,7 +12,6 @@ from .models import (
     PasswordResetToken,
     SensorReading,
 )
-from .ai_utils import analyze_incident_media, get_chatbot_response_with_media
 from .serializers import (
     ResponderSerializer,
     UserRegistrationSerializer,
@@ -28,41 +27,7 @@ from django.utils import timezone
 from datetime import timedelta
 import uuid
 
-# AI logic is handled in ai_utils.py
 
-
-@api_view(["POST"])
-def get_first_aid_advice(request):
-    user_message = request.data.get("message")
-    media_file = request.FILES.get("media")
-    
-    if not user_message and not media_file:
-        return Response({"reply": "Please provide a message or media."}, status=400)
-
-    try:
-        media_path = None
-        if media_file:
-            from django.core.files.storage import default_storage
-            from django.core.files.base import ContentFile
-            import os
-            
-            # Save temporary file for analysis
-            temp_name = f"temp/chat_{uuid.uuid4()}_{media_file.name}"
-            path = default_storage.save(temp_name, ContentFile(media_file.read()))
-            media_path = os.path.join(settings.MEDIA_ROOT, path)
-
-        reply = get_chatbot_response_with_media(user_message or "", media_path)
-        
-        # Clean up temp file if needed (optional)
-        # if media_path: os.remove(media_path)
-        
-        return Response({"reply": reply})
-    except Exception as e:
-        print(f"AI Error: {e}")
-        return Response(
-            {"reply": "Sorry, I am having trouble connecting to my brain right now."},
-            status=500,
-        )
 
 
 # 1. الـ Serializer الخاص باليوزر
@@ -287,12 +252,11 @@ class IncidentViewSet(viewsets.ModelViewSet):
             else:
                 client_ip = request.META.get("REMOTE_ADDR")
 
-        # Add IP to description
+        # Description handling
         desc = data.get("description", "")
         if isinstance(desc, list) and desc:
             desc = desc[0]
-        ip_prefix = f"[IP: {client_ip}] " if client_ip else ""
-        data["description"] = f"{ip_prefix}{desc}".strip()
+        data["description"] = desc.strip()
 
         # Handle file uploads
         media_files_urls = []
@@ -371,21 +335,7 @@ class IncidentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
-        incident = serializer.save()
-        # Trigger AI analysis after creation in a background thread
-        import threading
-        import time
-        def run_analysis(inc_id):
-            try:
-                # Wait a bit for the DB transaction to commit
-                time.sleep(2)
-                print(f"🚀 Starting background AI analysis for incident {inc_id}")
-                from .ai_utils import analyze_incident_media
-                analyze_incident_media(inc_id)
-            except Exception as e:
-                print(f"🚨 Async AI Analysis Error: {e}")
-        
-        threading.Thread(target=run_analysis, args=(incident.incident_id,)).start()
+        serializer.save()
 
 
 @api_view(["POST"])

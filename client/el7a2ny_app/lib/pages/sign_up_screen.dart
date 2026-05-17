@@ -171,10 +171,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      GlobalFabController.hide();
-    });
-
     final theme = Theme.of(context);
     final loc = context.loc;
     final primary = theme.primaryColor;
@@ -276,9 +272,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     if (widget.socialProfile == null) ...[
                       const SizedBox(height: 16),
-                      _AppField(controller: _password, label: loc.password, obscure: true, prefix: Icons.lock_outline),
+                      _AppField(
+                        controller: _password, 
+                        label: loc.password, 
+                        obscure: true, 
+                        prefix: Icons.lock_outline,
+                        validator: (v) {
+                          if (v == null || v.trim().length < 6) return context.loc.min6Chars;
+                          return null;
+                        },
+                      ),
                       const SizedBox(height: 16),
-                      _AppField(controller: _confirmPassword, label: loc.confirmPassword, obscure: true, prefix: Icons.lock_reset_outlined),
+                      _AppField(
+                        controller: _confirmPassword, 
+                        label: loc.confirmPassword, 
+                        obscure: true, 
+                        prefix: Icons.lock_reset_outlined,
+                        validator: (v) {
+                          if (v != _password.text) return context.loc.noMatch;
+                          return null;
+                        },
+                      ),
                     ],
                   ],
                 ),

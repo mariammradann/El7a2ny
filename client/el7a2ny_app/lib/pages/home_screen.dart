@@ -8,6 +8,7 @@ import 'sensors_page.dart';
 import 'landing_screen.dart';
 import '../services/session_service.dart';
 import '../services/sensor_service.dart';
+import 'active_incident_tracking_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -79,6 +80,9 @@ class _HomeScreenState extends State<HomeScreen>
 
             // ── Tab Bar ─────────────────────────────────────────────
             _buildTabBar(context, tabs),
+
+            // ── Active Incident Banner ──────────────────────────────
+            _buildActiveIncidentBanner(context),
 
             // ── Tab Content ─────────────────────────────────────────
             Expanded(
@@ -231,6 +235,87 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActiveIncidentBanner(BuildContext context) {
+    return ListenableBuilder(
+      listenable: SessionService(),
+      builder: (context, _) {
+        final session = SessionService();
+        if (session.activeIncidentId == null) return const SizedBox.shrink();
+
+        final isAr = context.loc.isAr;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFEF4444), Color(0xFFB91C1C)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.red.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ActiveIncidentTrackingScreen(
+                      incidentId: session.activeIncidentId!,
+                      initialLat: session.activeIncidentLat,
+                      initialLng: session.activeIncidentLng,
+                    ),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.location_searching_rounded, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isAr ? 'لديك بلاغ نشط حالياً' : 'Active Incident Tracking',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              fontFamily: 'NotoSansArabic',
+                            ),
+                          ),
+                          Text(
+                            isAr ? 'اضغط للعودة لصفحة التتبع' : 'Tap to return to tracking page',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 11,
+                              fontFamily: 'NotoSansArabic',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+                  ],
+                ),
+              ),
+            ),
           ),
         );
       },

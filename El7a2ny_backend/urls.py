@@ -13,7 +13,6 @@ from .views import (
     receive_temperature,
     register_user_api,
     get_device_status,
-    get_first_aid_advice,
     respond_to_alert,
     update_responder_location,
     verify_password_api,
@@ -105,7 +104,6 @@ urlpatterns = [
     path("api/subscription/subscribe/", subscribe_user, name="subscribe-user"),
     path("api/", include(router.urls)),
     path("api/devices/status/", get_device_status),
-    path("api/chat/", get_first_aid_advice),
     # مسارات تعديل كلمة المرور
     path("api/auth/password/verify/", verify_password_api),
     path("api/auth/password/change/", change_password_api),

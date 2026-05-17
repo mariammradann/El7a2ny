@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import 'sensor_service.dart';
 
 enum UserRole { citizen, volunteer, admin }
+enum IncidentRole { reporter, volunteer }
 
 class SessionService extends ChangeNotifier {
   static final SessionService _instance = SessionService._internal();
@@ -14,12 +15,20 @@ class SessionService extends ChangeNotifier {
   bool _isYearlyPlan = false;
   DateTime? _subscriptionDate;
   final List<String> _activityLog = [];
+  String? _activeIncidentId;
+  double? _activeIncidentLat;
+  double? _activeIncidentLng;
+  IncidentRole? _incidentRole;
 
   UserRole get currentRole => _currentRole;
   bool get isAdmin => _currentRole == UserRole.admin;
   bool get isPlus => _isPlus;
   bool get isYearlyPlan => _isYearlyPlan;
   DateTime? get subscriptionDate => _subscriptionDate;
+  String? get activeIncidentId => _activeIncidentId;
+  double? get activeIncidentLat => _activeIncidentLat;
+  double? get activeIncidentLng => _activeIncidentLng;
+  IncidentRole? get incidentRole => _incidentRole;
 
   DateTime? get renewalDate {
     if (_subscriptionDate == null) return null;
@@ -50,6 +59,29 @@ class SessionService extends ChangeNotifier {
     _isYearlyPlan = isYearly;
     _subscriptionDate = date ?? (value ? DateTime.now() : null);
     notifyListeners();
+  }
+
+  bool? _showVolunteerAlert = false;
+  bool get showVolunteerAlert => _showVolunteerAlert ?? false;
+
+  void setActiveIncident(String? id, {double? lat, double? lng, IncidentRole? role}) {
+    debugPrint("🔔 SESSION: Setting active incident to $id as $role");
+    _activeIncidentId = id;
+    _activeIncidentLat = lat;
+    _activeIncidentLng = lng;
+    _incidentRole = role;
+
+    if (id != null && role == IncidentRole.volunteer) {
+      _showVolunteerAlert = true;
+      notifyListeners();
+      Future.delayed(const Duration(seconds: 5), () {
+        _showVolunteerAlert = false;
+        notifyListeners();
+      });
+    } else {
+      _showVolunteerAlert = false;
+      notifyListeners();
+    }
   }
 
   void initFromUser(UserModel user) {

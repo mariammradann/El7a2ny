@@ -18,8 +18,6 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
   double _fireDeptRating = 0;
   double _el7a2nyPlusRating = 0;
   bool? _volunteersHelpful;
-  bool? _reportFake;
-
   bool _isSubmitting = false;
 
   Future<void> _submitRating() async {
@@ -32,7 +30,6 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
       "fire_dept_rating": _fireDeptRating,
       "el7a2ny_plus_rating": _el7a2nyPlusRating,
       "volunteers_helpful": _volunteersHelpful,
-      "report_fake": _reportFake,
     });
 
     if (!mounted) return;
@@ -126,45 +123,8 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
                             onTap: () => setState(() => _volunteersHelpful = false),
                           ),
                         ),
-                      ],
-                    ),
-                    const Divider(height: 40),
-
-                    Text(
-                      loc.isAr ? 'هل البلاغ كاذب؟' : 'Is the report fake?',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildHelpfulButton(
-                            title: loc.isAr ? 'نعم' : 'Yes',
-                            icon: Icons.report_problem_rounded,
-                            isSelected: _reportFake == true,
-                            activeColor: Colors.red,
-                            onTap: () {
-                              setState(() => _reportFake = true);
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const ReportAccountScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildHelpfulButton(
-                            title: loc.isAr ? 'لا' : 'No',
-                            icon: Icons.check_circle_rounded,
-                            isSelected: _reportFake == false,
-                            activeColor: Colors.green,
-                            onTap: () => setState(() => _reportFake = false),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
+                  ),
                     const SizedBox(height: 40),
                     
                     ElevatedButton(

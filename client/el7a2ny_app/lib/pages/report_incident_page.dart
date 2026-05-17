@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../core/localization/app_strings.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import '../services/api_service.dart';
-import '../models/user_model.dart';
+import '../services/session_service.dart';
 import 'active_incident_tracking_screen.dart';
 
 class ReportIncidentPage extends StatefulWidget {
@@ -219,6 +219,13 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
         ).showSnackBar(SnackBar(content: Text(context.loc.reportSubmitted)));
 
         // Navigate to the live tracking screen
+        SessionService().setActiveIncident(
+          incidentId,
+          lat: widget.latitude,
+          lng: widget.longitude,
+          role: IncidentRole.reporter,
+        );
+
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => ActiveIncidentTrackingScreen(
@@ -226,6 +233,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               initialLat: widget.latitude,
               initialLng: widget.longitude,
             ),
+            settings: const RouteSettings(name: '/active-incident'),
           ),
         );
       }

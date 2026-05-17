@@ -10,7 +10,6 @@ class LanguageToggleButton extends StatelessWidget {
     final isArabic = LocaleProvider.of(context).isArabic;
 
     return IconButton(
-      tooltip: isArabic ? 'English' : 'العربية',
       icon: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

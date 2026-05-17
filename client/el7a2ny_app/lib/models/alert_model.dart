@@ -22,6 +22,7 @@ class AlertModel {
   final String? aiSummary;
   final String? aiInstructions;
   final Map<String, dynamic>? aiAnalysis;
+  final String? reporterName;
 
   const AlertModel({
     required this.id,
@@ -44,6 +45,7 @@ class AlertModel {
     this.aiSummary,
     this.aiInstructions,
     this.aiAnalysis,
+    this.reporterName,
   });
 
   factory AlertModel.fromJson(Map<String, dynamic> json) {
@@ -86,6 +88,7 @@ class AlertModel {
       aiAnalysis: json['ai_analysis'] is Map
           ? Map<String, dynamic>.from(json['ai_analysis'])
           : null,
+      reporterName: json['reporter_name'],
     );
   }
 

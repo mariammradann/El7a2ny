@@ -7,6 +7,8 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../core/localization/app_strings.dart';
 import '../models/alert_model.dart';
 import '../services/api_service.dart';
+import '../services/session_service.dart';
+import 'active_incident_tracking_screen.dart';
 
 class AlertDetailsPage extends StatefulWidget {
   final AlertModel alert;
@@ -109,6 +111,13 @@ await ApiService.respondToAlert(
         _progress = min(100, (_currVols / _totalVols * 100).round());
       });
 
+      SessionService().setActiveIncident(
+        widget.alert.id,
+        lat: widget.alert.lat,
+        lng: widget.alert.lng,
+        role: IncidentRole.volunteer,
+      );
+
       _locationTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
         try {
           final pos = await Geolocator.getCurrentPosition(
@@ -133,6 +142,19 @@ await ApiService.respondToAlert(
           ),
           backgroundColor: const Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // Redirect to tracking screen
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => ActiveIncidentTrackingScreen(
+            incidentId: widget.alert.id,
+            initialLat: widget.alert.lat,
+            initialLng: widget.alert.lng,
+          ),
+          settings: const RouteSettings(name: '/active-incident'),
         ),
       );
     } catch (e) {
@@ -847,59 +869,79 @@ await ApiService.respondToAlert(
                         )
                       : _joined
                           // ── Joined state ──
-                          ? Container(
-                              key: const ValueKey('joined'),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 18, horizontal: 24),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF10B981)
-                                        .withValues(alpha: 0.4),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
+                          ? GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ActiveIncidentTrackingScreen(
+                                      incidentId: widget.alert.id,
+                                      initialLat: widget.alert.latitude,
+                                      initialLng: widget.alert.longitude,
+                                    ),
                                   ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.check_circle_rounded,
-                                    color: Colors.white,
-                                    size: 26,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        isAr
-                                            ? '🎉 أنت في الطريق!'
-                                            : '🎉 You are on the way!',
-                                        style: const TextStyle(
+                                );
+                              },
+                              child: Container(
+                                key: const ValueKey('joined'),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 18, horizontal: 24),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF10B981)
+                                          .withValues(alpha: 0.4),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle_rounded,
                                           color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                          size: 26,
                                         ),
-                                      ),
-                                      Text(
-                                        isAr
-                                            ? 'شكراً لمساعدتك • موقعك يُحدَّث'
-                                            : 'Thank you • Location updating',
-                                        style: TextStyle(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.85),
-                                          fontSize: 12,
+                                        const SizedBox(width: 12),
+                                        Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              isAr
+                                                  ? 'أنت في الطريق للمساعدة!'
+                                                  : 'You are on the way!',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              isAr
+                                                  ? 'اضغط هنا لتتبع البلاغ'
+                                                  : 'Tap to track incident',
+                                              style: TextStyle(
+                                                color: Colors.white
+                                                    .withValues(alpha: 0.85),
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                      ],
+                                    ),
+                                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+                                  ],
+                                ),
                               ),
                             )
                           // ── Default state ──

@@ -6,7 +6,16 @@ import 'dart:math' as math;
 import '../core/localization/app_strings.dart';
 import '../models/alert_model.dart';
 import '../services/api_service.dart';
+import '../services/session_service.dart';
 import '../widgets/incident_chat_sheet.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'report_fake_incident_screen.dart';
+import 'report_volunteer_screen.dart';
+import 'user_rating_screen.dart';
+import 'sign_up_screen.dart';
+import 'volunteer_rating_screen.dart';
+import '../core/auth/auth_token_store.dart';
+import '../widgets/global_fab_overlay.dart';
 
 class ActiveIncidentTrackingScreen extends StatefulWidget {
   final String incidentId;
@@ -33,6 +42,22 @@ class _ActiveIncidentTrackingScreenState
   Timer? _pollingTimer;
   AlertModel? _alertDetails;
   bool _loadingDetails = true;
+  bool _hasShownCompletionPopup = false;
+  bool _canceling = false;
+  bool _dangerEnding = false;
+
+  bool get _isCreator {
+    // Check local session state first for immediate UI rendering
+    if (SessionService().incidentRole == IncidentRole.volunteer) return false;
+    if (SessionService().incidentRole == IncidentRole.reporter) return true;
+
+    // Fallback to API data if session role is not set
+    if (_alertDetails == null) return true;
+    if (_alertDetails!.isMyAlert) return true;
+    // Guests are always creators because volunteers must be logged in
+    if (AuthTokenStore.userId == null || AuthTokenStore.userId == 'guest') return true;
+    return false;
+  }
 
   @override
   void initState() {
@@ -105,9 +130,144 @@ class _ActiveIncidentTrackingScreenState
           _alertDetails = details;
           _loadingDetails = false;
         });
+
+        // If the incident is resolved or finished, clear it from session
+        if (details.status.toLowerCase() == 'resolved' || 
+            details.status.toLowerCase() == 'completed' ||
+            details.status.toLowerCase() == 'cancelled') {
+          if (!_hasShownCompletionPopup) {
+            _hasShownCompletionPopup = true;
+            SessionService().setActiveIncident(null);
+            if (_isCreator) {
+              _showCreatorRatingPopup();
+            } else {
+              _showCompletionPopup();
+            }
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error fetching incident details: $e');
+    }
+  }
+
+  Future<void> _showCompletionPopup() async {
+    final isAr = context.loc.isAr;
+    final isFake = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Directionality(
+        textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, color: Colors.blue),
+              const SizedBox(width: 8),
+              Expanded(child: Text(isAr ? 'انتهاء البلاغ' : 'Incident Ended', style: const TextStyle(fontWeight: FontWeight.bold))),
+            ],
+          ),
+          content: Text(
+            isAr ? 'تم إنهاء هذا البلاغ.\nهل كان البلاغ كاذباً؟' : 'This incident has ended.\nWas it a false alarm?',
+            style: const TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(isAr ? 'لا، بلاغ حقيقي' : 'No, Real', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: Text(isAr ? 'نعم، كاذب' : 'Yes, Fake', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (mounted) {
+      if (isFake == true) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => ReportFakeIncidentScreen(
+              incidentId: widget.incidentId,
+              incidentDetails: _alertDetails,
+            ),
+            settings: const RouteSettings(name: '/report_fake_incident'),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const VolunteerRatingScreen(),
+            settings: const RouteSettings(name: '/volunteer_rating'),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showCreatorRatingPopup() async {
+    final isAr = context.loc.isAr;
+    final action = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Directionality(
+        textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(Icons.star_rate_rounded, color: Colors.orange),
+              const SizedBox(width: 8),
+              Expanded(child: Text(isAr ? 'تقييم التجربة' : 'Rate Experience', style: const TextStyle(fontWeight: FontWeight.bold))),
+            ],
+          ),
+          content: Text(
+            isAr 
+              ? 'لقد انتهى البلاغ. هل ترغب في تقييم تجربتك أم الإبلاغ عن متطوع أساء التصرف؟' 
+              : 'The incident has ended. Would you like to rate your experience or report a volunteer?',
+            style: const TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'skip'),
+              child: Text(isAr ? 'تخطي' : 'Skip', style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            if (_volunteers.isNotEmpty)
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'report'),
+                child: Text(isAr ? 'الإبلاغ' : 'Report', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, 'rate'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: Text(isAr ? 'تقييم التجربة' : 'Rate Experience', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (mounted) {
+      if (action == 'report') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => ReportVolunteerScreen(volunteers: _volunteers),
+            settings: const RouteSettings(name: '/report_volunteer'),
+          ),
+        );
+      } else if (action == 'rate') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const UserRatingScreen(),
+            settings: const RouteSettings(name: '/user_rating'),
+          ),
+        );
+      } else {
+        Navigator.of(context).pop();
+      }
     }
   }
 
@@ -123,78 +283,182 @@ class _ActiveIncidentTrackingScreenState
     );
   }
 
-  // ── AI Analysis helpers ──────────────────────────────────────────────────
 
-  Map<String, dynamic>? get _analysis => _alertDetails?.aiAnalysis;
 
-  Color _severityColor(String severity) {
-    switch (severity.toLowerCase()) {
-      case 'critical':
-        return const Color(0xFFB71C1C);
-      case 'high':
-        return const Color(0xFFE53935);
-      case 'medium':
-        return const Color(0xFFF57C00);
-      case 'low':
-        return const Color(0xFF1976D2);
-      default:
-        return Colors.grey;
+  Future<void> _cancelIncident() async {
+    final isAr = context.loc.isAr;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+        child: AlertDialog(
+          title: Text(isAr ? 'إلغاء البلاغ' : 'Cancel Incident', style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold)),
+          content: Text(isAr ? 'هل أنت متأكد من إلغاء هذا البلاغ نهائياً؟' : 'Are you sure you want to cancel this incident?', style: const TextStyle(fontFamily: 'NotoSansArabic')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(isAr ? 'تراجع' : 'No', style: const TextStyle(fontFamily: 'NotoSansArabic')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(isAr ? 'نعم، إلغاء' : 'Yes, Cancel', style: const TextStyle(color: Colors.red, fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _canceling = true);
+      try {
+        await ApiService.updateAlertStatus(widget.incidentId, 'cancelled');
+        SessionService().setActiveIncident(null);
+        if (mounted) {
+          if (_isCreator) {
+            final isGuest = AuthTokenStore.userId == null || AuthTokenStore.userId == 'guest';
+            if (isGuest) {
+              _showGuestRegistrationPopup();
+            } else {
+              _showCreatorRatingPopup();
+            }
+          } else {
+            Navigator.of(context).pop();
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isAr ? 'حدث خطأ أثناء الإلغاء' : 'Error cancelling incident', style: const TextStyle(fontFamily: 'NotoSansArabic')),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _canceling = false);
+      }
     }
   }
 
-  String _severityLabel(String severity) {
-    switch (severity.toLowerCase()) {
-      case 'critical':
-        return 'حرج';
-      case 'high':
-        return 'عالي';
-      case 'medium':
-        return 'متوسط';
-      case 'low':
-        return 'منخفض';
-      default:
-        return severity;
+  Future<void> _dangerEnded() async {
+    final isAr = context.loc.isAr;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+        child: AlertDialog(
+          title: Text(isAr ? 'انتهاء الخطر' : 'Danger Ended', style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold)),
+          content: Text(isAr ? 'هل تود إنهاء البلاغ لأن الخطر قد انتهى؟' : 'Would you like to end the incident because the danger has ended?', style: const TextStyle(fontFamily: 'NotoSansArabic')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(isAr ? 'تراجع' : 'Cancel', style: const TextStyle(fontFamily: 'NotoSansArabic')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(isAr ? 'نعم، انتهى' : 'Yes, Ended', style: const TextStyle(color: Colors.green, fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _dangerEnding = true);
+      try {
+        await ApiService.updateAlertStatus(widget.incidentId, 'resolved');
+        SessionService().setActiveIncident(null);
+        if (mounted) {
+          if (_isCreator) {
+            final isGuest = AuthTokenStore.userId == null || AuthTokenStore.userId == 'guest';
+            if (isGuest) {
+              _showGuestRegistrationPopup();
+            } else {
+              _showCreatorRatingPopup();
+            }
+          } else {
+            Navigator.of(context).pop();
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isAr ? 'حدث خطأ' : 'Error', style: const TextStyle(fontFamily: 'NotoSansArabic')),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _dangerEnding = false);
+      }
     }
   }
 
-  Color _validityColor(String validity) {
-    switch (validity) {
-      case 'genuine':
-        return const Color(0xFF2E7D32);
-      case 'uncertain':
-        return const Color(0xFFF57C00);
-      case 'likely_false':
-        return const Color(0xFFE53935);
-      case 'definitely_false':
-        return const Color(0xFFB71C1C);
-      default:
-        return Colors.grey;
-    }
+  void _showGuestRegistrationPopup() {
+    final isAr = context.loc.isAr;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Directionality(
+        textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(isAr ? 'تنبيه' : 'Notice', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+          content: Text(
+            isAr 
+              ? 'لكي تتمكن من استخدام التطبيق مرة أخرى، يجب عليك إنشاء حساب.' 
+              : 'To use the app again, you must create an account.',
+            style: const TextStyle(fontSize: 16, fontFamily: 'NotoSansArabic'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.of(context).pop();
+              },
+              child: Text(isAr ? 'تخطي' : 'Skip', style: const TextStyle(color: Colors.grey, fontFamily: 'NotoSansArabic')),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).primaryColor),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const SignUpScreen(),
+                    settings: const RouteSettings(name: '/signup'),
+                  ),
+                );
+                if (mounted) {
+                  _showCreatorRatingPopup();
+                }
+              },
+              child: Text(isAr ? 'إنشاء حساب' : 'Register', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  String _validityLabel(String validity) {
-    switch (validity) {
-      case 'genuine':
-        return '✅ بلاغ حقيقي';
-      case 'uncertain':
-        return '⚠️ غير مؤكد';
-      case 'likely_false':
-        return '❌ محتمل مزيف';
-      case 'definitely_false':
-        return '🚫 مزيف';
-      default:
-        return validity;
-    }
-  }
-
-  IconData _categoryIcon(String category) {
-    switch (category) {
-      case 'vehicle':
-        return Icons.directions_car_rounded;
-      case 'living_being':
-        return Icons.person_rounded;
-      default:
-        return Icons.category_rounded;
+  Future<void> _launchMaps() async {
+    final lat = _incidentLocation.latitude;
+    final lng = _incidentLocation.longitude;
+    final uri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$lat,$lng");
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        final isAr = context.loc.isAr;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isAr ? 'لا يمكن فتح الخرائط' : 'Could not open maps',
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -202,6 +466,11 @@ class _ActiveIncidentTrackingScreenState
 
   @override
   Widget build(BuildContext context) {
+    // Ensure global FABs are visible on this screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      GlobalFabController.show();
+    });
+
     final theme = Theme.of(context);
     final isAr = context.loc.isAr;
 
@@ -316,22 +585,6 @@ class _ActiveIncidentTrackingScreenState
                       ),
                     ),
                   ),
-                  if (_analysis != null && _analysis!['severity'] != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _severityColor(_analysis!['severity']),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        _severityLabel(_analysis!['severity']),
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -376,525 +629,394 @@ class _ActiveIncidentTrackingScreenState
                       ),
                       const SizedBox(height: 16),
 
-                      // AI Analysis Card
-                      if (_analysis != null) ...[
-                        _buildAnalysisCard(theme),
-                        const SizedBox(height: 12),
-                      ] else if (_alertDetails?.mediaUrls != null &&
-                          _alertDetails!.mediaUrls!.isNotEmpty) ...[
-                        _buildAnalyzingCard(theme, isAr),
-                        const SizedBox(height: 12),
-                      ],
 
-                      // Safety Instructions
-                      if (_alertDetails?.aiInstructions != null &&
-                          _alertDetails!.aiInstructions!.isNotEmpty) ...[
-                        _buildInstructionsCard(theme, isAr),
-                        const SizedBox(height: 12),
-                      ],
 
-                      // Volunteers header
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
+                      if (_alertDetails != null && !_isCreator) ...[
+                        // ── Volunteer View ──
+                        // Incident Details
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.info_outline_rounded,
+                                  color: Colors.green),
                             ),
-                            child: const Icon(Icons.people_alt_rounded,
-                                color: Colors.blue),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isAr
-                                      ? '${_volunteers.length} متطوعين في الطريق'
-                                      : '${_volunteers.length} volunteers en route',
-                                  style: const TextStyle(
-                                    fontFamily: 'NotoSansArabic',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isAr ? 'تفاصيل البلاغ' : 'Incident Details',
+                                    style: const TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  isAr
-                                      ? 'المساعدة قادمة إليك'
-                                      : 'Help is on the way',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600),
-                                ),
-                              ],
+                                  Text(
+                                    isAr ? 'أنت في طريقك للمساعدة' : 'You are on your way to help',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                        fontFamily: 'NotoSansArabic'),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Volunteers list
-                      if (_volunteers.isEmpty)
+                          ],
+                        ),
+                        const SizedBox(height: 12),
                         Container(
+                          width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.grey.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.hourglass_empty_rounded,
-                                  color: Colors.grey.shade400, size: 18),
-                              const SizedBox(width: 8),
                               Text(
-                                isAr
-                                    ? 'لا يوجد متطوعون بعد'
-                                    : 'No volunteers yet',
-                                style: TextStyle(
-                                    color: Colors.grey.shade500,
-                                    fontSize: 13),
+                                isAr ? 'صاحب البلاغ: ${_alertDetails!.reporterName ?? 'مستخدم'}' : 'Reporter: ${_alertDetails!.reporterName ?? 'User'}',
+                                style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold),
                               ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isAr ? 'نوع البلاغ: ${_alertDetails!.getLocalizedType(context.loc)}' : 'Type: ${_alertDetails!.type}',
+                                style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isAr ? 'الموقع: ${_alertDetails!.address ?? _alertDetails!.location}' : 'Location: ${_alertDetails!.address ?? _alertDetails!.location}',
+                                style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                              ),
+                              if (_alertDetails!.description != null && _alertDetails!.description!.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  isAr ? 'الوصف: ${_alertDetails!.description}' : 'Description: ${_alertDetails!.description}',
+                                  style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                                ),
+                              ]
                             ],
                           ),
-                        )
-                      else
-                        Container(
-                          constraints: const BoxConstraints(maxHeight: 160),
-                          child: ListView.separated(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: _volunteers.length,
-                            separatorBuilder: (_, __) =>
-                                const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final v = _volunteers[index];
-                              return ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.blue.shade700,
-                                  child: Text(
-                                    v['name']
-                                        .toString()
-                                        .substring(0, 1)
-                                        .toUpperCase(),
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold),
-                                  ),
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Directions Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: _launchMaps,
+                            icon: const Icon(Icons.directions_rounded),
+                            label: Text(
+                              isAr ? 'احصل على الاتجاهات' : 'Get Directions',
+                              style: const TextStyle(
+                                fontFamily: 'NotoSansArabic',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Help Completed Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue.shade700,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (context) => const VolunteerRatingScreen(),
+                                  settings: const RouteSettings(name: '/volunteer-rating'),
                                 ),
-                                title: Text(
-                                  v['name'],
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600),
-                                ),
-                                subtitle: Text(
-                                  isAr
-                                      ? 'يصل خلال ${v['eta']}'
-                                      : 'ETA: ${v['eta']}',
-                                ),
-                                trailing: v['phone'] != null &&
-                                        v['phone'].toString().isNotEmpty
-                                    ? IconButton(
-                                        icon: const Icon(Icons.phone,
-                                            color: Colors.green),
-                                        onPressed: () {},
-                                      )
-                                    : null,
                               );
                             },
+                            icon: const Icon(Icons.check_circle_outline_rounded),
+                            label: Text(
+                              isAr ? 'تمت المساعدة (إنهاء)' : 'Help Completed (Finish)',
+                              style: const TextStyle(
+                                fontFamily: 'NotoSansArabic',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-
-                      const SizedBox(height: 12),
-
-                      // Chat button
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.primaryColor,
-                          foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: theme.primaryColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                ),
+                                onPressed: _openChatSheet,
+                                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                                label: Text(
+                                  isAr ? 'تواصل' : 'Chat',
+                                  style: const TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.redAccent,
+                                  side: const BorderSide(color: Colors.redAccent),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ReportFakeIncidentScreen(
+                                        incidentId: widget.incidentId,
+                                        incidentDetails: _alertDetails,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.report_problem_outlined),
+                                label: Text(
+                                  isAr ? 'بلاغ كاذب' : 'Fake Report',
+                                  style: const TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        onPressed: _openChatSheet,
-                        icon: const Icon(Icons.chat_bubble_outline_rounded),
-                        label: Text(
-                          isAr
-                              ? 'التواصل مع المتطوعين'
-                              : 'Chat with Volunteers',
-                          style: const TextStyle(
-                            fontFamily: 'NotoSansArabic',
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
+                      ] else ...[
+                        // ── Creator View ──
+                        // Volunteers Header
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.people_alt_rounded,
+                                  color: Colors.blue),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isAr
+                                        ? '${_volunteers.length} متطوعين في الطريق'
+                                        : '${_volunteers.length} volunteers en route',
+                                    style: const TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    isAr
+                                        ? 'المساعدة قادمة إليك'
+                                        : 'Help is on the way',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Volunteers List
+                        if (_volunteers.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.hourglass_empty_rounded,
+                                    color: Colors.grey.shade400, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isAr
+                                      ? 'لا يوجد متطوعون بعد'
+                                      : 'No volunteers yet',
+                                  style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            constraints: const BoxConstraints(maxHeight: 160),
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              itemCount: _volunteers.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final v = _volunteers[index];
+                                return ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: CircleAvatar(
+                                    backgroundColor: Colors.blue.shade700,
+                                    child: Text(
+                                      v['name']
+                                          .toString()
+                                          .substring(0, 1)
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    v['name'],
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: Text(
+                                    isAr
+                                        ? 'يصل خلال ${v['eta']}'
+                                        : 'ETA: ${v['eta']}',
+                                  ),
+                                  trailing: v['phone'] != null &&
+                                          v['phone'].toString().isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(Icons.phone,
+                                              color: Colors.green),
+                                          onPressed: () {},
+                                        )
+                                      : null,
+                                );
+                              },
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+
+                        // Creator Action Buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: theme.primaryColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                ),
+                                onPressed: _openChatSheet,
+                                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                                label: Text(
+                                  isAr ? 'تواصل' : 'Chat',
+                                  style: const TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.redAccent,
+                                  side: const BorderSide(color: Colors.redAccent),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12)),
+                                ),
+                                onPressed: _canceling ? null : _cancelIncident,
+                                icon: _canceling 
+                                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.redAccent))
+                                    : const Icon(Icons.cancel_outlined),
+                                label: Text(
+                                  isAr ? 'إلغاء البلاغ' : 'Cancel Report',
+                                  style: const TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: _dangerEnding ? null : _dangerEnded,
+                            icon: _dangerEnding
+                                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.check_circle_outline_rounded),
+                            label: Text(
+                              isAr ? 'الخطر انتهى' : 'Danger Ended',
+                              style: const TextStyle(
+                                fontFamily: 'NotoSansArabic',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Sub-widgets ──────────────────────────────────────────────────────────
-
-  Widget _buildAnalysisCard(ThemeData theme) {
-    final a = _analysis!;
-    final validity = a['incident_validity'] as String? ?? 'uncertain';
-    final severity = a['severity'] as String? ?? 'low';
-    final incType = a['incident_type'] as String? ?? '';
-    final confidence =
-        ((a['confidence'] as num?)?.toDouble() ?? 0) * 100;
-    final falsePct =
-        ((a['false_report_probability'] as num?)?.toDouble() ?? 0) * 100;
-    final objects = a['detected_objects'] as List? ?? [];
-    final risks = a['risks'] as List? ?? [];
-    final actions = a['recommended_actions'] as List? ?? [];
-    final duplicate = a['duplicate_detected'] as bool? ?? false;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(
-            color: _validityColor(validity).withValues(alpha: 0.4)),
-        borderRadius: BorderRadius.circular(16),
-        color: _validityColor(validity).withValues(alpha: 0.05),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _validityColor(validity).withValues(alpha: 0.12),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(15)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.analytics_rounded,
-                    size: 18, color: Colors.white70),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'تحليل الذكاء الاصطناعي',
-                    style: TextStyle(
-                      fontFamily: 'NotoSansArabic',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: _validityColor(validity),
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _validityColor(validity),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _validityLabel(validity),
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (duplicate)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.4)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.copy_rounded,
-                            color: Colors.red, size: 16),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '⚠️ صورة مكررة — تم الإبلاغ بنفس الصورة من قبل',
-                            style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                                fontFamily: 'NotoSansArabic'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (incType.isNotEmpty)
-                            Text(
-                              incType,
-                              style: const TextStyle(
-                                fontFamily: 'NotoSansArabic',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: _severityColor(severity),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  'خطورة: ${_severityLabel(severity)}',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'ثقة: ${confidence.toStringAsFixed(0)}%',
-                                style: const TextStyle(
-                                    fontSize: 11, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (falsePct > 20)
-                      Column(
-                        children: [
-                          Text(
-                            '${falsePct.toStringAsFixed(0)}%',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: falsePct > 60
-                                  ? Colors.red
-                                  : Colors.orange,
-                            ),
-                          ),
-                          const Text('احتمال مزيف',
-                              style: TextStyle(
-                                  fontSize: 9, color: Colors.grey)),
-                        ],
-                      ),
-                  ],
-                ),
-                if (objects.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  const Text('العناصر المكتشفة',
-                      style: TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12)),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: objects.map((obj) {
-                      final o = obj as Map;
-                      final cat = o['category'] as String? ?? 'object';
-                      final label = o['label_ar'] as String? ??
-                          o['label'] as String? ??
-                          '';
-                      final conf =
-                          ((o['confidence'] as num?)?.toDouble() ?? 0) *
-                              100;
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: cat == 'vehicle'
-                              ? Colors.blue.withValues(alpha: 0.1)
-                              : cat == 'living_being'
-                                  ? Colors.green.withValues(alpha: 0.1)
-                                  : Colors.grey.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: cat == 'vehicle'
-                                ? Colors.blue.withValues(alpha: 0.3)
-                                : cat == 'living_being'
-                                    ? Colors.green.withValues(alpha: 0.3)
-                                    : Colors.grey.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(_categoryIcon(cat),
-                                size: 12,
-                                color: cat == 'vehicle'
-                                    ? Colors.blue
-                                    : cat == 'living_being'
-                                        ? Colors.green
-                                        : Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$label (${conf.toStringAsFixed(0)}%)',
-                              style: const TextStyle(
-                                  fontSize: 11,
-                                  fontFamily: 'NotoSansArabic'),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-                if (risks.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  const Text('المخاطر المرصودة',
-                      style: TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12)),
-                  const SizedBox(height: 6),
-                  ...risks.map((r) => Padding(
-                        padding: const EdgeInsets.only(bottom: 3),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.warning_amber_rounded,
-                                color: Colors.orange, size: 14),
-                            const SizedBox(width: 6),
-                            Expanded(
-                                child: Text(r.toString(),
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontFamily: 'NotoSansArabic'))),
-                          ],
-                        ),
-                      )),
-                ],
-                if (actions.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  const Text('إجراءات المتطوعين',
-                      style: TextStyle(
-                          fontFamily: 'NotoSansArabic',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12)),
-                  const SizedBox(height: 6),
-                  ...actions.map((a) => Padding(
-                        padding: const EdgeInsets.only(bottom: 3),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.chevron_left_rounded,
-                                color: Colors.blue, size: 16),
-                            const SizedBox(width: 4),
-                            Expanded(
-                                child: Text(a.toString(),
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        fontFamily: 'NotoSansArabic'))),
-                          ],
-                        ),
-                      )),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnalyzingCard(ThemeData theme, bool isAr) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-                strokeWidth: 2, color: Colors.orange),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              isAr
-                  ? 'جاري تحليل الصورة بالذكاء الاصطناعي...'
-                  : 'AI analyzing incident media...',
-              style: TextStyle(
-                fontSize: 13,
-                fontFamily: 'NotoSansArabic',
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInstructionsCard(ThemeData theme, bool isAr) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.emergency_share_outlined,
-                  color: Colors.orange, size: 18),
-              SizedBox(width: 8),
-              Text(
-                'تعليمات السلامة (لك)',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  fontFamily: 'NotoSansArabic',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _alertDetails!.aiInstructions!,
-            style: TextStyle(
-              fontSize: 13,
-              fontFamily: 'NotoSansArabic',
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
-              height: 1.6,
             ),
           ),
         ],
