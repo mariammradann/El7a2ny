@@ -123,7 +123,6 @@ class Incident(models.Model):
     current_volunteers = models.IntegerField(default=0)
     total_volunteers = models.IntegerField(default=0)
 
-
     class Meta:
         db_table = 'ems_schema"."incidents'
         managed = True  # لو الجداول موجودة فعلياً وصحيحة
@@ -202,19 +201,28 @@ class PasswordResetToken(models.Model):
 
 
 class SensorReading(models.Model):
-    user        = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sensor_readings")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="sensor_readings"
+    )
     temperature = models.FloatField()
-    humidity    = models.FloatField(null=True, blank=True)
-    is_alert    = models.BooleanField(default=False)
-    created_at  = models.DateTimeField(auto_now_add=True)
+    humidity = models.FloatField(null=True, blank=True)
+    is_alert = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'ems_schema"."sensor_readings'
         managed = True
         ordering = ["-created_at"]
 
+
 class UserRating(models.Model):
-    user = models.ForeignKey(User, related_name='user_ratings', on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(
+        User,
+        related_name="user_ratings",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     app_rating = models.FloatField(default=0.0)
     police_rating = models.FloatField(default=0.0)
     ambulance_rating = models.FloatField(default=0.0)
@@ -229,8 +237,15 @@ class UserRating(models.Model):
         managed = True
         ordering = ["-created_at"]
 
+
 class VolunteerRating(models.Model):
-    user = models.ForeignKey(User, related_name='volunteer_ratings', on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(
+        User,
+        related_name="volunteer_ratings",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     is_real_report = models.BooleanField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -243,31 +258,88 @@ class VolunteerRating(models.Model):
 import uuid
 from django.db import models
 
+
 class Responder(models.Model):
     # Primary Key from image
     responder_id = models.UUIDField(
-        primary_key=True, 
-        default=uuid.uuid4, 
-        editable=False
+        primary_key=True, default=uuid.uuid4, editable=False
     )
-    
+
     # Foreign Key / Reference fields from image
     incident_id = models.UUIDField()
     user_id = models.UUIDField()
-    
+
     # Interval type from image (maps to DurationField)
     response_time = models.DurationField(null=True, blank=True)
-    
+
     # New Location fields
     lat = models.FloatField(null=True, blank=True)
     lng = models.FloatField(null=True, blank=True)
     last_location_updated = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        # We use just the table name here. 
+        # We use just the table name here.
         # Ensure your search_path is set to 'ems_schema' in settings.py
-        db_table = 'responders'
+        db_table = "responders"
         managed = True
 
     def __str__(self):
         return f"Responder {self.responder_id} (User: {self.user_id})"
+
+
+class IncidentChat(models.Model):
+    """Model for incident chat threads"""
+
+    chat_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    incident_id = models.UUIDField(
+        db_index=True
+    )  # Reference to incident without foreign key for flexibility
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "incident_chats"
+        managed = True
+        indexes = [
+            models.Index(fields=["incident_id", "-updated_at"]),
+        ]
+
+    def __str__(self):
+        return f"Chat for Incident {self.incident_id}"
+
+
+class ChatMessage(models.Model):
+    """Model for individual chat messages in an incident chat"""
+
+    SENDER_TYPES = [
+        ("user", "Report User"),
+        ("volunteer", "Volunteer"),
+        ("admin", "Admin"),
+        ("system", "System"),
+    ]
+
+    message_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    chat = models.ForeignKey(
+        IncidentChat,
+        on_delete=models.CASCADE,
+        related_name="messages",
+        db_column="chat_id",
+    )
+    sender_id = models.UUIDField()  # ID of the user sending the message
+    sender_name = models.CharField(max_length=255)  # Cached sender name for display
+    sender_type = models.CharField(
+        max_length=20, choices=SENDER_TYPES
+    )  # user, volunteer, admin, system
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "chat_messages"
+        managed = True
+        ordering = ["created_at"]
+        indexes = [
+            models.Index(fields=["chat", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"Message from {self.sender_name} in Chat {self.chat_id}"

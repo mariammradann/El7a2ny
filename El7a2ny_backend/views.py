@@ -11,6 +11,8 @@ from .models import (
     Initiative,
     PasswordResetToken,
     SensorReading,
+    IncidentChat,
+    ChatMessage,
 )
 from .serializers import (
     ResponderSerializer,
@@ -18,6 +20,8 @@ from .serializers import (
     IncidentSerializer,
     HelpInitiativeSerializer,
     InitiativeSerializer,
+    ChatMessageSerializer,
+    IncidentChatSerializer,
 )
 import random
 import string
@@ -26,8 +30,6 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 import uuid
-
-
 
 
 # 1. الـ Serializer الخاص باليوزر
@@ -224,8 +226,8 @@ class IncidentViewSet(viewsets.ModelViewSet):
         # 🚨 Limit for Guest Devices: One report only
         device_id = data.get("device_id")
         # Consider a "Guest" as someone who didn't provide a user_id or we used the fallback
-        is_guest = "user_id" not in request.data 
-        
+        is_guest = "user_id" not in request.data
+
         if is_guest and device_id:
             existing_report = Incident.objects.filter(device_id=device_id).exists()
             if existing_report:
@@ -233,9 +235,9 @@ class IncidentViewSet(viewsets.ModelViewSet):
                     {
                         "error": "Guest Limit Reached",
                         "message": "عذراً، يمكنك إرسال بلاغ واحد فقط كزائر. يرجى تسجيل الدخول للاستمرار في استخدام التطبيق.",
-                        "requires_auth": True
+                        "requires_auth": True,
                     },
-                    status=status.HTTP_403_FORBIDDEN
+                    status=status.HTTP_403_FORBIDDEN,
                 )
 
         if "category" not in data or not data["category"]:
@@ -298,7 +300,9 @@ class IncidentViewSet(viewsets.ModelViewSet):
                 }
                 print(f"✅ Coordinates parsed: lat={lat}, lng={lng}")
             except (ValueError, TypeError) as e:
-                print(f"❌ Error parsing coordinates: {e} (lat={lat_raw}, lng={lng_raw})")
+                print(
+                    f"❌ Error parsing coordinates: {e} (lat={lat_raw}, lng={lng_raw})"
+                )
                 return Response(
                     {"error": f"Invalid coordinates: {e}"},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -356,20 +360,22 @@ def get_device_status(request):
     from datetime import timedelta
 
     user_id = request.query_params.get("user_id")
-    
+
     # Check if sensor sent a reading in the last 30 seconds
     cutoff = timezone.now() - timedelta(seconds=30)
-    
+
     sensor_query = SensorReading.objects.filter(created_at__gte=cutoff)
     if user_id:
         sensor_query = sensor_query.filter(user__user_id=user_id)
-    
+
     home_sensor_connected = sensor_query.exists()
 
-    return Response({
-        "smartwatchConnected": False,
-        "homeSensorConnected": home_sensor_connected,
-    })
+    return Response(
+        {
+            "smartwatchConnected": False,
+            "homeSensorConnected": home_sensor_connected,
+        }
+    )
 
 
 class HelpInitiativeViewSet(viewsets.ModelViewSet):
@@ -622,6 +628,8 @@ def get_user_activity_history(request):
         return Response({"error": "Invalid UUID format"}, status=400)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
 # ========== ADMIN ENDPOINTS ==========
 
 
@@ -1059,9 +1067,11 @@ def fetch_sensors(request):
 
     return Response(sensors)
 
+
 from .serializers import UserRatingSerializer, VolunteerRatingSerializer
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 def submit_user_rating(request):
     """
     Submit a user rating.
@@ -1072,7 +1082,8 @@ def submit_user_rating(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 def submit_volunteer_rating(request):
     """
     Submit a volunteer rating.
@@ -1083,31 +1094,31 @@ def submit_volunteer_rating(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 def respond_to_alert(request, incident_id):
     """
     Respond to an alert as a volunteer.
     """
-    user_id = request.data.get('user_id')
-    lat = request.data.get('lat')
-    lng = request.data.get('lng')
-    response_seconds = request.data.get('response_seconds', 0)
+    user_id = request.data.get("user_id")
+    lat = request.data.get("lat")
+    lng = request.data.get("lng")
+    response_seconds = request.data.get("response_seconds", 0)
 
     if not user_id:
-        return Response({'detail': 'user_id is required.'}, status=400)
+        return Response({"detail": "user_id is required."}, status=400)
 
     try:
         user = User.objects.get(user_id=user_id)
     except User.DoesNotExist:
-        return Response({'detail': 'User not found.'}, status=404)
+        return Response({"detail": "User not found."}, status=404)
 
     already_responded = Responder.objects.filter(
-        incident_id=incident_id,
-        user_id=user.user_id
+        incident_id=incident_id, user_id=user.user_id
     ).exists()
 
     if already_responded:
-        return Response({'detail': 'Already responded.'}, status=409)
+        return Response({"detail": "Already responded."}, status=409)
 
     response_time = timedelta(seconds=int(response_seconds))
 
@@ -1129,7 +1140,7 @@ def respond_to_alert(request, incident_id):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def get_incident_responders(request, incident_id):
     """
     Get all responders for an incident with their details.
@@ -1139,43 +1150,139 @@ def get_incident_responders(request, incident_id):
     for r in responders:
         try:
             user = User.objects.get(user_id=r.user_id)
-            name = user.name or ''
-            phone = user.phone_number if hasattr(user, 'phone_number') else ''
+            name = user.name or ""
+            phone = user.phone_number if hasattr(user, "phone_number") else ""
         except User.DoesNotExist:
-            name = 'Unknown'
-            phone = ''
+            name = "Unknown"
+            phone = ""
 
-        data.append({
-            'id': str(r.responder_id),
-            'user_id': str(r.user_id),
-            'name': name,
-            'phone': phone,
-            'lat': r.lat,
-            'lng': r.lng,
-            'response_time': str(r.response_time),
-        })
+        data.append(
+            {
+                "id": str(r.responder_id),
+                "user_id": str(r.user_id),
+                "name": name,
+                "phone": phone,
+                "lat": r.lat,
+                "lng": r.lng,
+                "response_time": str(r.response_time),
+            }
+        )
     return Response(data, status=status.HTTP_200_OK)
 
 
-@api_view(['PATCH'])
+@api_view(["PATCH"])
 def update_responder_location(request, incident_id):
     """
     Update responder's live location.
     """
-    user_id = request.data.get('user_id')
+    user_id = request.data.get("user_id")
 
     if not user_id:
-        return Response({'detail': 'user_id is required.'}, status=400)
+        return Response({"detail": "user_id is required."}, status=400)
 
     try:
-        responder = Responder.objects.get(
-            incident_id=incident_id,
-            user_id=user_id
-        )
-        responder.lat = request.data.get('lat')
-        responder.lng = request.data.get('lng')
+        responder = Responder.objects.get(incident_id=incident_id, user_id=user_id)
+        responder.lat = request.data.get("lat")
+        responder.lng = request.data.get("lng")
         responder.last_location_updated = timezone.now()
-        responder.save(update_fields=['lat', 'lng', 'last_location_updated'])
-        return Response({'status': 'ok'})
+        responder.save(update_fields=["lat", "lng", "last_location_updated"])
+        return Response({"status": "ok"})
     except Responder.DoesNotExist:
-        return Response({'detail': 'Not a responder for this incident.'}, status=404)
+        return Response({"detail": "Not a responder for this incident."}, status=404)
+
+
+# ============ CHAT ENDPOINTS ============
+
+
+@api_view(["GET", "POST"])
+def incident_chat_messages(request, incident_id):
+    """
+    GET: Fetch all messages for an incident chat
+    POST: Send a new message to an incident chat
+    """
+    if request.method == "GET":
+        # Get or create chat for this incident
+        chat, created = IncidentChat.objects.get_or_create(incident_id=incident_id)
+
+        # Optional: filter by timestamp to get only new messages
+        since = request.query_params.get("since")
+        messages = chat.messages.all()
+
+        if since:
+            try:
+                from django.utils import timezone
+                from dateutil.parser import parse
+
+                since_dt = parse(since)
+                messages = messages.filter(created_at__gt=since_dt)
+            except:
+                pass
+
+        serializer = ChatMessageSerializer(messages, many=True)
+        return Response(
+            {
+                "chat_id": str(chat.chat_id),
+                "incident_id": str(chat.incident_id),
+                "messages": serializer.data,
+            }
+        )
+
+    elif request.method == "POST":
+        # Create a new message
+        sender_id = request.data.get("sender_id")
+        sender_name = request.data.get("sender_name", "Unknown")
+        sender_type = request.data.get(
+            "sender_type", "user"
+        )  # user, volunteer, admin, system
+        text = request.data.get("text")
+
+        if not all([sender_id, text]):
+            return Response(
+                {"error": "sender_id and text are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get or create chat
+        chat, _ = IncidentChat.objects.get_or_create(incident_id=incident_id)
+
+        # Create message
+        message = ChatMessage.objects.create(
+            chat=chat,
+            sender_id=sender_id,
+            sender_name=sender_name,
+            sender_type=sender_type,
+            text=text,
+        )
+
+        serializer = ChatMessageSerializer(message)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET"])
+def incident_chat_poll(request, incident_id):
+    """
+    Poll endpoint for real-time chat updates.
+    Returns new messages since the provided timestamp.
+    """
+    since = request.query_params.get("since")
+
+    chat, created = IncidentChat.objects.get_or_create(incident_id=incident_id)
+    messages = chat.messages.all()
+
+    if since:
+        try:
+            from django.utils import timezone
+            from dateutil.parser import parse
+
+            since_dt = parse(since)
+            messages = messages.filter(created_at__gt=since_dt)
+        except:
+            pass
+
+    serializer = ChatMessageSerializer(messages, many=True)
+    return Response(
+        {
+            "messages": serializer.data,
+            "timestamp": timezone.now().isoformat(),
+        }
+    )

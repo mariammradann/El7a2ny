@@ -18,7 +18,6 @@ import 'package:http_parser/http_parser.dart'; // Needed for MediaType
 import 'package:cross_file/cross_file.dart'; // Usually comes with image_picker
 import '../core/config/api_config.dart';
 
-
 // ─────────────────────────────────────────────────────────
 //  API SERVICE
 // ─────────────────────────────────────────────────────────
@@ -26,7 +25,7 @@ import '../core/config/api_config.dart';
 class ApiService {
   // استخدم IP جهازك بدل localhost لو بتجرب من موبايل حقيقي (مثلاً 192.168.1.5)
   // الـ 10.0.2.2 مخصصة للأندرويد إيموليتور للوصول للسيرفر المحلي
-static String get baseUrl => ApiConfig.baseUrl;
+  static String get baseUrl => ApiConfig.baseUrl;
   static bool useMock = false;
 
   // --- 1. نظام جلب البروفايل (الديناميكي) ---
@@ -127,7 +126,6 @@ static String get baseUrl => ApiConfig.baseUrl;
     request.fields['address'] = "Current Location";
     request.fields['total_volunteers'] = totalVolunteers.toString();
 
-
     // 2. Add Media Files
     print("📸 Processing ${evidenceItems.length} evidence items...");
 
@@ -216,7 +214,9 @@ static String get baseUrl => ApiConfig.baseUrl;
 
   static Future<AlertModel?> fetchAlertDetails(String alertId) async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/api/incidents/$alertId/"));
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/incidents/$alertId/"),
+      );
       if (response.statusCode == 200) {
         return AlertModel.fromJson(jsonDecode(response.body));
       }
@@ -357,45 +357,44 @@ static String get baseUrl => ApiConfig.baseUrl;
     if (response.statusCode != 200) throw Exception("Failed to update profile");
   }
 
+  static Future<void> respondToAlert(
+    String alertId, {
+    double? lat,
+    double? lng,
+    int responseSeconds = 0,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
 
-static Future<void> respondToAlert(
-  String alertId, {
-  double? lat,
-  double? lng,
-  int responseSeconds = 0,
-}) async {
-  final prefs = await SharedPreferences.getInstance();
-  final userId = prefs.getString('user_id');
+    final response = await http.post(
+      Uri.parse('$baseUrl/alerts/$alertId/respond/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'user_id': userId,
+        'response_seconds': responseSeconds,
+        if (lat != null) 'lat': lat,
+        if (lng != null) 'lng': lng,
+      }),
+    );
 
-  final response = await http.post(
-    Uri.parse('$baseUrl/alerts/$alertId/respond/'),
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({
-      'user_id': userId,
-      'response_seconds': responseSeconds,
-      if (lat != null) 'lat': lat,
-      if (lng != null) 'lng': lng,
-    }),
-  );
+    if (response.statusCode == 409) throw Exception('Already responded');
+    if (response.statusCode != 201) throw Exception('Failed to respond');
+  }
 
-  if (response.statusCode == 409) throw Exception('Already responded');
-  if (response.statusCode != 201) throw Exception('Failed to respond');
-}
+  static Future<void> updateResponderLocation(
+    String incidentId,
+    double lat,
+    double lng,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
 
-static Future<void> updateResponderLocation(
-  String incidentId,
-  double lat,
-  double lng,
-) async {
-  final prefs = await SharedPreferences.getInstance();
-  final userId = prefs.getString('user_id');
-
-  await http.patch(
-    Uri.parse('$baseUrl/alerts/$incidentId/responders/location/'),
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode({'user_id': userId, 'lat': lat, 'lng': lng}),
-  );
-}
+    await http.patch(
+      Uri.parse('$baseUrl/alerts/$incidentId/responders/location/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'user_id': userId, 'lat': lat, 'lng': lng}),
+    );
+  }
 
   static Future<void> updateAlertStatus(
     String alertId,
@@ -727,15 +726,18 @@ static Future<void> updateResponderLocation(
       rethrow;
     }
   }
-  static Future<Map<String, dynamic>> getLatestSensorReading(String userId) async {
-  final response = await http.get(
-    Uri.parse('$baseUrl/api/sensor/latest/?user_id=$userId'),
-  );
-  if (response.statusCode == 200) {
-    return jsonDecode(response.body);
+
+  static Future<Map<String, dynamic>> getLatestSensorReading(
+    String userId,
+  ) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/sensor/latest/?user_id=$userId'),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to fetch sensor reading');
   }
-  throw Exception('Failed to fetch sensor reading');
-}
 
   // ========== RATING METHODS ==========
 
@@ -743,7 +745,7 @@ static Future<void> updateResponderLocation(
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
-      
+
       final dataToSend = Map<String, dynamic>.from(ratingData);
       if (userId != null) {
         dataToSend['user_id'] = userId;
@@ -761,11 +763,13 @@ static Future<void> updateResponderLocation(
     }
   }
 
-  static Future<bool> submitVolunteerRating(Map<String, dynamic> ratingData) async {
+  static Future<bool> submitVolunteerRating(
+    Map<String, dynamic> ratingData,
+  ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
-      
+
       final dataToSend = Map<String, dynamic>.from(ratingData);
       if (userId != null) {
         dataToSend['user_id'] = userId;
@@ -782,19 +786,92 @@ static Future<void> updateResponderLocation(
       return false;
     }
   }
-  static Future<List<Map<String, dynamic>>> fetchIncidentResponders(String incidentId) async {
 
-  final response = await http.get(
-    Uri.parse('$baseUrl/alerts/$incidentId/responders/'),
-    headers: {"Content-Type": "application/json"},
-  );
-  if (response.statusCode == 200) {
-    final List data = jsonDecode(response.body);
-    return data.cast<Map<String, dynamic>>();
+  static Future<List<Map<String, dynamic>>> fetchIncidentResponders(
+    String incidentId,
+  ) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/alerts/$incidentId/responders/'),
+      headers: {"Content-Type": "application/json"},
+    );
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    }
+    return [];
   }
-  return [];
+
+  // ========== CHAT ENDPOINTS ==========
+
+  static Future<List<Map<String, dynamic>>> fetchChatMessages(
+    String incidentId,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/alerts/$incidentId/chat/'),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final messages = data['messages'] as List;
+        return messages.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching chat messages: $e');
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>?> sendChatMessage({
+    required String incidentId,
+    required String senderId,
+    required String senderName,
+    required String text,
+    String senderType = 'user',
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/alerts/$incidentId/chat/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'sender_id': senderId,
+          'sender_name': senderName,
+          'sender_type': senderType,
+          'text': text,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      print('Error sending chat message: $e');
+      return null;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> pollChatMessages(
+    String incidentId,
+    String since,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/alerts/$incidentId/chat/poll/?since=$since'),
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final messages = data['messages'] as List;
+        return messages.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      print('Error polling chat messages: $e');
+      return [];
+    }
+  }
 }
-
-}
-
-

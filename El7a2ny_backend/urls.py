@@ -31,6 +31,8 @@ from .views import (
     subscribe_user,
     submit_user_rating,
     submit_volunteer_rating,
+    incident_chat_messages,
+    incident_chat_poll,
 )
 
 # 1. إعداد الـ Router
@@ -107,14 +109,37 @@ urlpatterns = [
     # مسارات تعديل كلمة المرور
     path("api/auth/password/verify/", verify_password_api),
     path("api/auth/password/change/", change_password_api),
-    path("api/sensor/temperature/",   receive_temperature,      name="receive_temperature"),
-    path("api/sensor/latest/",        get_latest_sensor_reading, name="latest_sensor"),
+    path("api/sensor/temperature/", receive_temperature, name="receive_temperature"),
+    path("api/sensor/latest/", get_latest_sensor_reading, name="latest_sensor"),
     path("api/ratings/user/", submit_user_rating, name="submit_user_rating"),
-    path("api/ratings/volunteer/", submit_volunteer_rating, name="submit_volunteer_rating"),
-    path('alerts/<uuid:incident_id>/respond/', respond_to_alert, name='respond-to-alert'),
-path('alerts/<uuid:incident_id>/responders/', get_incident_responders, name='incident-responders'),
-path('alerts/<uuid:incident_id>/responders/location/', update_responder_location, name='update-responder-location'),
-
+    path(
+        "api/ratings/volunteer/",
+        submit_volunteer_rating,
+        name="submit_volunteer_rating",
+    ),
+    path(
+        "alerts/<uuid:incident_id>/respond/", respond_to_alert, name="respond-to-alert"
+    ),
+    path(
+        "alerts/<uuid:incident_id>/responders/",
+        get_incident_responders,
+        name="incident-responders",
+    ),
+    path(
+        "alerts/<uuid:incident_id>/responders/location/",
+        update_responder_location,
+        name="update-responder-location",
+    ),
+    path(
+        "alerts/<uuid:incident_id>/chat/",
+        incident_chat_messages,
+        name="incident-chat-messages",
+    ),
+    path(
+        "alerts/<uuid:incident_id>/chat/poll/",
+        incident_chat_poll,
+        name="incident-chat-poll",
+    ),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير

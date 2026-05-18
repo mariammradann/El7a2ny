@@ -1,6 +1,16 @@
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
-from .models import Responder, User, Incident, Location, Initiative, HelpInitiative, PasswordResetToken
+from .models import (
+    Responder,
+    User,
+    Incident,
+    Location,
+    Initiative,
+    HelpInitiative,
+    PasswordResetToken,
+    IncidentChat,
+    ChatMessage,
+)
 
 
 # 1. Serializer الخاص بالموقع
@@ -52,6 +62,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             "total_volunteers",
             # "device_id",
         ]
+
     def create(self, validated_data):
         # 1. Pop 'location_data' so it doesn't go into the Incident constructor
         location_payload = validated_data.pop("location_data")
@@ -154,48 +165,99 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = "__all__"
 
+
 class HelpInitiativeSerializer(serializers.ModelSerializer):
     class Meta:
         model = HelpInitiative
         fields = "__all__"
 
+
 class InitiativeSerializer(serializers.ModelSerializer):
     user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source='user', required=False, allow_null=True
+        queryset=User.objects.all(), source="user", required=False, allow_null=True
     )
 
     class Meta:
         model = Initiative
         fields = [
-            'id', 'user_id', 'title', 'description', 'author_name', 
-            'author_role', 'category', 'location', 'latitude', 
-            'longitude', 'image_url', 'contact_info', 'is_active', 
-            'participants_count', 'created_at'
+            "id",
+            "user_id",
+            "title",
+            "description",
+            "author_name",
+            "author_role",
+            "category",
+            "location",
+            "latitude",
+            "longitude",
+            "image_url",
+            "contact_info",
+            "is_active",
+            "participants_count",
+            "created_at",
         ]
+
 
 from .models import UserRating, VolunteerRating
 
+
 class UserRatingSerializer(serializers.ModelSerializer):
     user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source='user', required=False, allow_null=True
+        queryset=User.objects.all(), source="user", required=False, allow_null=True
     )
+
     class Meta:
         model = UserRating
-        fields = '__all__'
+        fields = "__all__"
+
 
 class VolunteerRatingSerializer(serializers.ModelSerializer):
     user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source='user', required=False, allow_null=True
+        queryset=User.objects.all(), source="user", required=False, allow_null=True
     )
+
     class Meta:
         model = VolunteerRating
-        fields = '__all__'
+        fields = "__all__"
+
 
 class ResponderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Responder
-        fields = ['responder_id', 'incident_id', 'user_id', 'response_time', 'lat', 'lng', 'last_location_updated']
-        read_only_fields = ['responder_id']
+        fields = [
+            "responder_id",
+            "incident_id",
+            "user_id",
+            "response_time",
+            "lat",
+            "lng",
+            "last_location_updated",
+        ]
+        read_only_fields = ["responder_id"]
 
     def create(self, validated_data):
         return Responder.objects.create(**validated_data)
+
+
+# Chat Serializers
+class ChatMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChatMessage
+        fields = [
+            "message_id",
+            "sender_id",
+            "sender_name",
+            "sender_type",
+            "text",
+            "created_at",
+        ]
+        read_only_fields = ["message_id", "created_at"]
+
+
+class IncidentChatSerializer(serializers.ModelSerializer):
+    messages = ChatMessageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = IncidentChat
+        fields = ["chat_id", "incident_id", "messages", "created_at", "updated_at"]
+        read_only_fields = ["chat_id", "created_at", "updated_at"]
