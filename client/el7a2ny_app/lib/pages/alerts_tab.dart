@@ -6,6 +6,7 @@ import '../core/localization/app_strings.dart';
 import 'alert_details_page.dart';
 import '../services/session_service.dart';
 import 'package:geolocator/geolocator.dart';
+import 'active_incident_tracking_screen.dart';
 
 // IMPORTANT: Define your server URL here
 const String BASE_URL = "http://127.0.0.1:8000"; 
@@ -228,7 +229,8 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
       final s = a.status.toLowerCase();
       return s != 'resolved' && s != 'completed' && s != 'solved';
     }).where((a) {
-      if (isMyAlerts || _currentPosition == null) return true;
+      // Admins should see all incidents (no proximity filter)
+      if (isMyAlerts || _currentPosition == null || SessionService().isAdmin) return true;
       final dist = Geolocator.distanceBetween(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
@@ -293,6 +295,20 @@ class _AlertCardState extends State<_AlertCard> {
           backgroundColor: action == 'monitor' ? Colors.blue : Colors.orange,
         ));
         widget.onRefresh();
+
+        // If admin chose to monitor, open the active incident tracking screen and set session
+        if (action == 'monitor') {
+          SessionService().setActiveIncident(alert.id, lat: alert.lat, lng: alert.lng, role: null);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ActiveIncidentTrackingScreen(
+                incidentId: alert.id,
+                initialLat: alert.lat,
+                initialLng: alert.lng,
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

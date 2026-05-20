@@ -32,8 +32,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _auth = AuthRepository();
 
   Color _kAccentGreen(BuildContext context) => Theme.of(context).primaryColor;
-  Color _kTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
-  Color _kPlaceholderGrey(BuildContext context) => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
+  Color _kTextDark(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurface;
+  Color _kPlaceholderGrey(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
 
   @override
   void dispose() {
@@ -52,24 +54,21 @@ class _LoginScreenState extends State<LoginScreen> {
         rememberMe: _rememberMe,
       );
       if (!mounted) return;
-      
+
       // Check user type and route accordingly
-      final userType = AuthTokenStore.userType;
-      if (userType == "admin") {
+      final userType = AuthTokenStore.userType?.toLowerCase() ?? "";
+
+      if (userType.contains("admin")) {
         SessionService().setRole(UserRole.admin);
-        await Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(builder: (context) => const AdminScreen()),
-        );
+      } else if (userType.contains("volunteer")) {
+        SessionService().setRole(UserRole.volunteer);
       } else {
-        if (userType == "volunteer") {
-          SessionService().setRole(UserRole.volunteer);
-        } else {
-          SessionService().setRole(UserRole.citizen);
-        }
-        await Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(builder: (context) => MainShellScreen()),
-        );
+        SessionService().setRole(UserRole.citizen);
       }
+
+      await Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(builder: (context) => MainShellScreen()),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -100,7 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: _kTextDark(context)),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: _kTextDark(context),
+          ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         actions: [
@@ -150,18 +152,21 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _identifier,
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(fontFamily: 'NotoSansArabic'),
-                  decoration: _fieldDecoration(context, hint: context.loc.emailOrMobileHint),
-                  inputFormatters: [
-                    _SmartMobileFormatter(),
-                  ],
+                  decoration: _fieldDecoration(
+                    context,
+                    hint: context.loc.emailOrMobileHint,
+                  ),
+                  inputFormatters: [_SmartMobileFormatter()],
                   validator: (v) {
-                    if (v == null || v.isEmpty) return context.loc.requiredField;
+                    if (v == null || v.isEmpty)
+                      return context.loc.requiredField;
                     // Check if input is numeric (mobile number) or email-like
                     final isNumeric = RegExp(r'^[0-9]+$').hasMatch(v);
                     if (isNumeric) {
                       if (v.length != 11) return context.loc.mobileValidation11;
                     } else {
-                      if (!v.contains('@')) return context.loc.emailValidationAt;
+                      if (!v.contains('@'))
+                        return context.loc.emailValidationAt;
                     }
                     return null;
                   },
@@ -181,17 +186,27 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _password,
                   obscureText: _obscurePassword,
                   style: const TextStyle(fontFamily: 'NotoSansArabic'),
-                  decoration: _fieldDecoration(context, hint: context.loc.passwordHint).copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: _kPlaceholderGrey(context),
-                        size: 22,
+                  decoration:
+                      _fieldDecoration(
+                        context,
+                        hint: context.loc.passwordHint,
+                      ).copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: _kPlaceholderGrey(context),
+                            size: 22,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                  validator: (v) => (v == null || v.isEmpty) ? context.loc.requiredField : null,
+                  validator: (v) => (v == null || v.isEmpty)
+                      ? context.loc.requiredField
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -234,7 +249,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (context) => const ForgotPasswordScreen(),
+                              builder: (context) =>
+                                  const ForgotPasswordScreen(),
                             ),
                           );
                         },
@@ -330,7 +346,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  InputDecoration _fieldDecoration(BuildContext context, {required String hint}) {
+  InputDecoration _fieldDecoration(
+    BuildContext context, {
+    required String hint,
+  }) {
     final theme = Theme.of(context);
     return InputDecoration(
       hintText: hint,
@@ -344,11 +363,15 @@ class _LoginScreenState extends State<LoginScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
+        borderSide: BorderSide(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
+        borderSide: BorderSide(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

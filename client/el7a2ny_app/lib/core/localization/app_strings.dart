@@ -742,18 +742,28 @@ class AppStrings {
 
   // Free Plan
   String get freePlanTitle => isAr ? 'الخطة المجانية' : 'Free Plan';
-  String get freePlanSubtitle => isAr ? 'المميزات الأساسية المجانية' : 'Basic Free Features';
+  String get freePlanSubtitle =>
+      isAr ? 'المميزات الأساسية المجانية' : 'Basic Free Features';
   String get freePlanPrice => isAr ? 'مجانًا' : 'Free';
   String get freePlanPriceDesc => isAr ? 'مدى الحياة' : 'Forever';
   String get standardResponse => isAr ? 'استجابة قياسية' : 'Standard Response';
-  String get standardResponseDesc => isAr ? 'توصيل بخدمات الطوارئ' : 'Connect to emergency services';
+  String get standardResponseDesc =>
+      isAr ? 'توصيل بخدمات الطوارئ' : 'Connect to emergency services';
   String get communityHelp => isAr ? 'مساعدة مجتمعية' : 'Community Help';
-  String get communityHelpDesc => isAr ? 'طلب مساعدة من المتطوعين القريبين' : 'Request help from nearby volunteers';
-  String get standardMedicalAdvice => isAr ? 'نصائح طبية أساسية' : 'Basic Medical Advice';
-  String get standardMedicalAdviceDesc => isAr ? 'وصول لمعلومات الإسعافات الأولية' : 'Access to first aid information';
-  String get normalSOSAlerts => isAr ? 'تنبيهات طوارئ عادية' : 'Normal SOS Alerts';
-  String get normalSOSAlertsDesc => isAr ? 'إرسال واستقبال تنبيهات الخطر' : 'Send and receive danger alerts';
-  String get freeCurrentPlan => isAr ? 'خطتك الحالية (مجانية)' : 'Your Current Plan (Free)';
+  String get communityHelpDesc => isAr
+      ? 'طلب مساعدة من المتطوعين القريبين'
+      : 'Request help from nearby volunteers';
+  String get standardMedicalAdvice =>
+      isAr ? 'نصائح طبية أساسية' : 'Basic Medical Advice';
+  String get standardMedicalAdviceDesc => isAr
+      ? 'وصول لمعلومات الإسعافات الأولية'
+      : 'Access to first aid information';
+  String get normalSOSAlerts =>
+      isAr ? 'تنبيهات طوارئ عادية' : 'Normal SOS Alerts';
+  String get normalSOSAlertsDesc =>
+      isAr ? 'إرسال واستقبال تنبيهات الخطر' : 'Send and receive danger alerts';
+  String get freeCurrentPlan =>
+      isAr ? 'خطتك الحالية (مجانية)' : 'Your Current Plan (Free)';
 
   // Premium Subscription
   String get premiumPlusTitle => isAr ? 'إلحقني بلس' : 'El7a2ny Plus';
@@ -1080,4 +1090,22 @@ class AppStrings {
   String get confirmAction => isAr ? 'تأكيد الإجراء' : 'Confirm Action';
   String get cancel => isAr ? 'إلغاء' : 'Cancel';
   String get confirm => isAr ? 'تأكيد' : 'Confirm';
+
+  // User Details Screen
+  String get userDetails => isAr ? 'تفاصيل المستخدم' : 'User Details';
+  String get personalInformation =>
+      isAr ? 'المعلومات الشخصية' : 'Personal Information';
+  String get phone => isAr ? 'رقم الهاتف' : 'Phone';
+  String get nationalId => isAr ? 'رقم الهوية' : 'National ID';
+  String get dateOfBirth => isAr ? 'تاريخ الميلاد' : 'Date of Birth';
+  String get healthInformation =>
+      isAr ? 'المعلومات الصحية' : 'Health Information';
+  String get gender => isAr ? 'النوع' : 'Gender';
+  String get bloodType => isAr ? 'فصيلة الدم' : 'Blood Type';
+  String get volunteerInformation =>
+      isAr ? 'معلومات المتطوع' : 'Volunteer Information';
+  String get hasVehicle => isAr ? 'لديه مركبة' : 'Has Vehicle';
+  String get skills => isAr ? 'المهارات' : 'Skills';
+  String get subscriptionInfo =>
+      isAr ? 'معلومات الاشتراك' : 'Subscription Information';
 }

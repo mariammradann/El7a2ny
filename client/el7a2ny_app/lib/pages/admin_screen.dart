@@ -5,6 +5,7 @@ import 'sponsors_page.dart';
 import 'premium_subscription_page.dart';
 import 'stat_card.dart';
 import 'incident_analysis_page.dart';
+import 'user_detail_screen.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
 import '../models/admin_stats_model.dart';
@@ -431,28 +432,38 @@ class _AdminScreenState extends State<AdminScreen>
       itemBuilder: (context, index) {
         final user = _users[index];
         final isLoading = _actionLoading[user.id] ?? false;
-        return _AdminCard(
-          title: user.name,
-          subtitle: user.email,
-          trailingText: user.role.toUpperCase(),
-          statusText: user.status.toUpperCase(),
-          icon: user.role == 'volunteer'
-              ? Icons.volunteer_activism_rounded
-              : Icons.person_rounded,
-          actions: [
-            _AdminAction(
-              label: context.loc.actionVerify,
-              color: Colors.green,
-              isLoading: isLoading,
-              onTap: isLoading ? null : () => _verifyUser(context, user),
-            ),
-            _AdminAction(
-              label: context.loc.actionSuspend,
-              color: Colors.red,
-              isLoading: isLoading,
-              onTap: isLoading ? null : () => _suspendUser(context, user),
-            ),
-          ],
+        return GestureDetector(
+          onTap: () async {
+            final shouldRefresh = await Navigator.of(context).push<bool>(
+              MaterialPageRoute(builder: (_) => UserDetailScreen(user: user)),
+            );
+            if (shouldRefresh == true) {
+              _loadUsers();
+            }
+          },
+          child: _AdminCard(
+            title: user.name,
+            subtitle: user.email,
+            trailingText: user.role.toUpperCase(),
+            statusText: user.status.toUpperCase(),
+            icon: user.role == 'volunteer'
+                ? Icons.volunteer_activism_rounded
+                : Icons.person_rounded,
+            actions: [
+              _AdminAction(
+                label: context.loc.actionVerify,
+                color: Colors.green,
+                isLoading: isLoading,
+                onTap: isLoading ? null : () => _verifyUser(context, user),
+              ),
+              _AdminAction(
+                label: context.loc.actionSuspend,
+                color: Colors.red,
+                isLoading: isLoading,
+                onTap: isLoading ? null : () => _suspendUser(context, user),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -747,60 +758,69 @@ class _AdminCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: theme.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: theme.primaryColor),
-            ),
-            title: Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            subtitle: Text(
-              subtitle,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-            trailing: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  trailingText,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: theme.primaryColor,
-                  ),
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
+          children: [
+            ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                Text(
-                  statusText,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _getStatusColor(context, statusText),
-                  ),
+                child: Icon(icon, color: theme.primaryColor),
+              ),
+              title: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
-              ],
+              ),
+              subtitle: Text(
+                subtitle,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    trailingText,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: theme.primaryColor,
+                    ),
+                  ),
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _getStatusColor(context, statusText),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Divider(height: 1, color: theme.dividerColor.withValues(alpha: 0.1)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: actions
-                  .map((a) => _buildActionButton(context, a))
-                  .toList(),
+            Divider(
+              height: 1,
+              color: theme.dividerColor.withValues(alpha: 0.1),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: actions
+                    .map((a) => _buildActionButton(context, a))
+                    .toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
