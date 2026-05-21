@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'payment_types.dart';
 import 'payment_details_page.dart';
+import 'paymob_payment_page.dart';
 import '../core/localization/app_strings.dart';
 
 
@@ -343,15 +344,30 @@ class _PaymentPageState extends State<PaymentPage> {
           ),
           onPressed: hasSelection
               ? () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => PaymentDetailsPage(
-                        method: _selected!,
-                        amount: widget.amount,
-                        isYearly: widget.isYearly,
+                  // For card payments, go directly to Paymob
+                  if (_selected == PaymentMethodType.card) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PaymobPaymentPage(
+                          isYearly: widget.isYearly,
+                          amount: widget.amount,
+                          method: _selected!,
+                          methodTitle: 'Credit/Debit Card',
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } else {
+                    // Other payment methods show details page
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PaymentDetailsPage(
+                          method: _selected!,
+                          amount: widget.amount,
+                          isYearly: widget.isYearly,
+                        ),
+                      ),
+                    );
+                  }
                 }
               : null,
           child: Text(

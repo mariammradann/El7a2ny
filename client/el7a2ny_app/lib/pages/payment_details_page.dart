@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'payment_types.dart';
 import 'payment_processing_page.dart';
+import 'paymob_payment_page.dart';
 import '../core/localization/app_strings.dart';
 
 
@@ -92,16 +93,32 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
         widget.method == PaymentMethodType.instaPay) {
       if (!_formKey.currentState!.validate()) return;
     }
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => PaymentProcessingPage(
-          method: widget.method,
-          amount: widget.amount,
-          methodTitle: _methodTitle,
-          isYearly: widget.isYearly,
+
+    // For card payments, use Paymob payment page
+    if (widget.method == PaymentMethodType.card) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PaymobPaymentPage(
+            isYearly: widget.isYearly,
+            amount: widget.amount,
+            method: widget.method,
+            methodTitle: _methodTitle,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      // For other payment methods, show processing page (dummy for now)
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PaymentProcessingPage(
+            method: widget.method,
+            amount: widget.amount,
+            methodTitle: _methodTitle,
+            isYearly: widget.isYearly,
+          ),
+        ),
+      );
+    }
   }
 
   @override
