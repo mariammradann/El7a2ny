@@ -287,13 +287,72 @@ class ApiService {
     }
   }
 
-  static Future<List<SponsorModel>> fetchSponsors() async {
-    final response = await http.get(Uri.parse("$baseUrl/api/sponsors/"));
-    if (response.statusCode == 200) {
-      List data = jsonDecode(response.body);
-      return data.map((item) => SponsorModel.fromJson(item)).toList();
+  static Future<List<SponsorModel>> fetchSponsors({bool isArabic = false}) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/sponsors/?lang=${isArabic ? 'ar' : 'en'}"),
+      );
+      if (response.statusCode == 200) {
+        List data = jsonDecode(response.body);
+        return data.map((item) => SponsorModel.fromJson(item)).toList();
+      }
+    } catch (e) {
+      print("🚨 Error fetching sponsors: $e");
     }
     return [];
+  }
+
+  static Future<bool> submitSponsorRequest({
+    required String companyName,
+    required String contactPerson,
+    required String phoneNumber,
+    required String message,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/sponsors/apply/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "company_name": companyName,
+          "contact_person": contactPerson,
+          "phone_number": phoneNumber,
+          "message": message,
+          "user_id": userId,
+        }),
+      );
+      return response.statusCode == 201;
+    } catch (e) {
+      print("🚨 Error submitting sponsor request: $e");
+      return false;
+    }
+  }
+
+  static Future<List<dynamic>> fetchSponsorRequests() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/api/admin/sponsors/requests/"));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+    } catch (e) {
+      print("🚨 Error fetching sponsor requests: $e");
+    }
+    return [];
+  }
+
+  static Future<bool> respondToSponsorRequest(String requestId, String action) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/admin/sponsors/requests/$requestId/respond/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"action": action}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("🚨 Error responding to sponsor request: $e");
+      return false;
+    }
   }
 
   static Future<List<EmergencyContact>> fetchEmergencyContacts() async {

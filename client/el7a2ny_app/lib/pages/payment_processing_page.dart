@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 
 
-const _kOrange = Color(0xFFFF6B00);
+const _kOrange = Color(0xFFF18F34);
 
 class PaymentProcessingPage extends StatefulWidget {
   final PaymentMethodType method;
@@ -150,7 +150,7 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
                       height: 110,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFFF8C00), Color(0xFFE63B00)],
+                          colors: [Color(0xFFF18F34), Color(0xFFE95F32)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),

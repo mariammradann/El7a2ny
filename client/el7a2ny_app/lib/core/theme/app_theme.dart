@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color brandRed = Color(0xFFE44646);
+  static const Color brandRed = Color(0xFFE61717);
   static const Color darkBg = Color(0xFF0F172A);
   static const Color darkSurface = Color(0xFF1E293B);
   static const Color lightBg = Color(0xFFF5F3EF); // Matching emergencyPageBg
   static const Color lightSurface = Colors.white;
   static const Color secondaryTeal = Color(0xFF1A5F6B);
-  static const Color premiumGold = Color(0xFFFFD700);
-  static const Color premiumGoldDark = Color(0xFFB8860B);
+  static const Color premiumGold = Color(0xFFFDC800);
+  static const Color premiumGoldDark = Color(0xFFE95F32);
   static const Color premiumNavy = Color(0xFF0F172A);
   static const Color premiumSurface = Color(0xFF1E293B);
 
@@ -23,6 +23,7 @@ class AppTheme {
         seedColor: brandRed,
         brightness: Brightness.light,
         primary: brandRed,
+        error: brandRed,
         surface: lightSurface,
         onSurface: const Color(0xFF2C2C2C), // Matching emergencyTextDark
         surfaceContainerHighest: const Color(0xFFEAE7E2),
@@ -60,6 +61,7 @@ class AppTheme {
         seedColor: brandRed,
         brightness: Brightness.dark,
         primary: brandRed,
+        error: brandRed,
         surface: darkSurface,
         onSurface: const Color(0xFFE2E8F0),
         surfaceContainerHighest: const Color(0xFF334155),

@@ -35,7 +35,7 @@ class _SponsorsPageState extends State<SponsorsPage> {
         _loading = true;
         _error = null;
       });
-      final data = await ApiService.fetchSponsors();
+      final data = await ApiService.fetchSponsors(isArabic: context.loc.isAr);
       if (mounted) {
         setState(() {
           _sponsors = data;
@@ -170,7 +170,7 @@ class _SponsorsPageState extends State<SponsorsPage> {
                     Center(
                       child: Column(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: Colors.orange, size: 48),
+                          const Icon(Icons.error_outline_rounded, color: const Color(0xFFF18F34), size: 48),
                           const SizedBox(height: 12),
                           Text(loc.connError, style: const TextStyle(fontWeight: FontWeight.bold)),
                           TextButton(onPressed: _load, child: Text(loc.retry)),
@@ -294,7 +294,7 @@ class _SponsorCard extends StatelessWidget {
                       SessionService().logAction('Deleted sponsor: $title');
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sponsor Deleted')));
                     },
-                    icon: const Icon(Icons.delete_forever_rounded, size: 16, color: Colors.red),
+                    icon: const Icon(Icons.delete_forever_rounded, size: 16, color: const Color(0xFFE61717)),
                   ),
                 ],
               ],

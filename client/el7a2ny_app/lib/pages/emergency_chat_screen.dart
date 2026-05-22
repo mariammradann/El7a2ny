@@ -171,7 +171,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                 },
                 child: Text(
                   context.loc.isAr ? 'كاذب' : 'Fake',
-                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
+                  style: const TextStyle(color: const Color(0xFFE61717), fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
                 ),
               ),
               TextButton(
@@ -214,7 +214,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(5, (index) => IconButton(
-                    icon: const Icon(Icons.star, color: Colors.amber, size: 32),
+                    icon: const Icon(Icons.star, color: const Color(0xFFFDC800), size: 32),
                     onPressed: () {
                       Navigator.pop(context); // Close dialog
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -305,7 +305,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.2),
+                  color: const Color(0xFFE61717).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TextButton.icon(
@@ -591,9 +591,9 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
             children: [
               _buildServiceItem(context, '911', context.loc.policeService, const Color(0xFF0391DC)),
               const SizedBox(height: 12),
-              _buildServiceItem(context, '997', context.loc.ambulanceService, const Color(0xFFFF2D55)),
+              _buildServiceItem(context, '997', context.loc.ambulanceService, const Color(0xFFE61717)),
               const SizedBox(height: 12),
-              _buildServiceItem(context, '998', context.loc.fireService, const Color(0xFFE67E22)),
+              _buildServiceItem(context, '998', context.loc.fireService, const Color(0xFFE95F32)),
             ],
           ),
         ),
@@ -698,7 +698,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
               const SizedBox(height: 8),
               _buildInstructionItem(context, context.loc.firstAidInstruction, Colors.green.shade50, Colors.green),
               const SizedBox(height: 8),
-              _buildInstructionItem(context, context.loc.fireSafetyInstruction, Colors.orange.shade50, Colors.orange),
+              _buildInstructionItem(context, context.loc.fireSafetyInstruction, const Color(0xFFF18F34).withValues(alpha: 0.1), const Color(0xFFF18F34)),
               const SizedBox(height: 8),
               _buildInstructionItem(context, context.loc.earthquakeSafetyInstruction, Colors.blue.shade50, Colors.blue),
             ],

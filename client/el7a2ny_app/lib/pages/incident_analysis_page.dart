@@ -26,7 +26,7 @@ class IncidentAnalysisPage extends StatelessWidget {
               children: [
                 _StatTile(label: loc.totalIncidents, value: '1,248', color: Colors.blue),
                 const SizedBox(width: 12),
-                _StatTile(label: loc.activeAlerts, value: '14', color: Colors.red),
+                _StatTile(label: loc.activeAlerts, value: '14', color: const Color(0xFFE61717)),
               ],
             ),
             const SizedBox(height: 24),
@@ -35,15 +35,15 @@ class IncidentAnalysisPage extends StatelessWidget {
               child: Container(
                 height: 200,
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
+                  color: const Color(0xFFF18F34).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                  border: Border.all(color: const Color(0xFFF18F34).withValues(alpha: 0.2)),
                 ),
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.map_rounded, size: 48, color: Colors.orange),
+                      const Icon(Icons.map_rounded, size: 48, color: const Color(0xFFF18F34)),
                       const SizedBox(height: 8),
                       Text(isAr ? 'خريطة حرارية تفاعلية' : 'Interactive Heatmap', style: const TextStyle(fontWeight: FontWeight.bold)),
                     ],
@@ -56,7 +56,7 @@ class IncidentAnalysisPage extends StatelessWidget {
               title: loc.incidentsPerCategory,
               child: Column(
                 children: [
-                  _BarRow(label: isAr ? 'حريق' : 'Fire', value: 0.8, color: Colors.red),
+                  _BarRow(label: isAr ? 'حريق' : 'Fire', value: 0.8, color: const Color(0xFFE61717)),
                   _BarRow(label: isAr ? 'حادث سيارة' : 'Car Accident', value: 0.6, color: Colors.blue),
                   _BarRow(label: isAr ? 'طوارئ طبية' : 'Medical', value: 0.4, color: Colors.green),
                   _BarRow(label: isAr ? 'أخرى' : 'Other', value: 0.2, color: Colors.grey),

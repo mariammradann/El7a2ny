@@ -90,7 +90,7 @@ class _CreateInitiativeScreenState extends State<CreateInitiativeScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(context.loc.isAr ? 'فشل في حفظ المبادرة' : 'Failed to save initiative'),
-                backgroundColor: Colors.red,
+                backgroundColor: const Color(0xFFE61717),
               ),
             );
           }
@@ -98,7 +98,7 @@ class _CreateInitiativeScreenState extends State<CreateInitiativeScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+            SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFE61717)),
           );
         }
       } finally {

@@ -6,7 +6,7 @@ import 'paymob_payment_page.dart';
 import '../core/localization/app_strings.dart';
 
 
-const _kOrange = Color(0xFFFF6B00);
+const _kOrange = Color(0xFFF18F34);
 
 class PaymentDetailsPage extends StatefulWidget {
   final PaymentMethodType method;
@@ -71,7 +71,7 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
     switch (widget.method) {
       case PaymentMethodType.card:       return const Color(0xFF4F8EF7);
       case PaymentMethodType.fawry:      return _kOrange;
-      case PaymentMethodType.vodafoneCash: return const Color(0xFFE3001B);
+      case PaymentMethodType.vodafoneCash: return const Color(0xFFE61717);
       case PaymentMethodType.instaPay:   return const Color(0xFF7C3AED);
       case PaymentMethodType.bankTransfer: return const Color(0xFF374151);
     }
@@ -159,7 +159,7 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFFF8C00), Color(0xFFE63B00)],
+          colors: [Color(0xFFF18F34), Color(0xFFE95F32)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -278,7 +278,7 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             children: [
               _miniLogo('VISA', const Color(0xFF1A1F71)),
               const SizedBox(width: 4),
-              _miniLogo('MC', const Color(0xFFEB001B)),
+              _miniLogo('MC', const Color(0xFFE61717)),
             ],
           ),
           validator: (v) {
@@ -667,12 +667,12 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide:
-                  const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+                  const BorderSide(color: Color(0xFFE61717), width: 1.5),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide:
-                  const BorderSide(color: Color(0xFFEF4444), width: 1.5),
+                  const BorderSide(color: Color(0xFFE61717), width: 1.5),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

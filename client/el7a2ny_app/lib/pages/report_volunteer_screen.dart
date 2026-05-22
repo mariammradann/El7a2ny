@@ -63,7 +63,7 @@ class _ReportVolunteerScreenState extends State<ReportVolunteerScreen> {
             context.loc.isAr ? 'برجاء اختيار المتطوع' : 'Please select a volunteer',
             style: const TextStyle(fontFamily: 'NotoSansArabic'),
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE61717),
         ),
       );
       return;
@@ -106,7 +106,7 @@ class _ReportVolunteerScreenState extends State<ReportVolunteerScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(title, style: const TextStyle(fontFamily: 'NotoSansArabic')),
-          backgroundColor: Colors.orange.shade800,
+          backgroundColor: const Color(0xFFE95F32),
           foregroundColor: Colors.white,
         ),
         body: SingleChildScrollView(
@@ -141,7 +141,7 @@ class _ReportVolunteerScreenState extends State<ReportVolunteerScreen> {
                         children: [
                           CircleAvatar(
                             radius: 12,
-                            backgroundColor: Colors.orange.shade800,
+                            backgroundColor: const Color(0xFFE95F32),
                             child: const Icon(Icons.person, size: 14, color: Colors.white),
                           ),
                           const SizedBox(width: 8),
@@ -243,7 +243,7 @@ class _ReportVolunteerScreenState extends State<ReportVolunteerScreen> {
                           leading: const Icon(Icons.insert_drive_file_outlined, color: Colors.blue),
                           title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                           trailing: IconButton(
-                            icon: const Icon(Icons.close_rounded, color: Colors.red),
+                            icon: const Icon(Icons.close_rounded, color: const Color(0xFFE61717)),
                             onPressed: () => _removeFile(index),
                           ),
                         );
@@ -257,7 +257,7 @@ class _ReportVolunteerScreenState extends State<ReportVolunteerScreen> {
                 ElevatedButton(
                   onPressed: _submitting ? null : _submitReport,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange.shade800,
+                    backgroundColor: const Color(0xFFE95F32),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

@@ -24,11 +24,14 @@ class _AdminScreenState extends State<AdminScreen>
 
   AdminStats? _stats;
   List<UserModel> _users = [];
+  List<dynamic> _sponsorRequests = [];
   bool _loadingStats = true;
   bool _loadingUsers = true;
+  bool _loadingRequests = true;
   String? _statsError;
   String? _usersError;
-  Map<String, bool> _actionLoading = {}; // Track loading state per user
+  String? _requestsError;
+  Map<String, bool> _actionLoading = {}; // Track loading state per user/request
 
   @override
   void initState() {
@@ -36,6 +39,73 @@ class _AdminScreenState extends State<AdminScreen>
     _tabController = TabController(length: 4, vsync: this);
     _loadStats();
     _loadUsers();
+    _loadSponsorRequests();
+  }
+
+  Future<void> _loadSponsorRequests() async {
+    try {
+      setState(() {
+        _loadingRequests = true;
+        _requestsError = null;
+      });
+      final data = await ApiService.fetchSponsorRequests();
+      if (mounted) {
+        setState(() {
+          _sponsorRequests = data;
+          _loadingRequests = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _requestsError = e.toString();
+          _loadingRequests = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleSponsorResponse(String requestId, String action) async {
+    setState(() => _actionLoading[requestId] = true);
+    try {
+      final success = await ApiService.respondToSponsorRequest(requestId, action);
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                action == 'approve' ? 'Request approved successfully' : 'Request rejected successfully',
+                style: const TextStyle(fontFamily: 'NotoSansArabic'),
+              ),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: action == 'approve' ? Colors.green : const Color(0xFF8A1717),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        await _loadSponsorRequests();
+      } else {
+        throw Exception("Failed to respond to request");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error: $e',
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFFE61717),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _actionLoading[requestId] = false);
+      }
+    }
   }
 
   Future<void> _loadStats() async {
@@ -130,7 +200,11 @@ class _AdminScreenState extends State<AdminScreen>
                   child: _buildUsersTab(context),
                 ),
                 _buildResourcesTab(context),
-                _buildLogsTab(context),
+                RefreshIndicator(
+                  onRefresh: _loadSponsorRequests,
+                  color: primary,
+                  child: _buildLogsTab(context),
+                ),
               ],
             ),
           ),
@@ -180,7 +254,11 @@ class _AdminScreenState extends State<AdminScreen>
             child: _buildUsersTab(context),
           ),
           _buildResourcesTab(context),
-          _buildLogsTab(context),
+          RefreshIndicator(
+            onRefresh: _loadSponsorRequests,
+            color: primary,
+            child: _buildLogsTab(context),
+          ),
         ],
       ),
     );
@@ -230,8 +308,8 @@ class _AdminScreenState extends State<AdminScreen>
                     value: _stats?.activeAlerts.toString() ?? '0',
                     unit: '',
                     gradientColors: const [
-                      Color(0xFFF43F5E),
-                      Color(0xFFE11D48),
+                      Color(0xFFE61717),
+                      Color(0xFF8A1717),
                     ],
                     icon: Icons.notifications_active_rounded,
                   ),
@@ -262,8 +340,8 @@ class _AdminScreenState extends State<AdminScreen>
                         .toString(),
                     unit: '%',
                     gradientColors: const [
-                      Color(0xFFF59E0B),
-                      Color(0xFFD97706),
+                      Color(0xFFFDC800),
+                      Color(0xFFE95F32),
                     ],
                     icon: Icons.verified_rounded,
                   ),
@@ -313,14 +391,14 @@ class _AdminScreenState extends State<AdminScreen>
         _AreaStatusCard(
           title: loc.inactiveAreas,
           areas: const ['Suez', 'Fayoum', 'Beni Suef'],
-          color: Colors.red,
+          color: const Color(0xFFE61717),
           icon: Icons.location_off_rounded,
         ),
         const SizedBox(height: 12),
         _AreaStatusCard(
           title: loc.lowVolunteeringAreas,
           areas: const ['Alexandria (West)', 'Ismailia'],
-          color: Colors.orange,
+          color: const Color(0xFFF18F34),
           icon: Icons.person_search_rounded,
         ),
         const SizedBox(height: 12),
@@ -336,22 +414,319 @@ class _AdminScreenState extends State<AdminScreen>
 
   Widget _buildLogsTab(BuildContext context) {
     final loc = context.loc;
+    final theme = Theme.of(context);
+
     return ListenableBuilder(
       listenable: SessionService(),
       builder: (context, _) {
         final logs = SessionService().activityLog;
-        if (logs.isEmpty) {
-          return Center(child: Text(loc.noRecentActivity));
-        }
-        return ListView.builder(
+
+        return ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
-          itemCount: logs.length,
-          itemBuilder: (context, index) {
-            return _buildActivityItem(logs[index], '');
-          },
+          children: [
+            // --- Section 1: Partnership Requests ---
+            _SectionHeader(title: loc.isAr ? 'طلبات الشراكة' : 'Partnership Requests'),
+            const SizedBox(height: 16),
+            if (_loadingRequests)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_requestsError != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Column(
+                  children: [
+                    Text(
+                      loc.isAr
+                          ? 'خطأ في تحميل الطلبات: $_requestsError'
+                          : 'Error loading requests: $_requestsError',
+                      style: const TextStyle(color: Color(0xFFE61717)),
+                      textAlign: TextAlign.center,
+                    ),
+                    TextButton(
+                      onPressed: _loadSponsorRequests,
+                      child: Text(loc.retry),
+                    ),
+                  ],
+                ),
+              )
+            else if (_sponsorRequests.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: Text(
+                    loc.isAr ? 'لا توجد طلبات شراكة حالياً' : 'No partnership requests currently',
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _sponsorRequests.length,
+                itemBuilder: (context, index) {
+                  final req = _sponsorRequests[index];
+                  final String requestId = req['request_id'] ?? '';
+                  final String companyName = req['company_name'] ?? '';
+                  final String contactPerson = req['contact_person'] ?? '';
+                  final String phoneNumber = req['phone_number'] ?? '';
+                  final String message = req['message'] ?? '';
+                  final String status = req['status'] ?? 'pending';
+                  final String createdAt = req['created_at'] ?? '';
+                  final String? userName = req['user_name'];
+                  
+                  final isActionLoading = _actionLoading[requestId] ?? false;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  companyName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getSponsorStatusColor(status).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  _getSponsorStatusText(status, loc.isAr),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _getSponsorStatusColor(status),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _buildDetailRow(
+                            loc.isAr ? 'مسؤول التواصل: ' : 'Contact: ',
+                            contactPerson,
+                            theme,
+                          ),
+                          const SizedBox(height: 6),
+                          _buildDetailRow(
+                            loc.isAr ? 'رقم الهاتف: ' : 'Phone: ',
+                            phoneNumber,
+                            theme,
+                          ),
+                          if (userName != null) ...[
+                            const SizedBox(height: 6),
+                            _buildDetailRow(
+                              loc.isAr ? 'المستخدم: ' : 'User: ',
+                              userName,
+                              theme,
+                            ),
+                          ],
+                          const SizedBox(height: 12),
+                          Text(
+                            loc.isAr ? 'الرسالة:' : 'Message:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: theme.dividerColor.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Text(
+                              message,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              _formatDate(createdAt),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                              ),
+                            ),
+                          ),
+                          if (status.toLowerCase() == 'pending') ...[
+                            const SizedBox(height: 12),
+                            const Divider(height: 1),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                if (isActionLoading)
+                                  const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                else ...[
+                                  TextButton(
+                                    onPressed: () => _handleSponsorResponse(requestId, 'reject'),
+                                    child: Text(
+                                      loc.isAr ? 'رفض' : 'Reject',
+                                      style: const TextStyle(
+                                        color: Color(0xFFE61717),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: () => _handleSponsorResponse(requestId, 'approve'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                      elevation: 0,
+                                    ),
+                                    child: Text(
+                                      loc.isAr ? 'قبول' : 'Approve',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+            const SizedBox(height: 32),
+            // --- Section 2: Admin Logs ---
+            _SectionHeader(title: loc.adminLogs),
+            const SizedBox(height: 16),
+            if (logs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Center(
+                  child: Text(
+                    loc.noRecentActivity,
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: logs.length,
+                itemBuilder: (context, index) {
+                  return _buildActivityItem(logs[index], '');
+                },
+              ),
+          ],
         );
       },
     );
+  }
+
+  Widget _buildDetailRow(String label, String value, ThemeData theme) {
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: 13,
+          color: theme.colorScheme.onSurface,
+          fontFamily: 'NotoSansArabic',
+        ),
+        children: [
+          TextSpan(
+            text: label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+          TextSpan(text: value),
+        ],
+      ),
+    );
+  }
+
+  Color _getSponsorStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return Colors.green;
+      case 'rejected':
+        return const Color(0xFFE61717);
+      case 'pending':
+      default:
+        return const Color(0xFFF18F34);
+    }
+  }
+
+  String _getSponsorStatusText(String status, bool isAr) {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return isAr ? 'تم القبول' : 'Approved';
+      case 'rejected':
+        return isAr ? 'تم الرفض' : 'Rejected';
+      case 'pending':
+      default:
+        return isAr ? 'قيد الانتظار' : 'Pending';
+    }
+  }
+
+  String _formatDate(String isoString) {
+    try {
+      final dateTime = DateTime.parse(isoString);
+      return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
+    } catch (_) {
+      if (isoString.length >= 10) {
+        return isoString.substring(0, 10);
+      }
+      return isoString;
+    }
   }
 
   Widget _buildResourcesTab(BuildContext context) {
@@ -411,7 +786,7 @@ class _AdminScreenState extends State<AdminScreen>
           children: [
             const Icon(
               Icons.error_outline_rounded,
-              color: Colors.red,
+              color: const Color(0xFFE61717),
               size: 48,
             ),
             const SizedBox(height: 12),
@@ -458,7 +833,7 @@ class _AdminScreenState extends State<AdminScreen>
               ),
               _AdminAction(
                 label: context.loc.actionSuspend,
-                color: Colors.red,
+                color: const Color(0xFFE61717),
                 isLoading: isLoading,
                 onTap: isLoading ? null : () => _suspendUser(context, user),
               ),
@@ -497,7 +872,7 @@ class _AdminScreenState extends State<AdminScreen>
               style: const TextStyle(fontFamily: 'NotoSansArabic'),
             ),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE61717),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -534,7 +909,7 @@ class _AdminScreenState extends State<AdminScreen>
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(
                   loc.confirm ?? 'Confirm',
-                  style: const TextStyle(color: Colors.red),
+                  style: const TextStyle(color: const Color(0xFFE61717)),
                 ),
               ),
             ],
@@ -555,7 +930,7 @@ class _AdminScreenState extends State<AdminScreen>
               style: const TextStyle(fontFamily: 'NotoSansArabic'),
             ),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.orange,
+            backgroundColor: const Color(0xFFF18F34),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -570,7 +945,7 @@ class _AdminScreenState extends State<AdminScreen>
               style: const TextStyle(fontFamily: 'NotoSansArabic'),
             ),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE61717),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -832,8 +1207,8 @@ class _AdminCard extends StatelessWidget {
     if (status == loc.statusPending ||
         status == loc.statusDispatched ||
         status == loc.statusInProgress)
-      return Colors.orange;
-    return Colors.red;
+      return const Color(0xFFF18F34);
+    return const Color(0xFFE61717);
   }
 
   Widget _buildActionButton(BuildContext context, _AdminAction action) {

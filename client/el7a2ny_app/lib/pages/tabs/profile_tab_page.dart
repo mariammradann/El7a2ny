@@ -171,7 +171,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                     border: Border.all(
                                       color: isPlus
                                           ? const Color(
-                                              0xFFFFD700,
+                                              0xFFFDC800,
                                             ).withOpacity(0.3)
                                           : Colors.grey.withOpacity(0.2),
                                     ),
@@ -190,7 +190,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                         decoration: BoxDecoration(
                                           color: isPlus
                                               ? const Color(
-                                                  0xFFFFD700,
+                                                  0xFFFDC800,
                                                 ).withOpacity(0.1)
                                               : Colors.grey.withOpacity(0.1),
                                           shape: BoxShape.circle,
@@ -200,7 +200,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                               ? Icons.workspace_premium_rounded
                                               : Icons.person_outline_rounded,
                                           color: isPlus
-                                              ? const Color(0xFFFFD700)
+                                              ? const Color(0xFFFDC800)
                                               : Colors.grey,
                                           size: 28,
                                         ),
@@ -222,7 +222,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.w900,
                                                 color: isPlus
-                                                    ? const Color(0xFFFFD700)
+                                                    ? const Color(0xFFFDC800)
                                                     : const Color(0xFF0F172A),
                                               ),
                                             ),
@@ -249,7 +249,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                       Icon(
                                         Icons.arrow_forward_ios_rounded,
                                         color: isPlus
-                                            ? const Color(0xFFFFD700)
+                                            ? const Color(0xFFFDC800)
                                             : Colors.grey,
                                         size: 16,
                                       ),
@@ -434,7 +434,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                       _ProfileMenuTile(
                         icon: Icons.logout_rounded,
                         title: loc.logout,
-                        color: Colors.redAccent,
+                        color: const Color(0xFFE61717),
                         onTap: () async {
                           // إظهار Dialog تأكيد لو حابب
                           final confirm = await showDialog<bool>(
@@ -464,7 +464,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                 TextButton(
                                   onPressed: () => Navigator.pop(context, true),
                                   style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red,
+                                    foregroundColor: const Color(0xFFE61717),
                                   ),
                                   child: Text(loc.logout),
                                 ),
@@ -629,7 +629,7 @@ class _HistoryTile extends StatelessWidget {
     switch (history.type) {
       case 'emergency':
         icon = Icons.emergency_rounded;
-        color = Colors.redAccent;
+        color = const Color(0xFFE61717);
         break;
       case 'volunteer':
         icon = Icons.volunteer_activism_rounded;
@@ -884,7 +884,7 @@ class _ErrorState extends StatelessWidget {
     return Center(
       child: Column(
         children: [
-          const Icon(Icons.cloud_off_rounded, color: Colors.orange, size: 48),
+          const Icon(Icons.cloud_off_rounded, color: const Color(0xFFF18F34), size: 48),
           const SizedBox(height: 12),
           const Text(
             'Unable to load profile',

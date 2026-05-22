@@ -10,6 +10,7 @@ from .models import (
     PasswordResetToken,
     IncidentChat,
     ChatMessage,
+    IncidentAIAnalysis,
 )
 
 
@@ -26,6 +27,65 @@ class LocationSerializer(serializers.ModelSerializer):
         }
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════ AI ANALYSIS SERIALIZERS ═══════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class IncidentAIAnalysisSerializer(serializers.ModelSerializer):
+    """
+    Full serializer for IncidentAIAnalysis.
+    Returned after analysis completes.
+    """
+    alert_level  = serializers.ReadOnlyField()
+    triage_color = serializers.ReadOnlyField()
+
+    class Meta:
+        model  = IncidentAIAnalysis
+        fields = [
+            "analysis_id",
+            "incident_id",
+            "incident_type",
+            "severity",
+            "triage_level",
+            "triage_color",
+            "urgency_score",
+            "alert_level",
+            "risk_level",
+            "dispatch_priority",
+            "summary",
+            "responder_briefing",
+            "instructions",
+            "responders_needed",
+            "confidence",
+            "source",
+            "analyzed_at",
+        ]
+
+
+class IncidentAIAnalysisSummarySerializer(serializers.ModelSerializer):
+    """
+    Lightweight serializer — used when embedding analysis inside an Incident response.
+    Excludes raw_response and heavy fields.
+    """
+    alert_level  = serializers.ReadOnlyField()
+    triage_color = serializers.ReadOnlyField()
+
+    class Meta:
+        model  = IncidentAIAnalysis
+        fields = [
+            "incident_type",
+            "severity",
+            "triage_level",
+            "triage_color",
+            "urgency_score",
+            "alert_level",
+            "summary",
+            "instructions",
+            "responders_needed",
+            "analyzed_at",
+        ]
+
+
 # 2. Serializer الخاص بالبلاغات (SOS)
 class IncidentSerializer(serializers.ModelSerializer):
     # This is for incoming data from Flutter
@@ -36,6 +96,7 @@ class IncidentSerializer(serializers.ModelSerializer):
     lat = serializers.ReadOnlyField(source="location.latitude")
     lng = serializers.ReadOnlyField(source="location.longitude")
     reporter_name = serializers.ReadOnlyField(source="user.name")
+    ai_analysis = IncidentAIAnalysisSerializer(read_only=True, allow_null=True)
 
     # media_files is a JSONField in your model, so this works perfectly
     media_files = serializers.JSONField(required=False, allow_null=True)
@@ -60,6 +121,7 @@ class IncidentSerializer(serializers.ModelSerializer):
             "address",
             "current_volunteers",
             "total_volunteers",
+            "ai_analysis",
             # "device_id",
         ]
 
@@ -261,3 +323,26 @@ class IncidentChatSerializer(serializers.ModelSerializer):
         model = IncidentChat
         fields = ["chat_id", "incident_id", "messages", "created_at", "updated_at"]
         read_only_fields = ["chat_id", "created_at", "updated_at"]
+
+
+
+class AnalyzeImageRequestSerializer(serializers.Serializer):
+    """Validates incoming Flutter image-analysis requests."""
+    incident_id = serializers.UUIDField()
+    image       = serializers.ImageField()
+
+
+class AnalyzeVideoRequestSerializer(serializers.Serializer):
+    incident_id = serializers.UUIDField()
+    video       = serializers.FileField()
+
+
+class AnalyzeVoiceRequestSerializer(serializers.Serializer):
+    incident_id = serializers.UUIDField()
+    audio       = serializers.FileField()
+
+
+class AnalyzeTextRequestSerializer(serializers.Serializer):
+    incident_id = serializers.UUIDField()
+    description = serializers.CharField(min_length=5)
+    location    = serializers.CharField(required=False, allow_blank=True)

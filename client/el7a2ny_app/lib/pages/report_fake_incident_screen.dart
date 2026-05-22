@@ -85,7 +85,7 @@ class _ReportFakeIncidentScreenState extends State<ReportFakeIncidentScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(title, style: const TextStyle(fontFamily: 'NotoSansArabic')),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: const Color(0xFFE61717),
           foregroundColor: Colors.white,
         ),
         body: SingleChildScrollView(
@@ -97,20 +97,20 @@ class _ReportFakeIncidentScreenState extends State<ReportFakeIncidentScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: const Color(0xFFE61717).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                  border: Border.all(color: const Color(0xFFE61717).withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+                        const Icon(Icons.warning_amber_rounded, color: const Color(0xFFE61717)),
                         const SizedBox(width: 8),
                         Text(
                           isAr ? 'تفاصيل البلاغ المُبلّغ عنه' : 'Reported Incident Details',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent, fontFamily: 'NotoSansArabic'),
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: const Color(0xFFE61717), fontFamily: 'NotoSansArabic'),
                         ),
                       ],
                     ),
@@ -200,7 +200,7 @@ class _ReportFakeIncidentScreenState extends State<ReportFakeIncidentScreen> {
                         leading: const Icon(Icons.insert_drive_file_outlined, color: Colors.blue),
                         title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                         trailing: IconButton(
-                          icon: const Icon(Icons.close_rounded, color: Colors.red),
+                          icon: const Icon(Icons.close_rounded, color: const Color(0xFFE61717)),
                           onPressed: () => _removeFile(index),
                         ),
                       );
@@ -214,7 +214,7 @@ class _ReportFakeIncidentScreenState extends State<ReportFakeIncidentScreen> {
               ElevatedButton(
                 onPressed: _submitting ? null : _submitReport,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+                  backgroundColor: const Color(0xFFE61717),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

@@ -159,3 +159,9 @@ DEFAULT_FROM_EMAIL = "yahmed062@gmail.com"
 
 # Password Reset Token Expiration (in hours)
 PASSWORD_RESET_TOKEN_EXPIRATION_HOURS = 24
+
+# ───────────────────────────────────────────────────────────────────────────────
+# AI Microservice Configuration
+# ───────────────────────────────────────────────────────────────────────────────
+AI_SERVICE_URL     = "http://localhost:8001"
+AI_SERVICE_TIMEOUT = 120  # seconds — voice/video analysis can take time

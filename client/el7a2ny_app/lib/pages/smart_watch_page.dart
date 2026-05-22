@@ -139,12 +139,12 @@ class _WatchCard extends StatelessWidget {
 
     switch (watch.status) {
       case 'danger':
-        statusColor = const Color(0xFFDC2626);
+        statusColor = const Color(0xFFE61717);
         statusLabel = loc.lifeDanger;
         statusIcon = Icons.emergency_rounded;
         break;
       case 'warning':
-        statusColor = const Color(0xFFF59E0B);
+        statusColor = const Color(0xFFFDC800);
         statusLabel = loc.vitalSignsUnstable;
         statusIcon = Icons.warning_amber_rounded;
         break;
@@ -204,7 +204,7 @@ class _WatchCard extends StatelessWidget {
                 children: [
                   _MetricItem(label: loc.heartRate, value: watch.value, unit: 'bpm', color: Colors.pink, icon: Icons.favorite),
                   _MetricItem(label: loc.oxygenLevel, value: '98', unit: '%', color: Colors.blue, icon: Icons.bubble_chart),
-                  _MetricItem(label: loc.caloriesBurned, value: '240', unit: 'kcal', color: Colors.orange, icon: Icons.local_fire_department),
+                  _MetricItem(label: loc.caloriesBurned, value: '240', unit: 'kcal', color: const Color(0xFFF18F34), icon: Icons.local_fire_department),
                 ],
               ),
             ],
@@ -339,7 +339,7 @@ class _WatchEmergencyPageState extends State<WatchEmergencyPage>
     final loc = context.loc;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFDC2626), // Emergency red
+      backgroundColor: const Color(0xFFE61717), // Emergency red
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -391,7 +391,7 @@ class _WatchEmergencyPageState extends State<WatchEmergencyPage>
               Text(
                 _formatTime(_secondsLeft),
                 style: const TextStyle(
-                    color: Color(0xFFFFD700),
+                    color: Color(0xFFFDC800),
                     fontSize: 72,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 4),
@@ -480,7 +480,7 @@ class _WatchEmergencyPageState extends State<WatchEmergencyPage>
                      Navigator.push(context, MaterialPageRoute(builder: (_) => const EmergencyConfirmationPage()));
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFACC15),
+                    backgroundColor: const Color(0xFFFDC800),
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20)),
@@ -513,7 +513,7 @@ class _WatchEmergencyPageState extends State<WatchEmergencyPage>
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: _buildVitalCard(context, 'ضغط الدم', '140/95', 'عالي', Icons.speed_rounded, Colors.orange, 'عالي')),
+            Expanded(child: _buildVitalCard(context, 'ضغط الدم', '140/95', 'عالي', Icons.speed_rounded, const Color(0xFFF18F34), 'عالي')),
             const SizedBox(width: 16),
             Expanded(child: _buildVitalCard(context, 'مستوى السكر', '180', 'عالي', Icons.water_drop_rounded, Colors.purple, 'عالي')),
           ],
@@ -539,12 +539,12 @@ class _WatchEmergencyPageState extends State<WatchEmergencyPage>
               Icon(icon, color: color, size: 20),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
+                decoration: BoxDecoration(color: const Color(0xFFF18F34).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
                 child: Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded, size: 10, color: Colors.orange),
+                    const Icon(Icons.warning_amber_rounded, size: 10, color: const Color(0xFFF18F34)),
                     const SizedBox(width: 2),
-                    Text(alert, style: const TextStyle(color: Colors.orange, fontSize: 8, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                    Text(alert, style: const TextStyle(color: const Color(0xFFF18F34), fontSize: 8, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
                   ],
                 ),
               ),
@@ -582,7 +582,7 @@ class _ErrorBanner extends StatelessWidget {
     final loc = context.loc;
     return Column(
       children: [
-        const Icon(Icons.error_outline_rounded, color: Colors.red, size: 50),
+        const Icon(Icons.error_outline_rounded, color: const Color(0xFFE61717), size: 50),
         const SizedBox(height: 16),
         Text(loc.connError, style: const TextStyle(fontWeight: FontWeight.bold)),
         TextButton(onPressed: onRetry, child: Text(loc.retry)),

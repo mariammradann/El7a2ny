@@ -74,7 +74,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               style: const TextStyle(fontFamily: 'NotoSansArabic'),
             ),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE61717),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -109,7 +109,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(
                   loc.confirm ?? 'Confirm',
-                  style: const TextStyle(color: Colors.red),
+                  style: const TextStyle(color: const Color(0xFFE61717)),
                 ),
               ),
             ],
@@ -130,7 +130,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               style: const TextStyle(fontFamily: 'NotoSansArabic'),
             ),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.orange,
+            backgroundColor: const Color(0xFFF18F34),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -145,7 +145,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               style: const TextStyle(fontFamily: 'NotoSansArabic'),
             ),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE61717),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -292,7 +292,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                                 fontWeight: FontWeight.bold,
                                 color: widget.user.status == 'verified'
                                     ? Colors.green
-                                    : Colors.orange,
+                                    : const Color(0xFFF18F34),
                                 fontFamily: 'NotoSansArabic',
                               ),
                             ),
@@ -535,7 +535,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         style: const TextStyle(fontFamily: 'NotoSansArabic'),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: const Color(0xFFE61717),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -625,9 +625,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       case 'active':
         return Colors.green;
       case 'inactive':
-        return Colors.red;
+        return const Color(0xFFE61717);
       case 'pending':
-        return Colors.orange;
+        return const Color(0xFFF18F34);
       default:
         return Colors.grey;
     }
@@ -638,9 +638,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       case 'active':
         return Colors.green.withValues(alpha: 0.1);
       case 'inactive':
-        return Colors.red.withValues(alpha: 0.1);
+        return const Color(0xFFE61717).withValues(alpha: 0.1);
       case 'pending':
-        return Colors.orange.withValues(alpha: 0.1);
+        return const Color(0xFFF18F34).withValues(alpha: 0.1);
       default:
         return Colors.grey.withValues(alpha: 0.1);
     }
@@ -649,6 +649,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   Color _getVerificationBackgroundColor(String status) {
     return status == 'verified'
         ? Colors.green.withValues(alpha: 0.1)
-        : Colors.orange.withValues(alpha: 0.1);
+        : const Color(0xFFF18F34).withValues(alpha: 0.1);
   }
 }

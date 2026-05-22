@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/localization/app_strings.dart';
+import '../services/api_service.dart';
 
 class BecomePartnerPage extends StatefulWidget {
   const BecomePartnerPage({super.key});
@@ -14,6 +15,7 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
   final _contactController = TextEditingController();
   final _phoneController = TextEditingController();
   final _messageController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -24,12 +26,37 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.loc.isAr ? 'تم إرسال طلب الشراكة بنجاح' : 'Partnership application sent successfully')),
+      setState(() => _isSubmitting = true);
+      final success = await ApiService.submitSponsorRequest(
+        companyName: _companyController.text.trim(),
+        contactPerson: _contactController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        message: _messageController.text.trim(),
       );
-      Navigator.of(context).pop();
+      
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.loc.isAr ? 'تم إرسال طلب الشراكة بنجاح' : 'Partnership application sent successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.loc.isAr
+                ? 'حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.'
+                : 'Failed to submit application. Please try again.'),
+            backgroundColor: const Color(0xff8a1717),
+          ),
+        );
+      }
     }
   }
 
@@ -100,13 +127,22 @@ class _BecomePartnerPageState extends State<BecomePartnerPage> {
               ),
               const SizedBox(height: 40),
               FilledButton(
-                onPressed: _submit,
+                onPressed: _isSubmitting ? null : _submit,
                 style: FilledButton.styleFrom(
                   backgroundColor: theme.primaryColor,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(loc.sendApplication, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'NotoSansArabic')),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(loc.sendApplication, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, fontFamily: 'NotoSansArabic')),
               ),
             ],
           ),

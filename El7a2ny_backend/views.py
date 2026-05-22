@@ -13,6 +13,7 @@ from .models import (
     SensorReading,
     IncidentChat,
     ChatMessage,
+    SponsorRequest,
 )
 from .serializers import (
     ResponderSerializer,
@@ -30,6 +31,9 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # 1. الـ Serializer الخاص باليوزر
@@ -114,6 +118,266 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 # 3. الـ IncidentViewSet
+
+def _wrap_bilingual(ai_data: dict):
+    """
+    Takes a raw AI microservice dict (English only) and wraps the
+    summary, responder_briefing, and instructions into bilingual
+    {en: ..., ar: ...} structures using a simple Arabic mapping table.
+    Mutates ai_data in place.
+    """
+    import json
+
+    ARABIC_SUMMARIES = {
+        "Building Fire":        "حريق في مبنى",
+        "Vehicle Fire":         "حريق في مركبة",
+        "Wildfire":             "حريق غابات",
+        "Traffic Accident":     "حادث مروري",
+        "Medical Emergency":    "حالة طبية طارئة",
+        "Chemical Spill":       "انسكاب مواد كيميائية",
+        "Gas Leak":             "تسرب غاز",
+        "Flood":                "فيضان",
+        "Earthquake":           "زلزال",
+        "Collapsed Structure":  "انهيار مبنى",
+        "Active Shooter":       "إطلاق نار نشط",
+        "Bomb Threat":          "تهديد بقنبلة",
+        "Hostage Situation":    "احتجاز رهائن",
+        "Missing Person":       "شخص مفقود",
+    }
+
+    inc_type = ai_data.get("incident_type", "")
+    ar_type  = ARABIC_SUMMARIES.get(inc_type, inc_type)
+
+    # summary ─────────────────────────────────────────────────────────────────
+    raw_summary = ai_data.get("summary", "")
+    if isinstance(raw_summary, dict):
+        pass  # Already bilingual from Gemini — leave as-is
+    elif raw_summary and not str(raw_summary).strip().startswith("{"):
+        ai_data["summary"] = json.dumps(
+            {"en": raw_summary, "ar": f"{ar_type}: {raw_summary}"},
+            ensure_ascii=False,
+        )
+
+    # responder_briefing ──────────────────────────────────────────────────────
+    raw_brief = ai_data.get("responder_briefing", "")
+    if isinstance(raw_brief, dict):
+        pass  # Already bilingual from Gemini — leave as-is
+    elif raw_brief and not str(raw_brief).strip().startswith("{"):
+        ai_data["responder_briefing"] = json.dumps(
+            {"en": raw_brief, "ar": raw_brief},
+            ensure_ascii=False,
+        )
+
+    # instructions ────────────────────────────────────────────────────────────
+    raw_inst = ai_data.get("instructions", [])
+    if isinstance(raw_inst, dict):
+        pass  # Already bilingual dict from Gemini — leave as-is
+    elif isinstance(raw_inst, list) and raw_inst:
+        ai_data["instructions"] = {"en": raw_inst, "ar": raw_inst}
+
+
+def trigger_auto_ai_analysis(incident):
+    from .models import IncidentAIAnalysis
+    from .ai_client import analyze_text, analyze_image, save_ai_result
+    import json, os
+    from io import BytesIO
+    from django.conf import settings
+
+    # ── Step 1: Try image analysis on uploaded media files ────────────────────
+    media_files = incident.media_files or []
+    image_extensions = {".jpg", ".jpeg", ".png", ".webp"}
+    analyzed_via_image = False
+
+    for media_path in media_files:
+        # media_path is like "/media/reports/<user>/<filename>"
+        rel_path = media_path.lstrip("/")       # "media/reports/..."
+        abs_path = os.path.join(settings.BASE_DIR, rel_path)
+        ext = os.path.splitext(abs_path)[1].lower()
+        if ext not in image_extensions:
+            continue
+        if not os.path.exists(abs_path):
+            print(f"[WARNING] Media file not found on disk: {abs_path}")
+            continue
+        try:
+            print(f"[INFO] Running Gemini image analysis on: {abs_path}")
+            content_type = "image/jpeg" if ext in {".jpg", ".jpeg"} else f"image/{ext.lstrip('.')}"
+            with open(abs_path, "rb") as img_f:
+                ai_data = analyze_image(
+                    BytesIO(img_f.read()),
+                    filename=os.path.basename(abs_path),
+                    content_type=content_type,
+                )
+            _wrap_bilingual(ai_data)
+            save_ai_result(incident, ai_data, source="image")
+            print(f"[SUCCESS] AI image analysis saved for incident {incident.incident_id} "
+                  f"using {os.path.basename(abs_path)}")
+            analyzed_via_image = True
+            break   # Only analyze first valid image
+        except Exception as e:
+            print(f"[WARNING] AI image analysis failed for {abs_path}: {e}")
+
+    if analyzed_via_image:
+        return
+
+    # ── Step 2: Fall back to text analysis via AI microservice ────────────────
+    try:
+        if incident.description:
+            ai_data = analyze_text(incident.description, location=incident.location.address)
+            _wrap_bilingual(ai_data)
+            save_ai_result(incident, ai_data, source="text")
+            print(f"[SUCCESS] AI text analysis triggered successfully for incident {incident.incident_id}")
+            return
+    except Exception as e:
+        print(f"[WARNING] AI microservice failed or offline: {e}. Falling back to default AI analysis.")
+    
+    # Fallback default AI analysis generation
+    import json
+    cat = str(incident.category).lower()
+    desc = incident.description or "No description provided."
+    
+    if "fire" in cat:
+        incident_type = "Building Fire"
+        severity = "Critical"
+        triage_level = "Red"
+        urgency_score = 9
+        risk_level = "Rapid fire spread, heavy smoke inhalation risk, structural integrity threat."
+        dispatch_priority = "DISPATCH IMMEDIATE FIRST-RESPONDERS (RED ALERT)."
+        summary = {
+            "en": f"Active fire reported. Category: Fire. Details: {desc}",
+            "ar": f"تم الإبلاغ عن حريق نشط. التصنيف: حريق. التفاصيل: {desc}"
+        }
+        responder_briefing = {
+            "en": "Approach with full fire gear and oxygen packs. Structural collapse risk. Evacuate adjacent buildings immediately.",
+            "ar": "الاقتراب بمعدات الإطفاء الكاملة وأجهزة الأكسجين. خطر انهيار الهيكل. إخلاء المباني المجاورة فوراً."
+        }
+        instructions = {
+            "en": [
+                "Evacuate the building immediately using the stairs. Do not use elevators.",
+                "If trapped by smoke, stay low to the ground and cover your nose and mouth with a wet cloth.",
+                "Feel doors for heat before opening them. If hot, do not open.",
+                "Alert others in the vicinity and stay a safe distance away once outside."
+            ],
+            "ar": [
+                "إخلاء المبنى فوراً باستخدام السلالم. لا تستخدم المصاعد الكهربائية.",
+                "إذا حاصرك الدخان، ابقَ منخفضاً قريباً من الأرض وغطِّ أنفك وفمك بقطعة قماش مبللة.",
+                "تحسس الأبواب للتأكد من حرارتها قبل فتحها. إذا كانت ساخنة، لا تفتحها.",
+                "قم بتنبيه الآخرين في الجوار وابقَ على مسافة آمنة بمجرد خروجك."
+            ]
+        }
+        responders_needed = ["Firefighters", "Ambulance", "Search and Rescue"]
+    elif "medical" in cat:
+        incident_type = "Medical Emergency"
+        severity = "High"
+        triage_level = "Orange"
+        urgency_score = 8
+        risk_level = "Potential cardiac or respiratory arrest, severe blood loss, shock risk."
+        dispatch_priority = "IMMEDIATE PARAMEDIC DISPATCH."
+        summary = {
+            "en": f"Emergency medical situation. Category: Medical. Details: {desc}",
+            "ar": f"حالة طبية طارئة. التصنيف: طبي. التفاصيل: {desc}"
+        }
+        responder_briefing = {
+            "en": "Bring AED, trauma kit, and oxygen. Be prepared to administer CPR or first aid upon arrival.",
+            "ar": "إحضار جهاز إزالة الرجفان (AED)، حقيبة إسعافات أولية، وأكسجين. الاستعداد لإجراء الإنعاش الرئوي فور الوصول."
+        }
+        instructions = {
+            "en": [
+                "Check if the person is responsive and breathing.",
+                "If bleeding heavily, apply direct pressure using a clean cloth or bandage.",
+                "Keep the patient warm, quiet, and do not move them unless they are in immediate danger.",
+                "Loosen tight clothing and reassure the patient that help is on the way."
+            ],
+            "ar": [
+                "تأكد مما إذا كان الشخص واعياً ويتنفس.",
+                "في حالة النزيف الشديد، اضغط مباشرة باستخدام قطعة قماش نظيفة أو ضمادة.",
+                "حافظ على دفء المريض وهدوئه، ولا تحركه إلا إذا كان في خطر مباشر.",
+                "قم بفك الملابس الضيقة وطمأنة المريض بأن المساعدة في الطريق."
+            ]
+        }
+        responders_needed = ["Ambulance"]
+    elif "security" in cat:
+        incident_type = "Security Alert"
+        severity = "High"
+        triage_level = "Orange"
+        urgency_score = 8
+        risk_level = "Active physical threat, assault, or intrusion in progress."
+        dispatch_priority = "IMMEDIATE LAW ENFORCEMENT DISPATCH."
+        summary = {
+            "en": f"Security incident. Category: Security. Details: {desc}",
+            "ar": f"حادث أمني. التصنيف: أمن. التفاصيل: {desc}"
+        }
+        responder_briefing = {
+            "en": "Approach with caution. Scene may not be secure. Maintain defensive posture and contact law enforcement.",
+            "ar": "الاقتراب بحذر شديد. قد لا يكون الموقع آمناً بالكامل. حافظ على وضع دفاعي وتواصل مع الشرطة."
+        }
+        instructions = {
+            "en": [
+                "Find a safe place to hide, lock the doors, and turn off the lights.",
+                "Silence your mobile phone and remain completely quiet.",
+                "Only try to escape if there is a safe exit path available.",
+                "Do not confront the intruder or threat under any circumstances."
+            ],
+            "ar": [
+                "ابحث عن مكان آمن للاختباء، وأغلق الأبواب وأطفئ الأنوار.",
+                "ضع هاتفك المحمول على وضع الصامت وابقَ هادئاً تماماً.",
+                "لا تحاول الهرب إلا إذا كان هناك مسار خروج آمن تماماً.",
+                "لا تواجه المقتحم أو التهديد تحت أي ظرف من الظروف."
+            ]
+        }
+        responders_needed = ["Police"]
+    else:
+        incident_type = "Incident Report"
+        severity = "Medium"
+        triage_level = "Yellow"
+        urgency_score = 5
+        risk_level = "General distress or undefined emergency."
+        dispatch_priority = "Standard dispatch response."
+        summary = {
+            "en": f"Report received. Category: General. Details: {desc}",
+            "ar": f"تم استلام البلاغ. التصنيف: عام. التفاصيل: {desc}"
+        }
+        responder_briefing = {
+            "en": "Assess the scene carefully upon arrival. Establish contact with reporter to clarify situation.",
+            "ar": "تقييم الموقع بعناية عند الوصول. تواصل مع المُبلغ لتوضيح طبيعة الحالة."
+        }
+        instructions = {
+            "en": [
+                "Stay calm and remain in a safe location near the reported area.",
+                "Keep your phone lines clear to receive updates from responders.",
+                "Ensure you are visible to volunteers as they approach.",
+                "Avoid unnecessary movement to preserve energy and safety."
+            ],
+            "ar": [
+                "حافظ على هدوئك وابقَ في مكان آمن بالقرب من المنطقة المبلّغ عنها.",
+                "ابقِ خط الهاتف شاغراً لاستقبال أي تحديثات من فرق المساعدة.",
+                "تأكد من أنك مرئي للمتطوعين أثناء اقترابهم.",
+                "تجنب التحركات غير الضرورية للحفاظ على سلامتك وطاقتك."
+            ]
+        }
+        responders_needed = ["Standard response team"]
+        
+    # Delete any previous analysis (re-analysis case)
+    IncidentAIAnalysis.objects.filter(incident=incident).delete()
+    
+    # Save the fallback analysis object
+    IncidentAIAnalysis.objects.create(
+        incident=incident,
+        incident_type=incident_type,
+        severity=severity,
+        triage_level=triage_level,
+        urgency_score=urgency_score,
+        risk_level=risk_level,
+        dispatch_priority=dispatch_priority,
+        summary=json.dumps(summary, ensure_ascii=False),
+        responder_briefing=json.dumps(responder_briefing, ensure_ascii=False),
+        instructions=instructions,
+        responders_needed=responders_needed,
+        confidence=0.95,
+        source="text",
+    )
+    print(f"[SUCCESS] Auto-generated fallback AI analysis created successfully for incident {incident.incident_id}")
+
+
 class IncidentViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """Override list to ensure no caching"""
@@ -124,8 +388,21 @@ class IncidentViewSet(viewsets.ModelViewSet):
         return response
 
     def retrieve(self, request, *args, **kwargs):
-        """Override retrieve to ensure no caching"""
-        response = super().retrieve(request, *args, **kwargs)
+        """Override retrieve to ensure no caching and auto-generate AI analysis if missing or old format"""
+        instance = self.get_object()
+        try:
+            from .models import IncidentAIAnalysis
+            analysis = IncidentAIAnalysis.objects.filter(incident=instance).first()
+            # If analysis doesn't exist or summary is in old format (doesn't start with '{'), regenerate it
+            if not analysis or not analysis.summary or not str(analysis.summary).strip().startswith('{'):
+                trigger_auto_ai_analysis(instance)
+                # Refresh instance from db to include the new relation
+                instance.refresh_from_db()
+        except Exception as e:
+            print(f"[ERROR] Failed to auto-generate missing AI analysis on retrieve: {e}")
+            
+        serializer = self.get_serializer(instance)
+        response = Response(serializer.data)
         response["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response["Pragma"] = "no-cache"
         response["Expires"] = "0"
@@ -173,9 +450,9 @@ class IncidentViewSet(viewsets.ModelViewSet):
             else:
                 data = request.data.copy()
 
-        print(f"📦 Received data keys: {list(data.keys())}")
-        print(f"📦 Received files: {list(request.FILES.keys())}")
-        print(f"📦 Raw normalized data: {data}")
+        print(f"[INFO] Received data keys: {list(data.keys())}")
+        print(f"[INFO] Received files: {list(request.FILES.keys())}")
+        print(f"[INFO] Raw normalized data: {data}")
 
         # ✅ Fix: Resolve user UUID against your custom User model
         if "user_id" in data:
@@ -210,7 +487,7 @@ class IncidentViewSet(viewsets.ModelViewSet):
                 )
 
             data["user"] = str(resolved_user.user_id)
-            print(f"✅ Resolved user UUID: {data['user']}")
+            print(f"[SUCCESS] Resolved user UUID: {data['user']}")
         else:
             # If no user_id is provided, check if it's a guest report
             # but first we need a user to assign to the incident (ForeignKey requirement)
@@ -223,22 +500,7 @@ class IncidentViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        # 🚨 Limit for Guest Devices: One report only
-        device_id = data.get("device_id")
-        # Consider a "Guest" as someone who didn't provide a user_id or we used the fallback
-        is_guest = "user_id" not in request.data
 
-        if is_guest and device_id:
-            existing_report = Incident.objects.filter(device_id=device_id).exists()
-            if existing_report:
-                return Response(
-                    {
-                        "error": "Guest Limit Reached",
-                        "message": "عذراً، يمكنك إرسال بلاغ واحد فقط كزائر. يرجى تسجيل الدخول للاستمرار في استخدام التطبيق.",
-                        "requires_auth": True,
-                    },
-                    status=status.HTTP_403_FORBIDDEN,
-                )
 
         if "category" not in data or not data["category"]:
             data["category"] = "other"
@@ -264,17 +526,17 @@ class IncidentViewSet(viewsets.ModelViewSet):
         media_files_urls = []
         if "media_files" in request.FILES:
             files = request.FILES.getlist("media_files")
-            print(f"📦 Processing {len(files)} files")
+            print(f"[INFO] Processing {len(files)} files")
             for file in files:
                 try:
                     filename = f"reports/{data.get('user', 'unknown')}/{file.name}"
                     path = default_storage.save(filename, ContentFile(file.read()))
                     media_files_urls.append(f"/media/{path}")
-                    print(f"✅ File saved: {path}")
+                    print(f"[SUCCESS] File saved: {path}")
                 except Exception as e:
-                    print(f"⚠️ Error saving file: {e}")
+                    print(f"[WARNING] Error saving file: {e}")
         else:
-            print("⚠️ No media_files in request.FILES")
+            print("[WARNING] No media_files in request.FILES")
 
         # Parse coordinates (may be strings)
         lat_raw = data.pop("latitude", None)
@@ -298,17 +560,15 @@ class IncidentViewSet(viewsets.ModelViewSet):
                     "region": data.get("region", "Unknown"),
                     "address": addr or "Current Location",
                 }
-                print(f"✅ Coordinates parsed: lat={lat}, lng={lng}")
+                print(f"[SUCCESS] Coordinates parsed: lat={lat}, lng={lng}")
             except (ValueError, TypeError) as e:
-                print(
-                    f"❌ Error parsing coordinates: {e} (lat={lat_raw}, lng={lng_raw})"
-                )
+                print(f"[ERROR] Error parsing coordinates: {e} (lat={lat_raw}, lng={lng_raw})")
                 return Response(
                     {"error": f"Invalid coordinates: {e}"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         else:
-            print(f"⚠️ Missing coordinates: lat={lat_raw}, lng={lng_raw}")
+            print(f"[WARNING] Missing coordinates: lat={lat_raw}, lng={lng_raw}")
             if "location_data" not in data:
                 data["location_data"] = {
                     "latitude": 30.0444,
@@ -328,18 +588,22 @@ class IncidentViewSet(viewsets.ModelViewSet):
 
         data["media_files"] = media_files_urls
 
-        print(f"📤 Sending to serializer: {data}")
+        print(f"[INFO] Sending to serializer: {data}")
 
         serializer = self.get_serializer(data=data)
         if not serializer.is_valid():
-            print("🚨 Final Serializer Errors:", serializer.errors)
+            print("[ERROR] Final Serializer Errors:", serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
-        serializer.save()
+        incident = serializer.save()
+        try:
+            trigger_auto_ai_analysis(incident)
+        except Exception as e:
+            print(f"[ERROR] Failed to auto-generate AI analysis on create: {e}")
 
 
 @api_view(["POST"])
@@ -1188,7 +1452,7 @@ def update_responder_location(request, incident_id):
         responder.save(update_fields=["lat", "lng", "last_location_updated"])
         return Response({"status": "ok"})
     except Responder.DoesNotExist:
-        return Response({"detail": "Not a responder for this incident."}, status=404)
+        return Response({'detail': 'Not a responder for this incident.'}, status=404)
 
 
 # ============ CHAT ENDPOINTS ============
@@ -1286,3 +1550,378 @@ def incident_chat_poll(request, incident_id):
             "timestamp": timezone.now().isoformat(),
         }
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════ AI ANALYSIS VIEWS ═══════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .ai_client import (
+    AIServiceError,
+    analyze_image,
+    analyze_video,
+    analyze_voice,
+    analyze_text,
+    save_ai_result,
+)
+from .models import IncidentAIAnalysis
+
+
+def _get_incident_for_user(incident_id, user):
+    """
+    Fetch an Incident that belongs to the requesting user.
+    Returns (incident, error_response) — one of the two will be None.
+    """
+    try:
+        incident = Incident.objects.get(incident_id=incident_id, user=user)
+        return incident, None
+    except Incident.DoesNotExist:
+        return None, Response(
+            {"error": "Incident not found or does not belong to you."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+
+class AnalyzeIncidentImageView(APIView):
+    """
+    POST /api/incidents/analyze/image/
+    Flutter sends: incident_id (UUID) + image file
+    Django forwards to AI service, saves result, returns analysis.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes     = [IsAuthenticated]
+
+    def post(self, request):
+        incident_id = request.data.get("incident_id")
+        image_file = request.FILES.get("image")
+
+        if not incident_id or not image_file:
+            return Response(
+                {"error": "incident_id and image are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        incident, err = _get_incident_for_user(incident_id, request.user)
+        if err:
+            return err
+
+        try:
+            ai_data = analyze_image(
+                image_file,
+                filename=image_file.name,
+                content_type=image_file.content_type,
+            )
+            analysis = save_ai_result(incident, ai_data, source="image")
+            from .serializers import IncidentAIAnalysisSerializer
+            return Response(
+                IncidentAIAnalysisSerializer(analysis).data,
+                status=status.HTTP_201_CREATED,
+            )
+        except AIServiceError as e:
+            logger.error(f"AI image analysis failed: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class AnalyzeIncidentVideoView(APIView):
+    """
+    POST /api/incidents/analyze/video/
+    Flutter sends: incident_id (UUID) + video file
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes     = [IsAuthenticated]
+
+    def post(self, request):
+        incident_id = request.data.get("incident_id")
+        video_file = request.FILES.get("video")
+
+        if not incident_id or not video_file:
+            return Response(
+                {"error": "incident_id and video are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        incident, err = _get_incident_for_user(incident_id, request.user)
+        if err:
+            return err
+
+        try:
+            ai_data = analyze_video(
+                video_file,
+                filename=video_file.name,
+                content_type=video_file.content_type,
+            )
+            analysis = save_ai_result(incident, ai_data, source="video")
+            from .serializers import IncidentAIAnalysisSerializer
+            return Response(
+                IncidentAIAnalysisSerializer(analysis).data,
+                status=status.HTTP_201_CREATED,
+            )
+        except AIServiceError as e:
+            logger.error(f"AI video analysis failed: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class AnalyzeIncidentVoiceView(APIView):
+    """
+    POST /api/incidents/analyze/voice/
+    Flutter sends: incident_id (UUID) + audio file
+    Returns both transcription and emergency analysis.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes     = [IsAuthenticated]
+
+    def post(self, request):
+        incident_id = request.data.get("incident_id")
+        audio_file = request.FILES.get("audio")
+
+        if not incident_id or not audio_file:
+            return Response(
+                {"error": "incident_id and audio are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        incident, err = _get_incident_for_user(incident_id, request.user)
+        if err:
+            return err
+
+        try:
+            ai_data  = analyze_voice(
+                audio_file,
+                filename=audio_file.name,
+                content_type=audio_file.content_type,
+            )
+            # Voice response has nested 'analysis' — save_ai_result handles this
+            analysis = save_ai_result(incident, ai_data, source="voice")
+            from .serializers import IncidentAIAnalysisSerializer
+
+            return Response(
+                {
+                    "transcription":    ai_data.get("transcription", ""),
+                    "panic_detected":   ai_data.get("panic_detected", False),
+                    "distress_keywords":ai_data.get("distress_keywords", []),
+                    "analysis":         IncidentAIAnalysisSerializer(analysis).data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        except AIServiceError as e:
+            logger.error(f"AI voice analysis failed: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class AnalyzeIncidentTextView(APIView):
+    """
+    POST /api/incidents/analyze/text/
+    Flutter sends: incident_id (UUID) + description string
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes     = [IsAuthenticated]
+
+    def post(self, request):
+        incident_id = request.data.get("incident_id")
+        description = request.data.get("description")
+
+        if not incident_id or not description:
+            return Response(
+                {"error": "incident_id and description are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        incident, err = _get_incident_for_user(incident_id, request.user)
+        if err:
+            return err
+
+        try:
+            ai_data  = analyze_text(
+                description=description,
+                location=request.data.get("location"),
+            )
+            analysis = save_ai_result(incident, ai_data, source="text")
+            from .serializers import IncidentAIAnalysisSerializer
+            return Response(
+                IncidentAIAnalysisSerializer(analysis).data,
+                status=status.HTTP_201_CREATED,
+            )
+        except AIServiceError as e:
+            logger.error(f"AI text analysis failed: {e}")
+            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class IncidentAIAnalysisDetailView(APIView):
+    """
+    GET /api/incidents/<incident_id>/analysis/
+    Flutter fetches the saved AI analysis for an incident.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes     = [IsAuthenticated]
+
+    def get(self, request, incident_id):
+        incident, err = _get_incident_for_user(incident_id, request.user)
+        if err:
+            return err
+
+        try:
+            analysis = incident.ai_analysis  # via OneToOneField related_name
+            from .serializers import IncidentAIAnalysisSerializer
+            return Response(IncidentAIAnalysisSerializer(analysis).data)
+        except IncidentAIAnalysis.DoesNotExist:
+            return Response(
+                {"error": "No AI analysis found for this incident."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+@api_view(["GET"])
+def get_sponsors(request):
+    lang = request.query_params.get("lang", "en")
+    is_ar = lang == "ar"
+    sponsors = [
+        {
+            "id": 1,
+            "category": "cars",
+            "title": "غبور أوتو (GB Auto)" if is_ar else "GB Auto (Ghabour)",
+            "rating": "4.8",
+            "badge_label": "شريك النخبة" if is_ar else "Elite Partner",
+            "description": "خدمات صيانة وإغاثة على الطريق على مدار الساعة." if is_ar else "24/7 roadside assistance and vehicle maintenance services.",
+            "services": [
+                "إغاثة طريق / Roadside Assistance",
+                "سحب سيارات / Towing",
+                "صيانة متنقلة / Mobile Maintenance"
+            ] if is_ar else [
+                "Roadside Assistance",
+                "Towing",
+                "Mobile Maintenance"
+            ],
+            "phone": "19999",
+            "branch": "القاهرة" if is_ar else "Cairo",
+            "is_featured": True
+        },
+        {
+            "id": 2,
+            "category": "insurance",
+            "title": "أكسا للتأمين" if is_ar else "AXA Insurance",
+            "rating": "4.7",
+            "badge_label": "تأمين معتمد" if is_ar else "Certified Insurer",
+            "description": "تغطية تأمينية شاملة للحوادث والرعاية الطبية." if is_ar else "Comprehensive insurance coverage for accidents and healthcare.",
+            "services": [
+                "تأمين طبي / Medical Insurance",
+                "تأمين حوادث / Accident Insurance",
+                "دعم مالي / Financial Support"
+            ] if is_ar else [
+                "Medical Insurance",
+                "Accident Insurance",
+                "Financial Support"
+            ],
+            "phone": "16111",
+            "branch": "الجيزة" if is_ar else "Giza",
+            "is_featured": True
+        },
+        {
+            "id": 3,
+            "category": "medical",
+            "title": "مستشفى دار الفؤاد" if is_ar else "Dar Al Fouad Hospital",
+            "rating": "4.9",
+            "badge_label": "شريك طبي" if is_ar else "Medical Partner",
+            "description": "رعاية طبية طارئة وغرف عناية مركزة مجهزة بالكامل." if is_ar else "Emergency medical care and fully equipped intensive care units.",
+            "services": [
+                "طوارئ 24 ساعة / 24/7 ER",
+                "عناية مركزة / ICU",
+                "إرسال إسعاف / Ambulance Dispatch"
+            ] if is_ar else [
+                "24/7 ER",
+                "ICU",
+                "Ambulance Dispatch"
+            ],
+            "phone": "16370",
+            "branch": "السادس من أكتوبر" if is_ar else "6th of October",
+            "is_featured": True
+        }
+    ]
+    return Response(sponsors, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def apply_sponsor(request):
+    try:
+        user_id = request.data.get("user_id")
+        user = None
+        if user_id:
+            try:
+                user = User.objects.get(user_id=user_id)
+            except User.DoesNotExist:
+                pass
+        
+        company_name = request.data.get("company_name")
+        contact_person = request.data.get("contact_person")
+        phone_number = request.data.get("phone_number")
+        message = request.data.get("message")
+        
+        if not all([company_name, contact_person, phone_number, message]):
+            return Response({"error": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        sponsor_request = SponsorRequest.objects.create(
+            company_name=company_name,
+            contact_person=contact_person,
+            phone_number=phone_number,
+            message=message,
+            user=user,
+            status="pending"
+        )
+        
+        return Response({
+            "message": "Sponsor application submitted successfully",
+            "request_id": str(sponsor_request.request_id)
+        }, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        logger.error(f"Error submitting sponsor application: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+def admin_sponsor_requests(request):
+    try:
+        requests = SponsorRequest.objects.all().order_by("-created_at")
+        data = []
+        for req in requests:
+            data.append({
+                "request_id": str(req.request_id),
+                "company_name": req.company_name,
+                "contact_person": req.contact_person,
+                "phone_number": req.phone_number,
+                "message": req.message,
+                "status": req.status,
+                "created_at": req.created_at.isoformat(),
+                "user_id": str(req.user.user_id) if req.user else None,
+                "user_name": req.user.name if req.user else None,
+            })
+        return Response(data, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error fetching sponsor requests: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+def admin_respond_sponsor_request(request, request_id):
+    try:
+        action = request.data.get("action")  # 'approve' or 'reject'
+        if action not in ["approve", "reject"]:
+            return Response({"error": "Invalid action. Must be 'approve' or 'reject'"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            sponsor_request = SponsorRequest.objects.get(request_id=request_id)
+        except SponsorRequest.DoesNotExist:
+            return Response({"error": "Sponsor request not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+        sponsor_request.status = "approved" if action == "approve" else "rejected"
+        sponsor_request.save()
+        
+        return Response({
+            "message": f"Sponsor request {action}d successfully",
+            "request_id": str(sponsor_request.request_id),
+            "status": sponsor_request.status
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error responding to sponsor request: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -146,7 +146,7 @@ class ServiceCard extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('تعذر الاتصال بـ $name ($number)'),
-                          backgroundColor: Colors.red,
+                          backgroundColor: const Color(0xFFE61717),
                         ),
                       );
                     }

@@ -91,7 +91,7 @@ class _UserHistoryPageState extends State<UserHistoryPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.orange, size: 48),
+            const Icon(Icons.error_outline_rounded, color: const Color(0xFFF18F34), size: 48),
             const SizedBox(height: 12),
             Text(loc.connError, style: const TextStyle(fontWeight: FontWeight.bold)),
             TextButton(onPressed: _loadHistory, child: Text(loc.retry)),
@@ -157,7 +157,7 @@ class _HistoryCard extends StatelessWidget {
     switch (item.type) {
       case 'emergency':
         icon = Icons.emergency_rounded;
-        color = Colors.redAccent;
+        color = const Color(0xFFE61717);
         typeLabel = isAr ? 'طوارئ' : 'Emergency';
         break;
       case 'volunteer':

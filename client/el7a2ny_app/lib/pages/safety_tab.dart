@@ -36,12 +36,12 @@ class SafetyTab extends StatelessWidget {
       {
         'name': context.loc.ambulance,
         'number': '123',
-        'gradientColors': [const Color(0xFFEF4444), const Color(0xFFF97316)]
+        'gradientColors': [const Color(0xFFE61717), const Color(0xFFF18F34)]
       },
       {
         'name': context.loc.fireDept,
         'number': '180',
-        'gradientColors': [const Color(0xFFF97316), const Color(0xFFF59E0B)]
+        'gradientColors': [const Color(0xFFF18F34), const Color(0xFFFDC800)]
       },
       {
         'name': context.loc.rescue,

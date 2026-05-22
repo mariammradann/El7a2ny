@@ -9,8 +9,7 @@ import 'package:el7a2ny_app/core/services/social_auth_service.dart';
 import 'package:el7a2ny_app/data/repositories/auth_repository.dart';
 import 'package:el7a2ny_app/core/localization/app_strings.dart';
 import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
-import '../services/api_service.dart';
-import '../widgets/global_fab_overlay.dart';
+import '../widgets/artboard_logo.dart';
 
 class SignUpScreen extends StatefulWidget {
   final SocialProfile? socialProfile;
@@ -182,11 +181,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
         elevation: 0,
         centerTitle: true,
         title: Text(loc.signUpTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic')),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        actions: [const LanguageToggleButton(), const SizedBox(width: 8)],
+        leadingWidth: loc.isAr ? 170 : null,
+        leading: loc.isAr
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ArtboardLogo(),
+                  ),
+                ],
+              )
+            : IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+        actions: [
+          if (!loc.isAr)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Center(child: ArtboardLogo()),
+            ),
+          const LanguageToggleButton(),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Form(
         key: _formKey,

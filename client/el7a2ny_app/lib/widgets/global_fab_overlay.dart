@@ -7,7 +7,6 @@ import '../models/user_model.dart';
 import '../core/auth/auth_token_store.dart';
 import '../pages/active_incident_tracking_screen.dart';
 import '../pages/emergency_chat_screen.dart';
-import '../widgets/language_toggle_button.dart';
 import '../core/localization/locale_provider.dart';
 
 class GlobalFabController {
@@ -70,7 +69,7 @@ class GlobalFabOverlay extends StatelessWidget {
                               ScaffoldMessenger.of(navContext).showSnackBar(
                                 SnackBar(
                                   content: Text(isAr ? 'بدء إجراءات الاستغاثة الفورية...' : 'Initiating instant SOS...'),
-                                  backgroundColor: Colors.red,
+                                  backgroundColor: const Color(0xFFE61717),
                                 ),
                               );
                             }
@@ -122,7 +121,7 @@ class GlobalFabOverlay extends StatelessWidget {
                               child: HoverExpandableFab(
                                 label: isAr ? 'العودة للبلاغ' : 'Active Incident',
                                 icon: Icons.location_on_rounded,
-                                backgroundColor: Colors.orange.shade700,
+                                backgroundColor: const Color(0xFFE95F32),
                                 iconColor: Colors.white,
                                 heroTag: 'global_active_incident_fab',
                                 onTap: () {
@@ -170,17 +169,6 @@ class GlobalFabOverlay extends StatelessWidget {
                   ),
                 ),
 
-                // ── Language Toggle at Top ──
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 10,
-                  right: isAr ? null : 16,
-                  left: isAr ? 16 : null,
-                  child: Material(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(25),
-                    child: const LanguageToggleButton(iconColor: Colors.white),
-                  ),
-                ),
               ],
             );
           },
@@ -208,7 +196,7 @@ class GlobalFabOverlay extends StatelessWidget {
                   right: 16,
                   bottom: 20, // Bottom of the screen
                   child: Material(
-                    color: const Color(0xFFFF5252), // Red Accent style
+                    color: const Color(0xFFE61717), // Red Accent style
                     elevation: 10,
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
@@ -265,7 +253,7 @@ class GlobalFabOverlay extends StatelessWidget {
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFFFF5252),
+                              foregroundColor: const Color(0xFFE61717),
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               elevation: 0,

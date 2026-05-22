@@ -70,14 +70,14 @@ class _EmergencyTabState extends State<EmergencyTab>
                       height: 110,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFEF4444), Color(0xFFF97316)],
+                          colors: [Color(0xFFE61717), Color(0xFFF18F34)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFEF4444).withValues(alpha: 0.4),
+                            color: const Color(0xFFE61717).withValues(alpha: 0.4),
                             blurRadius: 20,
                             spreadRadius: 4,
                           ),
@@ -99,7 +99,7 @@ class _EmergencyTabState extends State<EmergencyTab>
                   const SizedBox(height: 8),
                   ShaderMask(
                     shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Color(0xFFDC2626), Color(0xFFEA580C)],
+                      colors: [Color(0xFFD61717), Color(0xFFE95F32)],
                     ).createShader(bounds),
                     child: const Text(
                       '123',
@@ -126,7 +126,7 @@ class _EmergencyTabState extends State<EmergencyTab>
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(context.loc.callingEmergencyServices),
-                          backgroundColor: const Color(0xFFDC2626),
+                          backgroundColor: const Color(0xFFD61717),
                         ),
                       );
                     },
@@ -135,12 +135,12 @@ class _EmergencyTabState extends State<EmergencyTab>
                           horizontal: 36, vertical: 18),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFDC2626), Color(0xFFEA580C)],
+                          colors: [Color(0xFFD61717), Color(0xFFE95F32)],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFDC2626).withValues(alpha: 0.5),
+                            color: const Color(0xFFD61717).withValues(alpha: 0.5),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),

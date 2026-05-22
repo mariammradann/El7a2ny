@@ -55,13 +55,13 @@ class _DashboardTabState extends State<DashboardTab> {
         'name': loc.ambulance,
         'number': '123',
         'icon': Icons.local_hospital_rounded,
-        'gradientColors': const [Color(0xFFDC2626), Color(0xFF7F1D1D)], // Maroon/Red
+        'gradientColors': const [Color(0xFFE61717), Color(0xFF8A1717)], // Maroon/Red
       },
       {
         'name': loc.fireDept,
         'number': '180',
         'icon': Icons.local_fire_department_rounded,
-        'gradientColors': const [Color(0xFFEA580C), Color(0xFF9A3412)], // Orange/Brown
+        'gradientColors': const [Color(0xFFE95F32), Color(0xFF9A3412)], // Orange/Brown
       },
       {
         'name': loc.rescue,

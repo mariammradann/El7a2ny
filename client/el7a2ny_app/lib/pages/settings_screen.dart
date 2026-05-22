@@ -7,6 +7,7 @@ import 'verify_password_screen.dart';
 import 'edit_profile_screen.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
+import '../widgets/artboard_logo.dart';
 
 
 class SettingsScreen extends StatefulWidget {
@@ -88,6 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isAr = context.loc.isAr;
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -95,10 +97,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
           backgroundColor: theme.appBarTheme.backgroundColor,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: colorScheme.onSurface),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
+          leadingWidth: isAr ? 170 : null,
+          leading: isAr
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.arrow_back_ios_new_rounded, color: colorScheme.onSurface),
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8.0),
+                      child: ArtboardLogo(),
+                    ),
+                  ],
+                )
+              : IconButton(
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, color: colorScheme.onSurface),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
           title: Text(
             context.loc.settings,
             style: TextStyle(
@@ -108,9 +125,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: theme.primaryColor,
             ),
           ),
-          actions: const [
-            LanguageToggleButton(),
-            SizedBox(width: 8),
+          actions: [
+            if (!isAr)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                child: Center(child: ArtboardLogo()),
+              ),
+            const LanguageToggleButton(),
+            const SizedBox(width: 8),
           ],
         ),
         body: SafeArea(

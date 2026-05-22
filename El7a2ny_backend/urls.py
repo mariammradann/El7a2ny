@@ -33,6 +33,15 @@ from .views import (
     submit_volunteer_rating,
     incident_chat_messages,
     incident_chat_poll,
+    AnalyzeIncidentImageView,
+    AnalyzeIncidentVideoView,
+    AnalyzeIncidentVoiceView,
+    AnalyzeIncidentTextView,
+    IncidentAIAnalysisDetailView,
+    get_sponsors,
+    apply_sponsor,
+    admin_sponsor_requests,
+    admin_respond_sponsor_request,
 )
 
 # 1. إعداد الـ Router
@@ -104,6 +113,10 @@ urlpatterns = [
         name="get-subscription",
     ),
     path("api/subscription/subscribe/", subscribe_user, name="subscribe-user"),
+    path("api/sponsors/", get_sponsors, name="get-sponsors"),
+    path("api/sponsors/apply/", apply_sponsor, name="apply-sponsor"),
+    path("api/admin/sponsors/requests/", admin_sponsor_requests, name="admin-sponsor-requests"),
+    path("api/admin/sponsors/requests/<uuid:request_id>/respond/", admin_respond_sponsor_request, name="admin-respond-sponsor-request"),
     path("api/", include(router.urls)),
     path("api/devices/status/", get_device_status),
     # مسارات تعديل كلمة المرور
@@ -140,6 +153,13 @@ urlpatterns = [
         incident_chat_poll,
         name="incident-chat-poll",
     ),
+    
+    # ── AI Analysis endpoints ─────────────────────────────────────────────────
+    path("api/incidents/analyze/image/", AnalyzeIncidentImageView.as_view(), name="analyze-image"),
+    path("api/incidents/analyze/video/", AnalyzeIncidentVideoView.as_view(), name="analyze-video"),
+    path("api/incidents/analyze/voice/", AnalyzeIncidentVoiceView.as_view(), name="analyze-voice"),
+    path("api/incidents/analyze/text/",  AnalyzeIncidentTextView.as_view(),  name="analyze-text"),
+    path("api/incidents/<uuid:incident_id>/analysis/", IncidentAIAnalysisDetailView.as_view(), name="incident-analysis"),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير

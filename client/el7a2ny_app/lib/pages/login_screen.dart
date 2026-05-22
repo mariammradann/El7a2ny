@@ -8,11 +8,10 @@ import 'package:el7a2ny_app/widgets/language_toggle_button.dart';
 import 'package:el7a2ny_app/core/localization/app_strings.dart';
 import 'package:el7a2ny_app/pages/forgot_password_screen.dart';
 import 'package:el7a2ny_app/pages/sign_up_screen.dart';
-import 'package:el7a2ny_app/pages/admin_screen.dart';
 import 'package:el7a2ny_app/core/auth/auth_token_store.dart';
-import '../widgets/language_toggle_button.dart';
 import '../services/session_service.dart';
 import '../widgets/global_fab_overlay.dart';
+import '../widgets/artboard_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -91,6 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final theme = Theme.of(context);
+    final isAr = context.loc.isAr;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -98,14 +98,37 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: _kTextDark(context),
-          ),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+        leadingWidth: isAr ? 170 : null,
+        leading: isAr
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: _kTextDark(context),
+                    ),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ArtboardLogo(),
+                  ),
+                ],
+              )
+            : IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: _kTextDark(context),
+                ),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
         actions: [
+          if (!isAr)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Center(child: ArtboardLogo()),
+            ),
           LanguageToggleButton(iconColor: _kTextDark(context)),
           const SizedBox(width: 8),
         ],

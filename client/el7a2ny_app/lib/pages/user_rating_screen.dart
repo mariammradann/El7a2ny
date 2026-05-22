@@ -50,7 +50,7 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(context.loc.isAr ? 'حدث خطأ أثناء إرسال التقييم' : 'Error submitting rating'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE61717),
         ),
       );
     }
@@ -119,7 +119,7 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
                             title: loc.isAr ? 'لا' : 'No',
                             icon: Icons.cancel_rounded,
                             isSelected: _volunteersHelpful == false,
-                            activeColor: Colors.red,
+                            activeColor: const Color(0xFFE61717),
                             onTap: () => setState(() => _volunteersHelpful = false),
                           ),
                         ),
@@ -187,7 +187,7 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
               color: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.star_rounded, color: Colors.amber, size: 28),
+            child: const Icon(Icons.star_rounded, color: const Color(0xFFFDC800), size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(

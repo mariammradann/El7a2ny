@@ -5,6 +5,7 @@ import 'sensors_page.dart';
 import 'alert_details_page.dart';
 import 'settings_screen.dart';
 import '../models/alert_model.dart';
+import '../widgets/artboard_logo.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -118,14 +119,41 @@ class _NotificationsPageState extends State<NotificationsPage> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: Icon(
-            isAr ? Icons.arrow_back_ios_rounded : Icons.arrow_back_ios_new_rounded, 
-            color: theme.colorScheme.onSurface,
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leadingWidth: isAr ? 170 : null,
+        leading: isAr
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios_rounded, 
+                      color: theme.colorScheme.onSurface,
+                      size: 20,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ArtboardLogo(),
+                  ),
+                ],
+              )
+            : IconButton(
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded, 
+                  color: theme.colorScheme.onSurface,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+        actions: [
+          if (!isAr)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Center(child: ArtboardLogo()),
+            ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,7 +332,7 @@ class _NotificationItem extends StatelessWidget {
     switch (type) {
       case 'sensor':
         iconData = Icons.sensors_rounded;
-        color = Colors.redAccent;
+        color = const Color(0xFFE61717);
         break;
       case 'volunteer':
         iconData = Icons.volunteer_activism_rounded;
@@ -312,7 +340,7 @@ class _NotificationItem extends StatelessWidget {
         break;
       case 'incident':
         iconData = Icons.warning_amber_rounded;
-        color = Colors.orange;
+        color = const Color(0xFFF18F34);
         break;
       case 'initiative':
         iconData = Icons.handshake_rounded;

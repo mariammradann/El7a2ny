@@ -41,15 +41,15 @@ class LandingScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [LanguageToggleButton(iconColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5))],
                 ),
-                _HeaderLogo(brandRed: _kBrandRed(context)),
-                const SizedBox(height: 8),
-                Text(
-                  context.loc.landingAppName,
-                  style: TextStyle(
-                    fontFamily: 'NotoSansArabic',
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: _kBrandRed(context),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    height: 90,
+                    child: Image.asset(
+                      'assets/images/rr.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -193,39 +193,6 @@ class LandingScreen extends StatelessWidget {
                 const SizedBox(height: 24),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HeaderLogo extends StatelessWidget {
-  final Color brandRed;
-  const _HeaderLogo({required this.brandRed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 88,
-      height: 88,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: brandRed, width: 3),
-        color: Theme.of(context).colorScheme.surface,
-      ),
-      child: Center(
-        child: Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: brandRed,
-          ),
-          child: const Icon(
-            Icons.priority_high_rounded,
-            color: Colors.white,
-            size: 38,
           ),
         ),
       ),

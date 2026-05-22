@@ -14,7 +14,7 @@ class StarRatingBar extends StatefulWidget {
     this.initialRating = 0.0,
     required this.onRatingChanged,
     this.itemSize = 32.0,
-    this.activeColor = const Color(0xFFF59E0B),
+    this.activeColor = const Color(0xFFFDC800),
     this.inactiveColor = const Color(0xFFE5E7EB),
   });
 

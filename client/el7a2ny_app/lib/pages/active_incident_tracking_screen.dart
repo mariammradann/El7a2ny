@@ -178,7 +178,7 @@ class _ActiveIncidentTrackingScreenState
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE61717)),
               child: Text(isAr ? 'نعم، كاذب' : 'Yes, Fake', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
@@ -219,7 +219,7 @@ class _ActiveIncidentTrackingScreenState
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              const Icon(Icons.star_rate_rounded, color: Colors.orange),
+              const Icon(Icons.star_rate_rounded, color: const Color(0xFFF18F34)),
               const SizedBox(width: 8),
               Expanded(child: Text(isAr ? 'تقييم التجربة' : 'Rate Experience', style: const TextStyle(fontWeight: FontWeight.bold))),
             ],
@@ -238,7 +238,7 @@ class _ActiveIncidentTrackingScreenState
             if (_volunteers.isNotEmpty)
               TextButton(
                 onPressed: () => Navigator.pop(context, 'report'),
-                child: Text(isAr ? 'الإبلاغ' : 'Report', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                child: Text(isAr ? 'الإبلاغ' : 'Report', style: const TextStyle(color: const Color(0xFFE61717), fontWeight: FontWeight.bold)),
               ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, 'rate'),
@@ -301,7 +301,7 @@ class _ActiveIncidentTrackingScreenState
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text(isAr ? 'نعم، إلغاء' : 'Yes, Cancel', style: const TextStyle(color: Colors.red, fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold)),
+              child: Text(isAr ? 'نعم، إلغاء' : 'Yes, Cancel', style: const TextStyle(color: const Color(0xFFE61717), fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -330,7 +330,7 @@ class _ActiveIncidentTrackingScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(isAr ? 'حدث خطأ أثناء الإلغاء' : 'Error cancelling incident', style: const TextStyle(fontFamily: 'NotoSansArabic')),
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFE61717),
             ),
           );
         }
@@ -385,7 +385,7 @@ class _ActiveIncidentTrackingScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(isAr ? 'حدث خطأ' : 'Error', style: const TextStyle(fontFamily: 'NotoSansArabic')),
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFE61717),
             ),
           );
         }
@@ -498,7 +498,7 @@ class _ActiveIncidentTrackingScreenState
                     width: 60,
                     height: 60,
                     child: const Icon(Icons.location_on,
-                        color: Colors.red, size: 50),
+                        color: const Color(0xFFE61717), size: 50),
                   ),
                   // Responder pins
                   ..._volunteers.map(
@@ -705,6 +705,113 @@ class _ActiveIncidentTrackingScreenState
                             ],
                           ),
                         ),
+                        if (_alertDetails != null &&
+                            ((_alertDetails!.getSummary(isAr) != null && _alertDetails!.getSummary(isAr)!.isNotEmpty) ||
+                            (_alertDetails!.getVolunteerInstructions(isAr) != null && _alertDetails!.getVolunteerInstructions(isAr)!.isNotEmpty))) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.blue.shade900.withValues(alpha: 0.1),
+                                  Colors.indigo.shade900.withValues(alpha: 0.05),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.blue.shade300.withValues(alpha: 0.3),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blue.withValues(alpha: 0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.psychology_rounded,
+                                      color: Colors.blueAccent,
+                                      size: 24,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      isAr ? 'تحليل الذكاء الاصطناعي للاستجابة السريعة' : 'AI Analysis & Triage Briefing',
+                                      style: const TextStyle(
+                                        fontFamily: 'NotoSansArabic',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blueAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (_alertDetails!.getSummary(isAr) != null && _alertDetails!.getSummary(isAr)!.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    isAr ? 'ملخص البلاغ:' : 'Incident Summary:',
+                                    style: const TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _alertDetails!.getSummary(isAr)!,
+                                    style: TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 13,
+                                      color: Colors.grey.shade700,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                                if (_alertDetails!.getVolunteerInstructions(isAr) != null && _alertDetails!.getVolunteerInstructions(isAr)!.isNotEmpty) ...[
+                                  const Divider(height: 24, thickness: 1),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.health_and_safety_rounded,
+                                        color: Color(0xFF10B981),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        isAr ? 'تعليمات فور الوصول للموقع:' : 'On-Arrival Instructions:',
+                                        style: const TextStyle(
+                                          fontFamily: 'NotoSansArabic',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF10B981),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    _alertDetails!.getVolunteerInstructions(isAr)!,
+                                    style: TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 13,
+                                      color: Colors.grey.shade700,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
                         
                         // Directions Button
@@ -790,8 +897,8 @@ class _ActiveIncidentTrackingScreenState
                             Expanded(
                               child: OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.redAccent,
-                                  side: const BorderSide(color: Colors.redAccent),
+                                  foregroundColor: const Color(0xFFE61717),
+                                  side: const BorderSide(color: const Color(0xFFE61717)),
                                   padding: const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12)),
@@ -935,6 +1042,126 @@ class _ActiveIncidentTrackingScreenState
                               },
                             ),
                           ),
+                        if (_alertDetails != null &&
+                            ((_alertDetails!.getSummary(isAr) != null && _alertDetails!.getSummary(isAr)!.isNotEmpty) ||
+                            (_alertDetails!.getInstructionsList(isAr) != null && _alertDetails!.getInstructionsList(isAr)!.isNotEmpty))) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFFE95F32).withValues(alpha: 0.1),
+                                  const Color(0xFF8A1717).withValues(alpha: 0.05),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFF18F34).withValues(alpha: 0.3),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFF18F34).withValues(alpha: 0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.security_rounded,
+                                      color: const Color(0xFFF18F34),
+                                      size: 22,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      isAr ? 'إرشادات السلامة الفورية (AI)' : 'Immediate Safety Actions (AI)',
+                                      style: const TextStyle(
+                                        fontFamily: 'NotoSansArabic',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFFF18F34),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (_alertDetails!.getSummary(isAr) != null && _alertDetails!.getSummary(isAr)!.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    isAr ? 'ملخص تحليل الطوارئ:' : 'Emergency Analysis Summary:',
+                                    style: const TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _alertDetails!.getSummary(isAr)!,
+                                    style: TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 13,
+                                      color: Colors.grey.shade700,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                                if (_alertDetails!.getInstructionsList(isAr) != null && _alertDetails!.getInstructionsList(isAr)!.isNotEmpty) ...[
+                                  const Divider(height: 24, thickness: 1),
+                                  Text(
+                                    isAr ? 'خطوات السلامة المطلوبة منك:' : 'Safety Steps to Follow Now:',
+                                    style: const TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ..._alertDetails!.getInstructionsList(isAr)!.map((instruction) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.only(top: 2),
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF18F34).withValues(alpha: 0.15),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.check_rounded,
+                                            color: const Color(0xFFF18F34),
+                                            size: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            instruction,
+                                            style: TextStyle(
+                                              fontFamily: 'NotoSansArabic',
+                                              fontSize: 13,
+                                              color: Colors.grey.shade700,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 16),
 
                         // Creator Action Buttons
@@ -965,15 +1192,15 @@ class _ActiveIncidentTrackingScreenState
                             Expanded(
                               child: OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.redAccent,
-                                  side: const BorderSide(color: Colors.redAccent),
+                                  foregroundColor: const Color(0xFFE61717),
+                                  side: const BorderSide(color: const Color(0xFFE61717)),
                                   padding: const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12)),
                                 ),
                                 onPressed: _canceling ? null : _cancelIncident,
                                 icon: _canceling 
-                                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.redAccent))
+                                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: const Color(0xFFE61717)))
                                     : const Icon(Icons.cancel_outlined),
                                 label: Text(
                                   isAr ? 'إلغاء البلاغ' : 'Cancel Report',

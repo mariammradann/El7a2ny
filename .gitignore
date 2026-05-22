@@ -117,3 +117,18 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+
+# Python virtual environments
+venv/
+.venv/
+ai_service/venv/
+
+# Environment files
+.env
+ai_service/.env
+
+# Local database / media / temp files
+media/reports/
+migrate_output.txt
+show.txt
+check_pg.py

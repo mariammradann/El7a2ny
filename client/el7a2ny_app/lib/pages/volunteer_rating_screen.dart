@@ -46,7 +46,7 @@ class _VolunteerRatingScreenState extends State<VolunteerRatingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(context.loc.isAr ? 'حدث خطأ أثناء إرسال التقييم' : 'Error submitting rating'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE61717),
         ),
       );
     }
@@ -90,7 +90,7 @@ class _VolunteerRatingScreenState extends State<VolunteerRatingScreen> {
                       subtitle: loc.isAr ? 'البلاغ كان كاذباً أو غير صحيح.' : 'The report was deceptive or incorrect.',
                       icon: Icons.error_rounded,
                       isSelected: _isRealReport == false,
-                      activeColor: Colors.red,
+                      activeColor: const Color(0xFFE61717),
                       onTap: () => setState(() => _isRealReport = false),
                       isDark: isDark,
                     ),
@@ -157,7 +157,7 @@ class _VolunteerRatingScreenState extends State<VolunteerRatingScreen> {
               color: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.shield_rounded, color: Colors.amber, size: 28),
+            child: const Icon(Icons.shield_rounded, color: const Color(0xFFFDC800), size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(

@@ -77,7 +77,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
                   ? 'حدث خطأ أثناء التحديث'
                   : 'Error updating status',
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE61717),
           ),
         );
       }
@@ -168,7 +168,7 @@ await ApiService.respondToAlert(
                 ? 'عذراً، حدث خطأ أثناء التسجيل.'
                 : 'Error registering for alert.',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE61717),
         ),
       );
     }
@@ -182,13 +182,13 @@ await ApiService.respondToAlert(
     final typeLower = widget.alert.type.toLowerCase();
 
     if (typeLower.contains('fire') || typeLower.contains('حريق')) {
-      bannerColor = const Color(0xFFEF4444);
+      bannerColor = const Color(0xFFE61717);
       largeIcon = Icons.fire_extinguisher_rounded;
     } else if (typeLower.contains('medical') || typeLower.contains('طب')) {
-      bannerColor = const Color(0xFFD97706);
+      bannerColor = const Color(0xFFE95F32);
       largeIcon = Icons.medical_services_rounded;
     } else if (typeLower.contains('security') || typeLower.contains('أمن')) {
-      bannerColor = const Color(0xFFB45309);
+      bannerColor = const Color(0xFFE95F32);
       largeIcon = Icons.shield_rounded;
     } else {
       bannerColor = const Color(0xFF6366F1);
@@ -317,8 +317,8 @@ await ApiService.respondToAlert(
                             ),
                             decoration: BoxDecoration(
                               color: widget.isMyAlerts
-                                  ? const Color(0xFFF97316)
-                                  : const Color(0xFFFF0000),
+                                  ? const Color(0xFFF18F34)
+                                  : const Color(0xFFE61717),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Column(

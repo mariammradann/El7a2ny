@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'landing_screen.dart';
-import '../core/localization/app_strings.dart';
 import '../widgets/global_fab_overlay.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -65,16 +64,26 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       GlobalFabController.hide();
     });
 
-    const arLoc = AppStrings(true);
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: Theme.of(context).brightness == Brightness.light
-                ? [Theme.of(context).primaryColor, Theme.of(context).primaryColor.withValues(alpha: 0.8)]
-                : [Theme.of(context).colorScheme.primaryContainer, Theme.of(context).primaryColor],
+          gradient: RadialGradient(
+            center: Alignment.center,
+            radius: 1.1,
+            colors: const [
+              Color(0xFFFFEF26), // asfar
+              Color(0xFFFDC800), // asfar aghma2
+              Color(0xFFF18F34), // orange
+              Color(0xFFE95F32), // orange awe
+              Color(0xFFE61717), // ahmar
+            ],
+            stops: const [
+              0.0,
+              0.25,
+              0.5,
+              0.75,
+              1.0,
+            ],
           ),
         ),
         child: Center(
@@ -85,49 +94,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Flame icon
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    child: const Icon(
-                      Icons.warning_amber_rounded,
-                      color: Colors.white,
-                      size: 52,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    arLoc.landingAppName,
-                    style: const TextStyle(
-                      fontFamily: 'NotoSansArabic',
-                      fontSize: 68,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          offset: Offset(0, 8),
-                          blurRadius: 12.0,
-                          color: Colors.black45,
-                        ),
-                        Shadow(
-                          offset: Offset(0, 2),
-                          blurRadius: 4.0,
-                          color: Colors.black26,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    arLoc.emergencySystemTitle,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 18,
-                      letterSpacing: 1.2,
+                  // El7a2ny Logo
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    height: 240,
+                    child: Image.asset(
+                      'assets/images/artboard_1.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ],

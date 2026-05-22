@@ -364,7 +364,7 @@ class _EditContactItem extends StatelessWidget {
             Row(
               children: [
                 IconButton(onPressed: onPick, icon: const Icon(Icons.contact_phone_outlined, size: 20)),
-                IconButton(onPressed: onRemove, icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent)),
+                IconButton(onPressed: onRemove, icon: const Icon(Icons.delete_outline, size: 20, color: const Color(0xFFE61717))),
               ],
             ),
           ],

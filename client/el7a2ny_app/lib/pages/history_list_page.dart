@@ -35,7 +35,7 @@ class HistoryListPage extends StatelessWidget {
             switch (h.type) {
               case 'emergency':
                 icon = Icons.emergency_rounded;
-                color = Colors.redAccent;
+                color = const Color(0xFFE61717);
                 break;
               case 'volunteer':
                 icon = Icons.volunteer_activism_rounded;

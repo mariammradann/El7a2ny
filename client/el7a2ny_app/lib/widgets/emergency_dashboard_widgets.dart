@@ -99,9 +99,9 @@ class EmergencyStatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? Colors.red.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
+        color: isDark ? const Color(0xFFE61717).withValues(alpha: 0.1) : const Color(0xFFE61717).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.red.shade400.withValues(alpha: 0.4) : Colors.red.shade600.withValues(alpha: 0.3)),
+        border: Border.all(color: isDark ? const Color(0xFFE61717).withValues(alpha: 0.4) : const Color(0xFFE61717).withValues(alpha: 0.3)),
       ),
       child: Text(
         'غير متصل',
@@ -109,7 +109,7 @@ class EmergencyStatusChip extends StatelessWidget {
           fontFamily: 'NotoSansArabic',
           fontSize: 12,
           fontWeight: FontWeight.w700,
-          color: isDark ? Colors.red.shade300 : Colors.red.shade700,
+          color: isDark ? const Color(0xFFE61717) : const Color(0xFF8A1717),
         ),
       ),
     );

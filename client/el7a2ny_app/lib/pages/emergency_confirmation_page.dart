@@ -31,7 +31,7 @@ class _EmergencyConfirmationPageState extends State<EmergencyConfirmationPage> w
     final loc = context.loc;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFDC2626), // Emergency red
+      backgroundColor: const Color(0xFFE61717), // Emergency red
       body: SafeArea(
         child: Column(
           children: [
@@ -98,7 +98,7 @@ class _EmergencyConfirmationPageState extends State<EmergencyConfirmationPage> w
                   _buildInfoRow(
                     label: loc.isAr ? 'بيوصل في :' : 'Estimated Arrival:',
                     value: loc.isAr ? '8 دقائق' : '8 minutes',
-                    valueColor: const Color(0xFFFFD700),
+                    valueColor: const Color(0xFFFDC800),
                   ),
                   _buildInfoRow(
                     label: loc.isAr ? 'أقرب مستشفى :' : 'Nearest Hospital:',

@@ -50,7 +50,7 @@ class _MyReportsPageState extends State<MyReportsPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  Icon(Icons.error_outline, size: 48, color: const Color(0xFFE61717)),
                   const SizedBox(height: 16),
                   Text(isAr ? 'خطأ في تحميل التقارير' : 'Error loading reports'),
                   const SizedBox(height: 16),
@@ -271,7 +271,7 @@ class _ReportCard extends StatelessWidget {
       case 'reported':
         return Colors.blue;
       case 'in_progress':
-        return Colors.orange;
+        return const Color(0xFFF18F34);
       case 'resolved':
         return Colors.green;
       case 'closed':
@@ -330,7 +330,7 @@ class _ReportCard extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    const Icon(Icons.error_outline, color: const Color(0xFFE61717), size: 48),
                     const SizedBox(height: 16),
                     Text(isAr ? 'خطأ في تحميل الصورة' : 'Failed to load image'),
                   ],

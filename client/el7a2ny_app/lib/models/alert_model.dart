@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:ui' as ui;
 import '../core/localization/app_strings.dart';
 import '../core/auth/auth_token_store.dart';
 
@@ -23,6 +25,16 @@ class AlertModel {
   final String? aiInstructions;
   final Map<String, dynamic>? aiAnalysis;
   final String? reporterName;
+  final String? volunteerInstructions;
+  final List<String>? aiInstructionsList;
+  final String? aiSummaryEn;
+  final String? aiSummaryAr;
+  final String? aiInstructionsEn;
+  final String? aiInstructionsAr;
+  final List<String>? aiInstructionsListEn;
+  final List<String>? aiInstructionsListAr;
+  final String? volunteerInstructionsEn;
+  final String? volunteerInstructionsAr;
 
   const AlertModel({
     required this.id,
@@ -46,6 +58,16 @@ class AlertModel {
     this.aiInstructions,
     this.aiAnalysis,
     this.reporterName,
+    this.volunteerInstructions,
+    this.aiInstructionsList,
+    this.aiSummaryEn,
+    this.aiSummaryAr,
+    this.aiInstructionsEn,
+    this.aiInstructionsAr,
+    this.aiInstructionsListEn,
+    this.aiInstructionsListAr,
+    this.volunteerInstructionsEn,
+    this.volunteerInstructionsAr,
   });
 
   factory AlertModel.fromJson(Map<String, dynamic> json) {
@@ -59,7 +81,76 @@ class AlertModel {
         mediaUrls = List<String>.from(json['media_files']);
       }
     }
-    // print('RAW created_at: ${json['created_at']}');
+
+    final isAr = ui.PlatformDispatcher.instance.locale.languageCode == 'ar';
+
+    // Helper helper to get localized value from a bilingual json structure
+    String? getBilingualString(dynamic value, bool preferAr) {
+      if (value == null) return null;
+      if (value is Map) {
+        return (preferAr ? value['ar'] ?? value['en'] : value['en'] ?? value['ar'])?.toString();
+      }
+      if (value is String) {
+        final trimmed = value.trim();
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+          try {
+            final parsed = jsonDecode(trimmed);
+            if (parsed is Map) {
+              return (preferAr ? parsed['ar'] ?? parsed['en'] : parsed['en'] ?? parsed['ar'])?.toString();
+            }
+          } catch (_) {}
+        }
+        return value;
+      }
+      return value.toString();
+    }
+
+    List<String>? getBilingualList(dynamic value, bool preferAr) {
+      if (value == null) return null;
+      if (value is Map) {
+        final list = preferAr ? value['ar'] ?? value['en'] : value['en'] ?? value['ar'];
+        if (list is List) {
+          return List<String>.from(list.map((item) => getBilingualString(item, preferAr) ?? ''));
+        }
+      }
+      if (value is List) {
+        return List<String>.from(value.map((item) => getBilingualString(item, preferAr) ?? ''));
+      }
+      if (value is String) {
+        final trimmed = value.trim();
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+          try {
+            final parsed = jsonDecode(trimmed);
+            if (parsed is Map) {
+              final list = preferAr ? parsed['ar'] ?? parsed['en'] : parsed['en'] ?? parsed['ar'];
+              if (list is List) {
+                return List<String>.from(list.map((item) => getBilingualString(item, preferAr) ?? ''));
+              }
+            }
+          } catch (_) {}
+        }
+      }
+      return null;
+    }
+
+    final aiAnalysisMap = json['ai_analysis'] is Map
+        ? Map<String, dynamic>.from(json['ai_analysis'])
+        : null;
+
+    final rawSummary = json['ai_summary'] ?? (aiAnalysisMap != null ? aiAnalysisMap['summary'] : null);
+    final summaryEn = getBilingualString(rawSummary, false);
+    final summaryAr = getBilingualString(rawSummary, true);
+
+    final rawInstructions = aiAnalysisMap != null ? aiAnalysisMap['instructions'] : null;
+    final instructionsListEn = getBilingualList(rawInstructions, false);
+    final instructionsListAr = getBilingualList(rawInstructions, true);
+
+    final instructionsEn = json['ai_instructions'] ?? (instructionsListEn != null ? instructionsListEn.join('\n') : null);
+    final instructionsAr = json['ai_instructions'] ?? (instructionsListAr != null ? instructionsListAr.join('\n') : null);
+    
+    final rawVolunteerInstructions = aiAnalysisMap != null ? aiAnalysisMap['responder_briefing'] : null;
+    final volunteerInstructionsEn = getBilingualString(rawVolunteerInstructions, false);
+    final volunteerInstructionsAr = getBilingualString(rawVolunteerInstructions, true);
 
     return AlertModel(
       id: (json['incident_id'] ?? json['id'] ?? '').toString(),
@@ -83,14 +174,27 @@ class AlertModel {
           
       isMyAlert: currentUserId != null && alertOwnerId == currentUserId,
       mediaUrls: mediaUrls,
-      aiSummary: json['ai_summary'],
-      aiInstructions: json['ai_instructions'],
-      aiAnalysis: json['ai_analysis'] is Map
-          ? Map<String, dynamic>.from(json['ai_analysis'])
-          : null,
+      aiSummary: isAr ? summaryAr : summaryEn,
+      aiInstructions: isAr ? instructionsAr : instructionsEn,
+      aiAnalysis: aiAnalysisMap,
       reporterName: json['reporter_name'],
+      volunteerInstructions: isAr ? volunteerInstructionsAr : volunteerInstructionsEn,
+      aiInstructionsList: isAr ? instructionsListAr : instructionsListEn,
+      aiSummaryEn: summaryEn,
+      aiSummaryAr: summaryAr,
+      aiInstructionsEn: instructionsEn,
+      aiInstructionsAr: instructionsAr,
+      aiInstructionsListEn: instructionsListEn,
+      aiInstructionsListAr: instructionsListAr,
+      volunteerInstructionsEn: volunteerInstructionsEn,
+      volunteerInstructionsAr: volunteerInstructionsAr,
     );
   }
+
+  String? getSummary(bool isAr) => isAr ? aiSummaryAr ?? aiSummary : aiSummaryEn ?? aiSummary;
+  String? getInstructions(bool isAr) => isAr ? aiInstructionsAr ?? aiInstructions : aiInstructionsEn ?? aiInstructions;
+  List<String>? getInstructionsList(bool isAr) => isAr ? aiInstructionsListAr ?? aiInstructionsList : aiInstructionsListEn ?? aiInstructionsList;
+  String? getVolunteerInstructions(bool isAr) => isAr ? volunteerInstructionsAr ?? volunteerInstructions : volunteerInstructionsEn ?? volunteerInstructions;
 
   // --- Helper Methods ---
 

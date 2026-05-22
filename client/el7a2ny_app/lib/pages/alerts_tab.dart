@@ -102,7 +102,7 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 10),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: const Color(0xFFE61717),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -292,7 +292,7 @@ class _AlertCardState extends State<_AlertCard> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(msg, style: const TextStyle(fontFamily: 'NotoSansArabic')),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: action == 'monitor' ? Colors.blue : Colors.orange,
+          backgroundColor: action == 'monitor' ? Colors.blue : const Color(0xFFF18F34),
         ));
         widget.onRefresh();
 
@@ -314,7 +314,7 @@ class _AlertCardState extends State<_AlertCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE61717),
           behavior: SnackBarBehavior.floating,
         ));
       }
@@ -336,7 +336,7 @@ class _AlertCardState extends State<_AlertCard> {
                   child: const Text('إلغاء')),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('حذف', style: TextStyle(color: Colors.red)),
+                child: const Text('حذف', style: TextStyle(color: const Color(0xFFE61717))),
               ),
             ],
           ),
@@ -351,7 +351,7 @@ class _AlertCardState extends State<_AlertCard> {
           content: Text(context.loc.incidentDeletedMsg,
               style: const TextStyle(fontFamily: 'NotoSansArabic')),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE61717),
         ));
         widget.onRefresh();
       }
@@ -359,7 +359,7 @@ class _AlertCardState extends State<_AlertCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE61717),
           behavior: SnackBarBehavior.floating,
         ));
       }
@@ -377,13 +377,13 @@ class _AlertCardState extends State<_AlertCard> {
     IconData largeIcon;
 
     if (alert.type.contains('fire') || alert.type.contains('حريق')) {
-      bannerColor = const Color(0xFFEF4444);
+      bannerColor = const Color(0xFFE61717);
       largeIcon = Icons.fire_extinguisher_rounded;
     } else if (alert.type.contains('medical') || alert.type.contains('طب')) {
-      bannerColor = const Color(0xFFD97706);
+      bannerColor = const Color(0xFFE95F32);
       largeIcon = Icons.medical_services_rounded;
     } else if (alert.type.contains('security') || alert.type.contains('أمن')) {
-      bannerColor = const Color(0xFFB45309);
+      bannerColor = const Color(0xFFE95F32);
       largeIcon = Icons.shield_rounded;
     } else {
       bannerColor = const Color(0xFF6366F1);
@@ -456,7 +456,7 @@ class _AlertCardState extends State<_AlertCard> {
                         color: (alert.status.toLowerCase() == 'resolved' ||
                                 alert.status.toLowerCase() == 'completed')
                             ? const Color(0xFF22C55E)
-                            : const Color(0xFFF97316),
+                            : const Color(0xFFF18F34),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -475,7 +475,7 @@ class _AlertCardState extends State<_AlertCard> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isMyAlerts ? const Color(0xFFF97316) : theme.primaryColor,
+                        color: isMyAlerts ? const Color(0xFFF18F34) : theme.primaryColor,
                         shape: BoxShape.circle,
                       ),
                       child: Text(
@@ -723,14 +723,14 @@ Container(
                           _AdminActionButton(
                             label: context.loc.actionCancelAlert,
                             icon: Icons.cancel_outlined,
-                            color: Colors.orange,
+                            color: const Color(0xFFF18F34),
                             onTap: () => _doAdminAction('cancel'),
                           ),
                           const SizedBox(width: 8),
                           _AdminActionButton(
                             label: context.loc.actionDeleteIncident,
                             icon: Icons.delete_outline_rounded,
-                            color: Colors.red,
+                            color: const Color(0xFFE61717),
                             onTap: _doAdminDelete,
                           ),
                         ],

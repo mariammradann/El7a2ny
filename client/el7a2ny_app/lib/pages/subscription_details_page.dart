@@ -29,14 +29,14 @@ class SubscriptionDetailsPage extends StatelessWidget {
           leading: IconButton(
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
-              color: Color(0xFFFFD700),
+              color: Color(0xFFFDC800),
             ),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
             isAr ? 'تفاصيل الاشتراك' : 'Subscription Details',
             style: const TextStyle(
-              color: Color(0xFFFFD700),
+              color: Color(0xFFFDC800),
               fontWeight: FontWeight.w900,
               fontFamily: 'NotoSansArabic',
             ),
@@ -58,7 +58,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(
-                    color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                    color: const Color(0xFFFDC800).withValues(alpha: 0.3),
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -73,12 +73,12 @@ class SubscriptionDetailsPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.1),
+                        color: const Color(0xFFFDC800).withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.workspace_premium_rounded,
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFFDC800),
                         size: 48,
                       ),
                     ),
@@ -89,7 +89,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
                         fontFamily: 'NotoSansArabic',
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFFDC800),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -99,7 +99,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFD700),
+                        color: const Color(0xFFFDC800),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -236,7 +236,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: const Color(0xFFFFD700).withValues(alpha: 0.6),
+            color: const Color(0xFFFDC800).withValues(alpha: 0.6),
             size: 20,
           ),
           const SizedBox(width: 16),
@@ -273,7 +273,7 @@ class SubscriptionDetailsPage extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFFFFD700), size: 20),
+          Icon(icon, color: const Color(0xFFFDC800), size: 20),
           const SizedBox(width: 12),
           Text(
             title,

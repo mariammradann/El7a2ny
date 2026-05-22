@@ -6,13 +6,13 @@ import '../pages/tabs/home_tab_page.dart';
 import '../pages/tabs/istighatha_tab_page.dart';
 import '../pages/tabs/profile_tab_page.dart';
 import '../core/localization/app_strings.dart';
-import '../pages/landing_screen.dart';
 import '../pages/settings_screen.dart';
 import '../widgets/language_toggle_button.dart';
 import '../services/session_service.dart';
 import '../pages/admin_screen.dart';
 import '../pages/notifications_page.dart';
 import '../widgets/global_fab_overlay.dart';
+import '../widgets/artboard_logo.dart';
 
 /// الهيكل الموحد: هيدر ثابت + محتوى + شريط تنقل سفلي.
 /// لا يُستخدم مع شاشات تسجيل الدخول / إنشاء الحساب.
@@ -130,6 +130,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
         // Ensure index doesn't overflow if isAdmin state changes
         final safeIndex = _index.clamp(0, destinations.length - 1);
+        final isAr = loc.isAr;
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
@@ -142,13 +143,35 @@ class _MainShellScreenState extends State<MainShellScreen> {
               ? Text(loc.adminDashboard, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, fontFamily: 'NotoSansArabic'))
               : null,
             centerTitle: true,
-            leading: safeIndex != 0
-                ? IconButton(
-                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
-                    onPressed: () => setState(() => _index = 0),
-                  )
-                : null,
+            leadingWidth: isAr ? (safeIndex != 0 ? 170 : null) : null,
+            leading: isAr
+                ? (safeIndex != 0
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
+                            onPressed: () => setState(() => _index = 0),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.0),
+                            child: ArtboardLogo(),
+                          ),
+                        ],
+                      )
+                    : null)
+                : (safeIndex != 0
+                    ? IconButton(
+                        icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface),
+                        onPressed: () => setState(() => _index = 0),
+                      )
+                    : null),
             actions: [
+              if (!isAr && safeIndex != 0)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Center(child: ArtboardLogo()),
+                ),
               IconButton(
                 onPressed: () {
                   Navigator.push(

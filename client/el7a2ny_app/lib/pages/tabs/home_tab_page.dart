@@ -15,6 +15,7 @@ import '../../core/localization/app_strings.dart';
 import '../../services/session_service.dart';
 import '../user_rating_screen.dart';
 import '../volunteer_rating_screen.dart';
+import '../../widgets/artboard_logo.dart';
 
 /// الصفحة الرئيسية داخل الـ shell: حالة الأجهزة من الـ API + أزرار الوصول السريع.
 class HomeTabPage extends StatefulWidget {
@@ -164,28 +165,10 @@ class _HomeTabPageState extends State<HomeTabPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                context.loc.currentSystem,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: getEmergencyTitleRed(context),
-                ),
+              const Center(
+                child: ArtboardLogo(size: 350),
               ),
-              const SizedBox(height: 6),
-              Text(
-                context.loc.responsePlatform,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'NotoSansArabic',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               EmergencyDashboardCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -369,7 +352,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
 
                     EmergencySolidButton(
                       label: context.loc.isAr ? 'تقييم الخدمة' : 'Rate Service',
-                      backgroundColor: const Color(0xFFF59E0B),
+                      backgroundColor: const Color(0xFFFDC800),
                       onPressed: () {
                         final isVolunteer = SessionService().currentRole == UserRole.volunteer;
                         if (isVolunteer) {

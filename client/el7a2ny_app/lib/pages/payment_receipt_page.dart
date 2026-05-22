@@ -6,7 +6,7 @@ import '../services/session_service.dart';
 import '../core/localization/app_strings.dart';
 
 
-const _kOrange = Color(0xFFFF6B00);
+const _kOrange = Color(0xFFF18F34);
 const _kGreen = Color(0xFF16A34A);
 
 class PaymentReceiptPage extends StatefulWidget {
@@ -196,7 +196,7 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
             padding: const EdgeInsets.all(18),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFFFF8C00), Color(0xFFE63B00)],
+                colors: [Color(0xFFF18F34), Color(0xFFE95F32)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -311,14 +311,14 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFFFDC800).withOpacity(0.5)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: const BoxDecoration(
-              color: Color(0xFFFFD700),
+              color: Color(0xFFFDC800),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.emoji_events_rounded,
@@ -344,7 +344,7 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                   style: const TextStyle(
                     fontFamily: 'NotoSansArabic',
                     fontSize: 12,
-                    color: Color(0xFFB45309),
+                    color: Color(0xFFE95F32),
                   ),
                 ),
               ],

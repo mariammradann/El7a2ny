@@ -50,12 +50,12 @@ class _VerifyCurrentPasswordScreenState extends State<VerifyCurrentPasswordScree
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFE61717)),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(content: Text(e.toString()), backgroundColor: const Color(0xFFE61717)),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -263,7 +263,7 @@ class _VerifyCurrentPasswordScreenState extends State<VerifyCurrentPasswordScree
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.red.shade400),
+        borderSide: BorderSide(color: const Color(0xFFE61717)),
       ),
     );
   }

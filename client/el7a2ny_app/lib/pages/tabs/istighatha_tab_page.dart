@@ -70,7 +70,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage> with SingleTicker
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.toString()), backgroundColor: const Color(0xFFE61717)),
         );
       }
     } finally {
@@ -154,7 +154,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage> with SingleTicker
             _buildGlowCircle(240, 0.2),
             Container(
               width: 200, height: 200,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFB91C1C)])),
+              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFFE61717), Color(0xFF8A1717)])),
               child: Center(
                 child: _isLocating 
                   ? const CircularProgressIndicator(color: Colors.white)
@@ -167,7 +167,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage> with SingleTicker
     );
   }
 
-  Widget _buildGlowCircle(double size, double opacity) => Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFEF4444).withOpacity(opacity)));
+  Widget _buildGlowCircle(double size, double opacity) => Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFE61717).withOpacity(opacity)));
 
   Widget _buildVibrationToggle(bool isDark, ThemeData theme) {
     return Container(
@@ -178,7 +178,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage> with SingleTicker
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(context.loc.constantVibration, style: const TextStyle(fontWeight: FontWeight.w700)),
-          CupertinoSwitch(value: _isVibrationEnabled, activeTrackColor: const Color(0xFFEF4444), onChanged: (v) => setState(() => _isVibrationEnabled = v)),
+          CupertinoSwitch(value: _isVibrationEnabled, activeTrackColor: const Color(0xFFE61717), onChanged: (v) => setState(() => _isVibrationEnabled = v)),
         ],
       ),
     );

@@ -60,12 +60,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        SnackBar(content: Text(e.message), backgroundColor: const Color(0xFFE61717)),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(content: Text(e.toString()), backgroundColor: const Color(0xFFE61717)),
       );
     } finally {
       if (mounted) setState(() => _loading = false);

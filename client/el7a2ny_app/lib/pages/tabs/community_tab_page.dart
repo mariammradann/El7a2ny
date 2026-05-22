@@ -82,7 +82,7 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.loc.isAr ? 'حذف' : 'Delete', style: const TextStyle(color: Colors.red)),
+            child: Text(context.loc.isAr ? 'حذف' : 'Delete', style: const TextStyle(color: const Color(0xFFE61717))),
           ),
         ],
       ),
@@ -103,7 +103,7 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(context.loc.isAr ? 'فشل في حذف المبادرة' : 'Failed to delete initiative'),
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFE61717),
             ),
           );
         }
@@ -192,7 +192,7 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
                         children: [
                           const Icon(
                             Icons.error_outline_rounded,
-                            color: Colors.orange,
+                            color: const Color(0xFFF18F34),
                             size: 48,
                           ),
                           const SizedBox(height: 12),
@@ -554,7 +554,7 @@ class _HelpInitiativeCard extends StatelessWidget {
               if (onDelete != null) ...[
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                  icon: const Icon(Icons.delete, color: const Color(0xFFE61717), size: 18),
                   onPressed: onDelete,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -622,7 +622,7 @@ class _HelpInitiativeCard extends StatelessWidget {
               CircleAvatar(
                 backgroundColor: initiative.authorRole == 'volunteer'
                     ? const Color(0xFF10B981)
-                    : Colors.orange,
+                    : const Color(0xFFF18F34),
                 radius: 14,
                 child: Text(
                   initiative.authorName[0],

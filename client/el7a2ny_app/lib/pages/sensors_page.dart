@@ -171,7 +171,7 @@ class _SensorSliverAppBar extends StatelessWidget {
       expandedHeight: 140,
       floating: false,
       pinned: true,
-      backgroundColor: isDanger ? const Color(0xFFDC2626) : Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: isDanger ? const Color(0xFFE61717) : Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
       leading: IconButton(
         icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDanger ? Colors.white : Theme.of(context).colorScheme.onSurface),
@@ -188,7 +188,7 @@ class _SensorSliverAppBar extends StatelessWidget {
             color: isDanger ? Colors.white : Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        background: isDanger ? Container(color: const Color(0xFFDC2626)) : null,
+        background: isDanger ? Container(color: const Color(0xFFE61717)) : null,
       ),
     );
   }
@@ -214,12 +214,12 @@ class _SensorCard extends StatelessWidget {
 
     switch (status) {
       case SensorStatus.danger:
-        statusColor = const Color(0xFFDC2626);
+        statusColor = const Color(0xFFE61717);
         statusLabel = loc.emergencyAlert;
         statusIcon = Icons.report_problem_rounded;
         break;
       case SensorStatus.warning:
-        statusColor = const Color(0xFFF59E0B);
+        statusColor = const Color(0xFFFDC800);
         statusLabel = loc.isAr ? 'تحذير' : 'Warning';
         statusIcon = Icons.warning_amber_rounded;
         break;
@@ -432,7 +432,7 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
     final loc = context.loc;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFDC2626), // Solid emergency red
+      backgroundColor: const Color(0xFFE61717), // Solid emergency red
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -484,7 +484,7 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
               Text(
                 _formatTime(_secondsLeft),
                 style: const TextStyle(
-                    color: Color(0xFFFFD700), // Gold/Yellow timer
+                    color: Color(0xFFFDC800), // Gold/Yellow timer
                     fontSize: 72,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 4),
@@ -512,7 +512,7 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
                     _buildDetailRow(
                       label: loc.isAr ? 'القيمة الحالية :' : 'Current Value:',
                       value: '${widget.sensor.value} ${widget.sensor.unit}',
-                      valueColor: const Color(0xFFFFD700),
+                      valueColor: const Color(0xFFFDC800),
                     ),
                     const Divider(color: Colors.white12, height: 24),
                     _buildDetailRow(
@@ -523,7 +523,7 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        _buildBadge(loc.isAr ? 'عالية' : 'High', Colors.orange),
+                        _buildBadge(loc.isAr ? 'عالية' : 'High', const Color(0xFFF18F34)),
                         const SizedBox(width: 8),
                         _buildBadge(
                             loc.isAr ? 'المطبخ' : 'Kitchen', Colors.grey),
@@ -586,7 +586,7 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const EmergencyConfirmationPage()));
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFACC15), // Yellow
+                    backgroundColor: const Color(0xFFFDC800), // Yellow
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20)),
@@ -696,10 +696,10 @@ class _ErrorBanner extends StatelessWidget {
     final loc = context.loc;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: const Color(0xFFE61717).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
       child: Column(
         children: [
-          const Icon(Icons.error_outline_rounded, color: Colors.red, size: 40),
+          const Icon(Icons.error_outline_rounded, color: const Color(0xFFE61717), size: 40),
           const SizedBox(height: 12),
           Text(loc.connError, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold)),
           TextButton(onPressed: onRetry, child: Text(loc.retry)),
@@ -731,7 +731,7 @@ class _TestPanel extends StatelessWidget {
             children: [
               Expanded(child: Text(s.type.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold))),
               TextButton(onPressed: () => onTrigger(s, isWarning: true), child: const Text('WARN')),
-              TextButton(onPressed: () => onTrigger(s), child: const Text('DANGER', style: TextStyle(color: Colors.red))),
+              TextButton(onPressed: () => onTrigger(s), child: const Text('DANGER', style: TextStyle(color: const Color(0xFFE61717)))),
             ],
           )),
           const Divider(),

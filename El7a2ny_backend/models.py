@@ -343,3 +343,121 @@ class ChatMessage(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender_name} in Chat {self.chat_id}"
+
+
+class IncidentAIAnalysis(models.Model):
+    """
+    Stores the AI microservice result for a given Incident.
+    One-to-one with Incident — one analysis per incident.
+    """
+
+    SEVERITY_CHOICES = [
+        ("Critical", "Critical"),
+        ("High",     "High"),
+        ("Medium",   "Medium"),
+        ("Low",      "Low"),
+        ("Unknown",  "Unknown"),
+    ]
+
+    TRIAGE_CHOICES = [
+        ("Red",    "Red"),
+        ("Orange", "Orange"),
+        ("Yellow", "Yellow"),
+        ("Green",  "Green"),
+        ("Black",  "Black"),
+    ]
+
+    SOURCE_CHOICES = [
+        ("image", "Image"),
+        ("video", "Video"),
+        ("voice", "Voice"),
+        ("text",  "Text"),
+    ]
+
+    analysis_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False
+    )
+
+    # Link to the existing Incident model
+    incident = models.OneToOneField(
+        Incident,
+        on_delete=models.CASCADE,
+        related_name="ai_analysis",
+        db_column="incident_id",
+    )
+
+    # ── Core AI output fields ─────────────────────────────────────────────────
+    incident_type     = models.CharField(max_length=255)
+    severity          = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default="Unknown")
+    triage_level      = models.CharField(max_length=10, choices=TRIAGE_CHOICES,   default="Yellow")
+    urgency_score     = models.IntegerField(default=5)   # 1–10
+    risk_level        = models.CharField(max_length=255, null=True, blank=True)
+    dispatch_priority = models.CharField(max_length=255, null=True, blank=True)
+
+    # ── Text outputs ──────────────────────────────────────────────────────────
+    summary            = models.TextField(null=True, blank=True)
+    responder_briefing = models.TextField(null=True, blank=True)
+
+    # ── JSON arrays ───────────────────────────────────────────────────────────
+    instructions      = models.JSONField(default=list)   # ["Evacuate", "Stay low", ...]
+    responders_needed = models.JSONField(default=list)   # ["Firefighters", "Ambulance"]
+
+    # ── Metadata ──────────────────────────────────────────────────────────────
+    confidence  = models.FloatField(null=True, blank=True)   # 0.0 – 1.0
+    source      = models.CharField(max_length=10, choices=SOURCE_CHOICES, null=True, blank=True)
+    raw_response = models.JSONField(null=True, blank=True)   # full AI JSON stored for debugging
+    analyzed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ems_schema"."incident_ai_analyses'
+        managed  = True
+        ordering = ["-analyzed_at"]
+
+    def __str__(self):
+        return f"AI Analysis for Incident {self.incident_id} — {self.severity}"
+
+    # ── Convenience properties for Flutter ───────────────────────────────────
+    @property
+    def alert_level(self) -> str:
+        if self.urgency_score >= 9:
+            return "CRITICAL ALERT"
+        elif self.urgency_score >= 7:
+            return "HIGH ALERT"
+        elif self.urgency_score >= 4:
+            return "MODERATE ALERT"
+        return "LOW ALERT"
+
+    @property
+    def triage_color(self) -> str:
+        colors = {
+            "Red":    "#FF0000",
+            "Orange": "#FF6600",
+            "Yellow": "#FFD700",
+            "Green":  "#00AA00",
+            "Black":  "#222222",
+        }
+        return colors.get(self.triage_level, "#888888")
+
+
+class SponsorRequest(models.Model):
+    request_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    company_name = models.CharField(max_length=255)
+    contact_person = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=20)
+    message = models.TextField()
+    status = models.CharField(
+        max_length=20,
+        choices=[("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected")],
+        default="pending",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sponsor_requests", null=True, blank=True)
+
+    class Meta:
+        db_table = 'ems_schema"."sponsor_requests'
+        ordering = ["-created_at"]
+        managed = True
+
+    def __str__(self):
+        return f"SponsorRequest {self.request_id} - {self.company_name} ({self.status})"

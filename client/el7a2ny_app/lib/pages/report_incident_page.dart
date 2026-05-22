@@ -174,7 +174,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                 ? 'يجب إضافة صورة أو فيديو (الصوت وحده غير كافي)'
                 : 'Please add a photo or video (audio alone is not enough)',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: const Color(0xFFF18F34),
         ),
       );
       return;
@@ -527,7 +527,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                 Positioned(
                   right: 0,
                   child: IconButton(
-                    icon: const Icon(Icons.cancel, color: Colors.red),
+                    icon: const Icon(Icons.cancel, color: const Color(0xFFE61717)),
                     onPressed: () => setState(() => _evidenceItems.removeAt(i)),
                   ),
                 ),

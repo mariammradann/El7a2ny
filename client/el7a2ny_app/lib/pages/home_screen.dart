@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen>
     },
     {
       'label': context.loc.emergencyCall,
-      'activeGradient': const [Color(0xFFEF4444), Color(0xFFF97316)],
+      'activeGradient': const [Color(0xFFE61717), Color(0xFFF18F34)],
     },
     {
       'label': context.loc.safetyInfo,
@@ -118,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen>
               end: Alignment.centerLeft,
             ),
             border: isPlus 
-              ? Border(bottom: BorderSide(color: const Color(0xFFFFD700).withOpacity(0.2), width: 1))
+              ? Border(bottom: BorderSide(color: const Color(0xFFFDC800).withOpacity(0.2), width: 1))
               : null,
           ),
           padding: EdgeInsets.only(
@@ -157,8 +157,8 @@ class _HomeScreenState extends State<HomeScreen>
                           borderRadius: BorderRadius.circular(16),
                           gradient: LinearGradient(
                             colors: isPlus 
-                              ? [const Color(0xFFFFD700), const Color(0xFFB8860B)]
-                              : [const Color(0xFFEF4444), const Color(0xFFF97316)],
+                              ? [const Color(0xFFFDC800), const Color(0xFFE95F32)]
+                              : [const Color(0xFFE61717), const Color(0xFFF18F34)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -195,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFFD700),
+                                    color: const Color(0xFFFDC800),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Text(
@@ -214,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Text(
                             isPlus ? 'إلحقني بلس مفعل' : context.loc.emergencyServices24_7,
                             style: TextStyle(
-                              color: isPlus ? const Color(0xFFFFD700).withValues(alpha: 0.8) : const Color(0xFF93C5FD), 
+                              color: isPlus ? const Color(0xFFFDC800).withValues(alpha: 0.8) : const Color(0xFF93C5FD), 
                               fontSize: 12
                             ),
                           ),
@@ -253,14 +253,14 @@ class _HomeScreenState extends State<HomeScreen>
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFEF4444), Color(0xFFB91C1C)],
+              colors: [Color(0xFFE61717), Color(0xFF8A1717)],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.red.withValues(alpha: 0.3),
+                color: const Color(0xFFE61717).withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -384,9 +384,9 @@ class _SensorStatusBadge extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFEF4444).withValues(alpha: 0.2),
+              color: const Color(0xFFE61717).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.5)),
+              border: Border.all(color: const Color(0xFFE61717).withValues(alpha: 0.5)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -395,7 +395,7 @@ class _SensorStatusBadge extends StatelessWidget {
                   width: 8,
                   height: 8,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFEF4444),
+                    color: Color(0xFFE61717),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -403,7 +403,7 @@ class _SensorStatusBadge extends StatelessWidget {
                 Text(
                   '⚠ ${context.loc.activeAlertsTab}',
                   style: const TextStyle(
-                    color: Color(0xFFFCA5A5),
+                    color: Color(0xFFE61717),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),

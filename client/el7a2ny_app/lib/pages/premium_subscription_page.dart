@@ -191,9 +191,9 @@ class _PremiumSubscriptionPageState extends State<PremiumSubscriptionPage> {
                                   const SizedBox(height: 20),
                                   _ServiceCategoryCard(
                                     icon: Icons.medical_services_rounded,
-                                    iconBackground: const Color(0xFFEF4444)
+                                    iconBackground: const Color(0xFFE61717)
                                         .withValues(alpha: 0.12),
-                                    iconColor: const Color(0xFFEF4444),
+                                    iconColor: const Color(0xFFE61717),
                                     title: context.loc.medicalServicesTitle,
                                     features: isAr
                                         ? [
@@ -344,16 +344,16 @@ class _UpgradeNudgeBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFD700).withValues(alpha: 0.08),
+        color: const Color(0xFFFDC800).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.35)),
+            Border.all(color: const Color(0xFFFDC800).withValues(alpha: 0.35)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.upgrade_rounded,
-              color: Color(0xFFFFD700), size: 20),
+              color: Color(0xFFFDC800), size: 20),
           const SizedBox(width: 10),
           Flexible(
             child: Text(
@@ -364,7 +364,7 @@ class _UpgradeNudgeBanner extends StatelessWidget {
                 fontFamily: 'NotoSansArabic',
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFFFFD700),
+                color: Color(0xFFFDC800),
               ),
             ),
           ),
@@ -465,7 +465,7 @@ class _PremiumHeader extends StatelessWidget {
         ],
         border: Border(
           bottom: BorderSide(
-              color: const Color(0xFFFFD700).withOpacity(0.2), width: 1),
+              color: const Color(0xFFFDC800).withOpacity(0.2), width: 1),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
@@ -511,7 +511,7 @@ class _PremiumHeader extends StatelessWidget {
                               shaderCallback: (bounds) =>
                                   const LinearGradient(
                                 colors: [
-                                  Color(0xFFFFD700),
+                                  Color(0xFFFDC800),
                                   Color(0xFFFFA500)
                                 ],
                               ).createShader(bounds),
@@ -633,13 +633,13 @@ class _PlusIconBadge extends StatelessWidget {
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
+            Border.all(color: const Color(0xFFFDC800).withOpacity(0.3)),
         boxShadow: const [
           BoxShadow(color: Colors.black26, blurRadius: 10)
         ],
       ),
       child: const Icon(Icons.auto_awesome_rounded,
-          size: 24, color: Color(0xFFFFD700)),
+          size: 24, color: Color(0xFFFDC800)),
     );
   }
 }
@@ -820,12 +820,12 @@ class _SectionIcon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFD700).withOpacity(0.1),
+        color: const Color(0xFFFDC800).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border:
-            Border.all(color: const Color(0xFFFFD700).withOpacity(0.2)),
+            Border.all(color: const Color(0xFFFDC800).withOpacity(0.2)),
       ),
-      child: Icon(icon, size: 20, color: const Color(0xFFFFD700)),
+      child: Icon(icon, size: 20, color: const Color(0xFFFDC800)),
     );
   }
 }
@@ -916,12 +916,12 @@ class _FeatureIcon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFD700).withOpacity(0.08),
+        color: const Color(0xFFFDC800).withOpacity(0.08),
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: const Color(0xFFFFD700).withOpacity(0.1)),
+            Border.all(color: const Color(0xFFFDC800).withOpacity(0.1)),
       ),
-      child: Icon(icon, size: 24, color: const Color(0xFFFFD700)),
+      child: Icon(icon, size: 24, color: const Color(0xFFFDC800)),
     );
   }
 }
@@ -1133,11 +1133,11 @@ class _StickyFooter extends StatelessWidget {
                   height: 58,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFD700),
+                      backgroundColor: const Color(0xFFFDC800),
                       foregroundColor: const Color(0xFF0F172A),
                       elevation: 6,
                       shadowColor:
-                          const Color(0xFFFFD700).withOpacity(0.4),
+                          const Color(0xFFFDC800).withOpacity(0.4),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18)),
                     ),
@@ -1209,10 +1209,10 @@ class _StickyFooter extends StatelessWidget {
                 height: 58,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFD700),
+                    backgroundColor: const Color(0xFFFDC800),
                     foregroundColor: const Color(0xFF0F172A),
                     elevation: 6,
-                    shadowColor: const Color(0xFFFFD700).withOpacity(0.4),
+                    shadowColor: const Color(0xFFFDC800).withOpacity(0.4),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18)),
                   ),
@@ -1320,10 +1320,10 @@ class _StickyFooter extends StatelessWidget {
               height: 58,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFD700),
+                  backgroundColor: const Color(0xFFFDC800),
                   foregroundColor: const Color(0xFF0F172A),
                   elevation: 6,
-                  shadowColor: const Color(0xFFFFD700).withOpacity(0.4),
+                  shadowColor: const Color(0xFFFDC800).withOpacity(0.4),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18)),
                 ),

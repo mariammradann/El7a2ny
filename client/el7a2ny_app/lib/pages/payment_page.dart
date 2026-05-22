@@ -23,7 +23,7 @@ class _PaymentOption {
   });
 }
 
-const _kOrange = Color(0xFFFF6B00);
+const _kOrange = Color(0xFFF18F34);
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 class PaymentPage extends StatefulWidget {
@@ -58,7 +58,7 @@ class _PaymentPageState extends State<PaymentPage> {
         title: loc.methodFawry,
         subtitle: loc.fawrySubtitle,
         icon: Icons.grid_view_rounded,
-        iconBg: const Color(0xFFFF6B00),
+        iconBg: const Color(0xFFF18F34),
         isMostUsed: true,
       ),
       _PaymentOption(
@@ -66,7 +66,7 @@ class _PaymentPageState extends State<PaymentPage> {
         title: loc.methodVodafoneCash,
         subtitle: loc.vodafoneSubtitle,
         icon: Icons.smartphone_rounded,
-        iconBg: const Color(0xFFE3001B),
+        iconBg: const Color(0xFFE61717),
       ),
       _PaymentOption(
         type: PaymentMethodType.instaPay,
@@ -118,7 +118,7 @@ class _PaymentPageState extends State<PaymentPage> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFFF8C00), Color(0xFFE63B00)],
+          colors: [Color(0xFFF18F34), Color(0xFFE95F32)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
