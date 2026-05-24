@@ -42,6 +42,9 @@ from .views import (
     apply_sponsor,
     admin_sponsor_requests,
     admin_respond_sponsor_request,
+    api_assistant_chat,
+    report_fake_incident,
+    admin_logs,
 )
 
 # 1. إعداد الـ Router
@@ -160,6 +163,9 @@ urlpatterns = [
     path("api/incidents/analyze/voice/", AnalyzeIncidentVoiceView.as_view(), name="analyze-voice"),
     path("api/incidents/analyze/text/",  AnalyzeIncidentTextView.as_view(),  name="analyze-text"),
     path("api/incidents/<uuid:incident_id>/analysis/", IncidentAIAnalysisDetailView.as_view(), name="incident-analysis"),
+    path("api/assistant/chat/", api_assistant_chat, name="assistant-chat"),
+    path("api/incidents/<uuid:incident_id>/report-fake/", report_fake_incident, name="report-fake-incident"),
+    path("api/admin/logs/", admin_logs, name="admin-logs"),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير

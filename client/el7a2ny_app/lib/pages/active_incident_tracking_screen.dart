@@ -14,6 +14,7 @@ import 'report_volunteer_screen.dart';
 import 'user_rating_screen.dart';
 import 'sign_up_screen.dart';
 import 'volunteer_rating_screen.dart';
+import 'banned_screen.dart';
 import '../core/auth/auth_token_store.dart';
 import '../widgets/global_fab_overlay.dart';
 
@@ -145,7 +146,7 @@ class _ActiveIncidentTrackingScreenState
             _hasShownCompletionPopup = true;
             SessionService().setActiveIncident(null);
             if (_isCreator) {
-              _showCreatorRatingPopup();
+              _checkBanAndShowRating();
             } else {
               _showCompletionPopup();
             }
@@ -154,6 +155,28 @@ class _ActiveIncidentTrackingScreenState
       }
     } catch (e) {
       debugPrint('Error fetching incident details: $e');
+    }
+  }
+
+  Future<void> _checkBanAndShowRating() async {
+    try {
+      final user = await ApiService.fetchUserProfile();
+      if (user.status == 'banned' && user.bannedUntil != null) {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => BannedScreen(bannedUntil: user.bannedUntil!),
+            ),
+          );
+        }
+        return;
+      }
+    } catch (e) {
+      debugPrint('Error checking user ban status: $e');
+    }
+
+    if (mounted) {
+      _showCreatorRatingPopup();
     }
   }
 
@@ -737,33 +760,229 @@ class _ActiveIncidentTrackingScreenState
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.7,
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: theme.scaffoldBackgroundColor,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, -5),
-                    ),
-                  ],
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Handle
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
+              child: SafeArea(
+                top: false,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Handle
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+
+
+                      if (_alertDetails != null && !_isCreator) ...[
+                        // ── Volunteer View ──
+                        // Incident Details
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.info_outline_rounded,
+                                  color: Colors.green),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isAr ? 'تفاصيل البلاغ' : 'Incident Details',
+                                    style: const TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    isAr ? 'أنت في طريقك للمساعدة' : 'You are on your way to help',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                        fontFamily: 'NotoSansArabic'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isAr ? 'صاحب البلاغ: ${_alertDetails!.reporterName ?? 'مستخدم'}' : 'Reporter: ${_alertDetails!.reporterName ?? 'User'}',
+                                style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isAr ? 'نوع البلاغ: ${_alertDetails!.getLocalizedType(context.loc)}' : 'Type: ${_alertDetails!.type}',
+                                style: const TextStyle(fontFamily: 'NotoSansArabic', fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isAr ? 'الموقع: ${_alertDetails!.address ?? _alertDetails!.location}' : 'Location: ${_alertDetails!.address ?? _alertDetails!.location}',
+                                style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                              ),
+                              if (_alertDetails!.description != null && _alertDetails!.description!.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  isAr ? 'الوصف: ${_alertDetails!.description}' : 'Description: ${_alertDetails!.description}',
+                                  style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                                ),
+                              ],
+                              if (_alertDetails!.mediaUrls != null && _alertDetails!.mediaUrls!.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  isAr ? 'الصور المرفقة:' : 'Attached Photos:',
+                                  style: const TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  height: 100,
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: _alertDetails!.mediaUrls!.length,
+                                    itemBuilder: (context, idx) {
+                                      final mediaUrl = _alertDetails!.mediaUrls![idx];
+                                      final absoluteMediaUrl = mediaUrl.startsWith('http')
+                                          ? mediaUrl
+                                          : '${ApiService.baseUrl}${mediaUrl.startsWith('/') ? '' : '/'}$mediaUrl';
+                                      return Padding(
+                                        padding: EdgeInsets.only(
+                                          right: isAr ? 8 : 0,
+                                          left: isAr ? 0 : 8,
+                                        ),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              barrierDismissible: true,
+                                              builder: (context) => Dialog(
+                                                backgroundColor: Colors.black.withValues(alpha: 0.85),
+                                                insetPadding: const EdgeInsets.all(16),
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    InteractiveViewer(
+                                                      panEnabled: true,
+                                                      minScale: 0.5,
+                                                      maxScale: 4.0,
+                                                      child: ClipRRect(
+                                                        borderRadius: BorderRadius.circular(16),
+                                                        child: Image.network(
+                                                          absoluteMediaUrl,
+                                                          fit: BoxFit.contain,
+                                                          loadingBuilder: (context, child, loadingProgress) {
+                                                            if (loadingProgress == null) return child;
+                                                            return const Center(
+                                                              child: CircularProgressIndicator(
+                                                                color: Colors.white,
+                                                              ),
+                                                            );
+                                                          },
+                                                          errorBuilder: (context, error, stackTrace) =>
+                                                              Container(
+                                                            color: Colors.black54,
+                                                            padding: const EdgeInsets.all(24),
+                                                            child: Column(
+                                                              mainAxisSize: MainAxisSize.min,
+                                                              children: [
+                                                                const Icon(Icons.broken_image, color: Colors.white, size: 50),
+                                                                const SizedBox(height: 12),
+                                                                Text(
+                                                                  isAr ? 'خطأ في تحميل الصورة' : 'Failed to load image',
+                                                                  style: const TextStyle(color: Colors.white),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Positioned(
+                                                      top: 8,
+                                                      right: 8,
+                                                      child: Container(
+                                                        decoration: const BoxDecoration(
+                                                          color: Colors.black54,
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                        child: IconButton(
+                                                          icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                                                          onPressed: () => Navigator.of(context).pop(),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: Image.network(
+                                              absoluteMediaUrl,
+                                              width: 100,
+                                              height: 100,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) =>
+                                                  Container(
+                                                width: 100,
+                                                height: 100,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.withValues(alpha: 0.2),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ]
+                            ],
+                          ),
+                        ),
+                        if (_alertDetails != null &&
+                            ((_alertDetails!.getSummary(isAr) != null && _alertDetails!.getSummary(isAr)!.isNotEmpty) ||
+                            (_alertDetails!.getVolunteerInstructions(isAr) != null && _alertDetails!.getVolunteerInstructions(isAr)!.isNotEmpty))) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: Colors.grey.withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(2),
@@ -815,8 +1034,101 @@ class _ActiveIncidentTrackingScreenState
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
+                                if (_alertDetails!.getSummary(isAr) != null && _alertDetails!.getSummary(isAr)!.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    isAr ? 'ملخص البلاغ:' : 'Incident Summary:',
+                                    style: const TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _alertDetails!.getSummary(isAr)!,
+                                    style: TextStyle(
+                                      fontFamily: 'NotoSansArabic',
+                                      fontSize: 13,
+                                      color: Colors.grey.shade700,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                                if (_alertDetails!.getVolunteerInstructionsList(isAr) != null && _alertDetails!.getVolunteerInstructionsList(isAr)!.isNotEmpty) ...[
+                                  const Divider(height: 24, thickness: 1),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.health_and_safety_rounded,
+                                        color: Color(0xFF10B981),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        isAr ? 'تعليمات فور الوصول للموقع:' : 'On-Arrival Instructions:',
+                                        style: const TextStyle(
+                                          fontFamily: 'NotoSansArabic',
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF10B981),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  ..._alertDetails!.getVolunteerInstructionsList(isAr)!.asMap().entries.map((entry) {
+                                    final index = entry.key;
+                                    final step = entry.value;
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 10.0),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            width: 22,
+                                            height: 22,
+                                            margin: const EdgeInsets.only(top: 2),
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  Color(0xFF10B981),
+                                                  Color(0xFF059669),
+                                                ],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              ),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              '${index + 1}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              step,
+                                              style: TextStyle(
+                                                fontFamily: 'NotoSansArabic',
+                                                fontSize: 13,
+                                                color: Colors.grey.shade700,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Container(

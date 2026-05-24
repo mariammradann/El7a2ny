@@ -49,6 +49,21 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
 
   }
 
+  Color _getSeverityColor(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return const Color(0xFFE61717); // Red
+      case 'high':
+        return const Color(0xFFF18F34); // Orange
+      case 'medium':
+        return const Color(0xFFFDC800); // Yellow-Orange
+      case 'low':
+        return const Color(0xFFEAB308); // Yellow
+      default:
+        return const Color(0xFF64748B); // Slate Gray
+    }
+  }
+
   bool _updatingStatus = false;
 
   Future<void> _updateAlertStatus(String newStatus) async {
@@ -378,17 +393,19 @@ await ApiService.respondToAlert(
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.white10
-                                    : const Color(0xFFF1F5F9),
+                                color: _getSeverityColor(widget.alert.severity).withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: _getSeverityColor(widget.alert.severity).withOpacity(0.3),
+                                  width: 1,
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.info_outline_rounded,
                                     size: 14,
-                                    color: Color(0xFF64748B),
+                                    color: _getSeverityColor(widget.alert.severity),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -396,9 +413,10 @@ await ApiService.respondToAlert(
                                       context.loc,
                                     ),
                                     style: TextStyle(
-                                      color: onSurface.withValues(alpha: 0.7),
+                                      color: _getSeverityColor(widget.alert.severity),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
+                                      fontFamily: 'NotoSansArabic',
                                     ),
                                   ),
                                 ],
@@ -701,8 +719,8 @@ await ApiService.respondToAlert(
                                     fontSize: 13,
                                   ),
                                 ),
-                              if (widget.alert.aiSummary != null &&
-                                  widget.alert.aiSummary!.isNotEmpty) ...[
+                              if (widget.alert.getSummary(isAr) != null &&
+                                  widget.alert.getSummary(isAr)!.isNotEmpty) ...[
                                 const SizedBox(height: 16),
                                 Container(
                                   padding: const EdgeInsets.all(16),
@@ -739,7 +757,7 @@ await ApiService.respondToAlert(
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        widget.alert.aiSummary!,
+                                        widget.alert.getSummary(isAr)!,
                                         style: TextStyle(
                                           color:
                                               onSurface.withValues(alpha: 0.8),
@@ -757,7 +775,7 @@ await ApiService.respondToAlert(
                                 const Divider(),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Photos & Videos',
+                                  isAr ? 'الصور والفيديوهات' : 'Photos & Videos',
                                   style: TextStyle(
                                     color: onSurface,
                                     fontWeight: FontWeight.bold,
@@ -773,29 +791,101 @@ await ApiService.respondToAlert(
                                     itemBuilder: (context, idx) {
                                       final mediaUrl =
                                           widget.alert.mediaUrls![idx];
+                                      final absoluteMediaUrl = mediaUrl.startsWith('http') 
+                                          ? mediaUrl 
+                                          : '${ApiService.baseUrl}${mediaUrl.startsWith('/') ? '' : '/'}$mediaUrl';
                                       return Padding(
                                         padding: EdgeInsets.only(
                                           right: isAr ? 8 : 0,
                                           left: isAr ? 0 : 8,
                                         ),
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child: Image.network(
-                                            mediaUrl,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error,
-                                                    stackTrace) =>
-                                                Container(
-                                              width: 120,
-                                              decoration: BoxDecoration(
-                                                color: theme.colorScheme.surface,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              barrierDismissible: true,
+                                              builder: (context) => Dialog(
+                                                backgroundColor: Colors.black.withValues(alpha: 0.85),
+                                                insetPadding: const EdgeInsets.all(16),
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    InteractiveViewer(
+                                                      panEnabled: true,
+                                                      minScale: 0.5,
+                                                      maxScale: 4.0,
+                                                      child: ClipRRect(
+                                                        borderRadius: BorderRadius.circular(16),
+                                                        child: Image.network(
+                                                          absoluteMediaUrl,
+                                                          fit: BoxFit.contain,
+                                                          loadingBuilder: (context, child, loadingProgress) {
+                                                            if (loadingProgress == null) return child;
+                                                            return const Center(
+                                                              child: CircularProgressIndicator(
+                                                                color: Colors.white,
+                                                              ),
+                                                            );
+                                                          },
+                                                          errorBuilder: (context, error, stackTrace) =>
+                                                              Container(
+                                                            color: Colors.black54,
+                                                            padding: const EdgeInsets.all(24),
+                                                            child: Column(
+                                                              mainAxisSize: MainAxisSize.min,
+                                                              children: [
+                                                                const Icon(Icons.broken_image, color: Colors.white, size: 50),
+                                                                const SizedBox(height: 12),
+                                                                Text(
+                                                                  isAr ? 'خطأ في تحميل الصورة' : 'Failed to load image',
+                                                                  style: const TextStyle(color: Colors.white),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Positioned(
+                                                      top: 8,
+                                                      right: 8,
+                                                      child: Container(
+                                                        decoration: const BoxDecoration(
+                                                          color: Colors.black54,
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                        child: IconButton(
+                                                          icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                                                          onPressed: () => Navigator.of(context).pop(),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
-                                              child: const Icon(
-                                                Icons.broken_image,
-                                                color: Colors.grey,
+                                            );
+                                          },
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: Image.network(
+                                              absoluteMediaUrl,
+                                              width: 120,
+                                              height: 140,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error,
+                                                      stackTrace) =>
+                                                  Container(
+                                                width: 120,
+                                                decoration: BoxDecoration(
+                                                  color: theme.colorScheme.surface,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: const Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.grey,
+                                                ),
                                               ),
                                             ),
                                           ),

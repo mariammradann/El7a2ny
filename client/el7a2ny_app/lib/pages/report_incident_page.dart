@@ -179,17 +179,22 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
       );
       return;
     }
-    if (_volunteersNeededCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.loc.isAr
-                ? 'عدد المتطوعين مطلوب'
-                : 'Volunteers needed is required',
+    int totalVolunteers = 0;
+    if (_volunteersNeededCtrl.text.trim().isNotEmpty) {
+      final parsed = int.tryParse(_volunteersNeededCtrl.text.trim());
+      if (parsed == null || parsed < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.loc.isAr
+                  ? 'يرجى إدخال عدد صحيح صالح للمتطوعين'
+                  : 'Please enter a valid number of volunteers',
+            ),
           ),
-        ),
-      );
-      return;
+        );
+        return;
+      }
+      totalVolunteers = parsed;
     }
 
     setState(() => _isSubmitting = true);
@@ -202,8 +207,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
         lat: widget.latitude,
         lng: widget.longitude,
         description: _descriptionCtrl.text, // ← clean description only
-        totalVolunteers:
-            int.tryParse(_volunteersNeededCtrl.text.trim()) ?? 0, // ← new param
+        totalVolunteers: totalVolunteers, // ← new param
         evidenceItems: _evidenceItems,
       );
       _makeEmergencyCalls();

@@ -40,6 +40,27 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Pipeline utilities
+from utils.yolov8_detector import EmergencyDetector
+from utils.authenticity import (
+    analyze_metadata, 
+    check_image_consistency, 
+    calculate_authenticity_verdict
+)
+from utils.triage import evaluate_baseline_triage
+from utils.gemini_client import GeminiReasoner
+from utils.assistant_client import GeminiAssistant
+
+try:
+    detector = EmergencyDetector()
+except Exception as e:
+    logger.error(f"Failed to initialize EmergencyDetector: {e}")
+    detector = None
+
+reasoner = GeminiReasoner()
+assistant = GeminiAssistant()
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Constants & Prompts
 # ─────────────────────────────────────────────────────────────────────────────
@@ -300,7 +321,11 @@ async def root():
 
 
 @app.post("/api/v1/analyze/image")
-async def analyze_image(file: UploadFile = File(...)):
+async def analyze_image(
+    file: UploadFile = File(...),
+    description: Optional[str] = Form(None),
+    user_trust_score: Optional[float] = Form(1.0)
+):
     """
     Analyze an image file for emergency detection.
     Accepts: JPEG, PNG, WebP (max 20MB)
@@ -325,22 +350,88 @@ async def analyze_image(file: UploadFile = File(...)):
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid image file: {str(e)}")
         
-        # Send to Gemini
-        logger.info("Sending image to Gemini for analysis...")
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=[
-                ANALYSIS_PROMPT,
-                {
-                    "mime_type": file.content_type,
-                    "data": content,
-                }
-            ]
+        # Run YOLOv8 detection
+        try:
+            img_detect = Image.open(BytesIO(content))
+            if detector:
+                raw_detections, detected_counts = detector.detect(img_detect)
+            else:
+                raw_detections, detected_counts = [], {}
+        except Exception as e:
+            logger.error(f"YOLO detection failed: {e}")
+            raw_detections, detected_counts = [], {}
+
+        # Run Authenticity analysis
+        metadata_res = analyze_metadata(content)
+        consistency_score = check_image_consistency(raw_detections, description)
+        is_real, real_prob = calculate_authenticity_verdict(
+            metadata_res.get("score", 0.5),
+            consistency_score,
+            user_trust_score
+        )
+
+        # Run Baseline Triage
+        baseline_severity, baseline_triage, urgency_score = evaluate_baseline_triage(detected_counts)
+
+        # Run Gemini reasoning
+        logger.info("Sending image details to Gemini for semantic reasoning...")
+        gemini_res = reasoner.reason_incident(
+            detected_counts,
+            description,
+            baseline_severity,
+            image_data=content,
+            mime_type=file.content_type
         )
         
-        analysis = parse_json_response(response.text)
-        analysis = validate_analysis_response(analysis)
-        analysis["source"] = "image"
+        incident_type = gemini_res.get("incident_type", "Medical Emergency")
+        if not incident_type or incident_type == "Medical Emergency":
+            if detected_counts.get("fire", 0) > 0 or detected_counts.get("smoke", 0) > 0:
+                incident_type = "Building Fire"
+            elif detected_counts.get("vehicle-accident", 0) > 0 or detected_counts.get("damaged-vehicle", 0) > 0:
+                incident_type = "Traffic Accident"
+            elif detected_counts.get("flood", 0) > 0:
+                incident_type = "Flood"
+            elif detected_counts.get("collapsed-building", 0) > 0:
+                incident_type = "Collapsed Structure"
+
+        # Merge: prefer Gemini's image-aware severity over YOLO-only baseline
+        gemini_severity  = gemini_res.get("severity")   # may be None if Gemini didn't return it
+        gemini_triage    = gemini_res.get("triage_level")
+        final_severity   = gemini_severity  if gemini_severity  else baseline_severity
+        final_triage     = gemini_triage    if gemini_triage     else baseline_triage
+
+        # Map triage → urgency_score when Gemini overrides
+        triage_urgency_map = {"Red": 10, "Orange": 8, "Yellow": 5, "Green": 2}
+        final_urgency = triage_urgency_map.get(final_triage, urgency_score)
+
+        analysis = {
+            "incident_type": incident_type,
+            "severity": final_severity,
+            "triage_level": final_triage,
+            "urgency_score": final_urgency,
+            "risk_level": f"Detections: {', '.join([f'{k}: {v}' for k, v in detected_counts.items() if v])}" if any(detected_counts.values()) else "No immediate hazards detected",
+            "dispatch_priority": f"Priority dispatch based on {final_severity} severity",
+            
+            "is_real": is_real,
+            "fake_probability": round(1.0 - real_prob, 3),
+            "verification_methods": {
+                "exif_valid": metadata_res.get("valid", False),
+                "exif_score": metadata_res.get("score", 0.0),
+                "consistency_score": consistency_score,
+                "user_trust_score": user_trust_score,
+                "exif_reason": metadata_res.get("reason", "")
+            },
+            "raw_detections": raw_detections,
+            "detected_objects": detected_counts,
+            
+            "summary": gemini_res.get("summary", {}),
+            "responder_briefing": gemini_res.get("volunteer_instructions", {}),
+            "instructions": gemini_res.get("user_instructions", {}),
+            "responders_needed": [role for role, count in gemini_res.get("volunteers_recommended", {}).items() if count > 0],
+            "volunteers_recommended": gemini_res.get("volunteers_recommended", {}),
+            "confidence": 0.9,
+            "source": "image"
+        }
         
         logger.info(f"Analysis complete: {analysis['incident_type']} (Severity: {analysis['severity']})")
         return analysis
@@ -353,7 +444,11 @@ async def analyze_image(file: UploadFile = File(...)):
 
 
 @app.post("/api/v1/analyze/video")
-async def analyze_video(file: UploadFile = File(...)):
+async def analyze_video(
+    file: UploadFile = File(...),
+    description: Optional[str] = Form(None),
+    user_trust_score: Optional[float] = Form(1.0)
+):
     """
     Analyze a video file for emergency detection.
     Accepts: MP4, AVI, MOV (max 200MB)
@@ -373,34 +468,113 @@ async def analyze_video(file: UploadFile = File(...)):
                 detail=f"Invalid video type: {file.content_type}"
             )
         
-        # Save to temp file for Gemini
+        # Save to temp file for processing
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp:
             tmp.write(content)
             tmp_path = tmp.name
         
         try:
-            # Send to Gemini
-            logger.info("Sending video to Gemini for analysis...")
-            response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=[
-                    ANALYSIS_PROMPT,
-                    {
-                        "mime_type": file.content_type,
-                        "data": content,
-                    }
-                ]
+            # Run video frame-sampling detection
+            if detector:
+                raw_detections, detected_counts = detector.detect_video(tmp_path)
+            else:
+                raw_detections, detected_counts = [], {}
+            
+            # Run Authenticity analysis
+            metadata_score = 0.85  # Default validation score for standard video container
+            consistency_score = check_image_consistency(raw_detections, description)
+            is_real, real_prob = calculate_authenticity_verdict(
+                metadata_score,
+                consistency_score,
+                user_trust_score
+            )
+
+            # Run Baseline Triage
+            baseline_severity, baseline_triage, urgency_score = evaluate_baseline_triage(detected_counts)
+
+            # Try to extract the first frame of the video as an image to pass to Gemini
+            first_frame_bytes = None
+            first_frame_mime = None
+            try:
+                import cv2
+                cap = cv2.VideoCapture(tmp_path)
+                if cap.isOpened():
+                    ret, frame = cap.read()
+                    if ret:
+                        ret_enc, encoded_img = cv2.imencode(".jpg", frame)
+                        if ret_enc:
+                            first_frame_bytes = encoded_img.tobytes()
+                            first_frame_mime = "image/jpeg"
+                    cap.release()
+            except Exception as ve:
+                logger.warning(f"Could not extract first frame for Gemini video reasoning: {ve}")
+
+            # Run Gemini reasoning
+            logger.info("Sending video details to Gemini for semantic reasoning...")
+            gemini_res = reasoner.reason_incident(
+                detected_counts,
+                description,
+                baseline_severity,
+                image_data=first_frame_bytes,
+                mime_type=first_frame_mime
             )
             
-            analysis = parse_json_response(response.text)
-            analysis = validate_analysis_response(analysis)
-            analysis["source"] = "video"
+            incident_type = gemini_res.get("incident_type", "Medical Emergency")
+            if not incident_type or incident_type == "Medical Emergency":
+                if detected_counts.get("fire", 0) > 0 or detected_counts.get("smoke", 0) > 0:
+                    incident_type = "Building Fire"
+                elif detected_counts.get("vehicle-accident", 0) > 0 or detected_counts.get("damaged-vehicle", 0) > 0:
+                    incident_type = "Traffic Accident"
+                elif detected_counts.get("flood", 0) > 0:
+                    incident_type = "Flood"
+                elif detected_counts.get("collapsed-building", 0) > 0:
+                    incident_type = "Collapsed Structure"
+
+            # Merge: prefer Gemini's image-aware severity over YOLO-only baseline
+            gemini_severity  = gemini_res.get("severity")
+            gemini_triage    = gemini_res.get("triage_level")
+            final_severity   = gemini_severity  if gemini_severity  else baseline_severity
+            final_triage     = gemini_triage    if gemini_triage     else baseline_triage
+            triage_urgency_map = {"Red": 10, "Orange": 8, "Yellow": 5, "Green": 2}
+            final_urgency = triage_urgency_map.get(final_triage, urgency_score)
+
+            analysis = {
+                "incident_type": incident_type,
+                "severity": final_severity,
+                "triage_level": final_triage,
+                "urgency_score": final_urgency,
+                "risk_level": f"Detections: {', '.join([f'{k}: {v}' for k, v in detected_counts.items() if v])}" if any(detected_counts.values()) else "No immediate hazards detected",
+                "dispatch_priority": f"Priority dispatch based on {final_severity} severity",
+                
+                "is_real": is_real,
+                "fake_probability": round(1.0 - real_prob, 3),
+                "verification_methods": {
+                    "exif_valid": True,
+                    "exif_score": metadata_score,
+                    "consistency_score": consistency_score,
+                    "user_trust_score": user_trust_score,
+                    "exif_reason": "Standard video file format"
+                },
+                "raw_detections": raw_detections,
+                "detected_objects": detected_counts,
+                
+                "summary": gemini_res.get("summary", {}),
+                "responder_briefing": gemini_res.get("volunteer_instructions", {}),
+                "instructions": gemini_res.get("user_instructions", {}),
+                "responders_needed": [role for role, count in gemini_res.get("volunteers_recommended", {}).items() if count > 0],
+                "volunteers_recommended": gemini_res.get("volunteers_recommended", {}),
+                "confidence": 0.9,
+                "source": "video"
+            }
             
             logger.info(f"Analysis complete: {analysis['incident_type']}")
             return analysis
             
         finally:
-            os.unlink(tmp_path)
+            try:
+                os.unlink(tmp_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete temp video file: {e}")
         
     except HTTPException:
         raise
@@ -438,21 +612,54 @@ async def analyze_voice(file: UploadFile = File(...)):
         
         # Send to Gemini for transcription and analysis
         logger.info("Sending audio to Gemini for transcription and analysis...")
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=[
-                VOICE_ANALYSIS_PROMPT,
-                {
-                    "mime_type": file.content_type,
-                    "data": content,
-                }
-            ]
-        )
-        
-        analysis = parse_json_response(response.text)
-        analysis = validate_analysis_response(analysis)
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    VOICE_ANALYSIS_PROMPT,
+                    {
+                        "mime_type": file.content_type,
+                        "data": content,
+                    }
+                ]
+            )
+            analysis = parse_json_response(response.text)
+            analysis = validate_analysis_response(analysis)
+        except Exception as e:
+            logger.error(f"Gemini voice analysis failed: {e}. Using default fallback.")
+            analysis = {
+                "transcription": "Voice emergency message received.",
+                "panic_detected": True,
+                "distress_keywords": ["help", "emergency"],
+                "incident_type": "Medical Emergency",
+                "severity": "High",
+                "triage_level": "Orange",
+                "urgency_score": 7,
+                "risk_level": "Immediate responder deployment",
+                "dispatch_priority": "High priority dispatch",
+                "summary": {
+                    "en": "Emergency voice recording uploaded.",
+                    "ar": "تم رفع رسالة صوتية لحالة طوارئ."
+                },
+                "responder_briefing": {
+                    "en": "Voice call reports emergency. Respond immediately.",
+                    "ar": "بلاغ صووتى طارئ. توجه للموقع فوراً."
+                },
+                "instructions": {
+                    "en": ["Stay calm and wait for help.", "Do not hang up if contacted."],
+                    "ar": ["حافظ على هدوئك وانتظر المساعدة.", "لا تغلق الخط إذا تم الاتصال بك."]
+                },
+                "responders_needed": ["first_aid"],
+                "volunteers_recommended": {
+                    "first_aid": 1,
+                    "fire_response": 0,
+                    "transportation": 1,
+                    "rescue": 0
+                },
+                "confidence": 0.5
+            }
+            
         analysis["source"] = "voice"
-        
         logger.info(f"Transcription: {analysis.get('transcription', '')[:100]}...")
         logger.info(f"Panic detected: {analysis.get('panic_detected', False)}")
         return analysis
@@ -482,18 +689,74 @@ async def analyze_text(
         
         # Send to Gemini
         logger.info("Sending text to Gemini for analysis...")
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=[
-                prompt,
-                f"Incident description: {description}"
-            ]
-        )
-        
-        analysis = parse_json_response(response.text)
-        analysis = validate_analysis_response(analysis)
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    prompt,
+                    f"Incident description: {description}"
+                ]
+            )
+            analysis = parse_json_response(response.text)
+            analysis = validate_analysis_response(analysis)
+        except Exception as e:
+            logger.error(f"Gemini text analysis failed: {e}. Using rule-based fallback.")
+            desc_lower = description.lower()
+            severity = "Low"
+            triage_level = "Green"
+            urgency_score = 3
+            incident_type = "Medical Emergency"
+            volunteers = {"first_aid": 0, "fire_response": 0, "transportation": 0, "rescue": 0}
+            
+            if any(w in desc_lower for w in ["fire", "smoke", "burn", "حريق", "دخان", "نار"]):
+                incident_type = "Building Fire"
+                severity = "High"
+                triage_level = "Orange"
+                urgency_score = 8
+                volunteers["fire_response"] = 1
+            if any(w in desc_lower for w in ["accident", "crash", "collision", "حادث", "تصادم"]):
+                incident_type = "Traffic Accident"
+                severity = "Medium"
+                triage_level = "Yellow"
+                urgency_score = 5
+                volunteers["rescue"] = 1
+            if any(w in desc_lower for w in ["unconscious", "trapped", "collapsed", "مغمى", "محتجز", "انهيار"]):
+                severity = "Critical"
+                triage_level = "Red"
+                urgency_score = 10
+                volunteers["rescue"] = max(volunteers["rescue"], 2)
+            if any(w in desc_lower for w in ["blood", "injured", "bleed", "دم", "مصاب", "ينزف"]):
+                volunteers["first_aid"] = 1
+                if severity == "Low":
+                    severity = "Medium"
+                    triage_level = "Yellow"
+                    urgency_score = 5
+
+            analysis = {
+                "incident_type": incident_type,
+                "severity": severity,
+                "triage_level": triage_level,
+                "urgency_score": urgency_score,
+                "risk_level": "Immediate action required" if severity in ["High", "Critical"] else "Monitor situation",
+                "dispatch_priority": f"Priority dispatch based on {severity} severity",
+                "summary": {
+                    "en": f"Emergency report: {description}",
+                    "ar": f"تقرير طوارئ: {description}"
+                },
+                "responder_briefing": {
+                    "en": "Proceed to the location with caution and report status.",
+                    "ar": "توجه إلى الموقع بحذر وأبلغ عن الحالة."
+                },
+                "instructions": {
+                    "en": ["Stay safe and do not put yourself in danger.", "Wait for responders."],
+                    "ar": ["حافظ على سلامتك ولا تعرض نفسك للخطر.", "انتظر وصول المسعفين."]
+                },
+                "responders_needed": [role for role, count in volunteers.items() if count > 0],
+                "volunteers_recommended": volunteers,
+                "confidence": 0.5
+            }
+            
         analysis["source"] = "text"
-        
         logger.info(f"Analysis complete: {analysis['incident_type']}")
         return analysis
         
@@ -502,6 +765,38 @@ async def analyze_text(
     except Exception as e:
         logger.error(f"Error analyzing text: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Text analysis failed: {str(e)}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# AI Assistant Chat Endpoint
+# ─────────────────────────────────────────────────────────────────────────────
+
+from pydantic import BaseModel
+from typing import List
+
+class ChatMessage(BaseModel):
+    role: str
+    text: str
+
+class AssistantChatRequest(BaseModel):
+    history: List[ChatMessage]
+    user_name: Optional[str] = None
+
+@app.post("/api/v1/assistant/chat")
+async def assistant_chat(payload: AssistantChatRequest):
+    """
+    Handle chat conversation history and return Daleel's response.
+    """
+    try:
+        # Convert Pydantic models to dict lists
+        history_list = [{"role": msg.role, "text": msg.text} for msg in payload.history]
+        
+        # Call assistant
+        response_text = assistant.chat(history_list, user_name=payload.user_name)
+        return {"response": response_text}
+    except Exception as e:
+        logger.error(f"Error in assistant chat endpoint: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Assistant chat failed: {str(e)}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

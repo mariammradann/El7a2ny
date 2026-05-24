@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import '../core/localization/app_strings.dart';
 import '../models/alert_model.dart';
 import '../app/main_shell_screen.dart';
+import '../services/api_service.dart';
 
 class ReportFakeIncidentScreen extends StatefulWidget {
   final String incidentId;
@@ -46,29 +47,58 @@ class _ReportFakeIncidentScreenState extends State<ReportFakeIncidentScreen> {
     });
   }
 
-  void _submitReport() {
+  Future<void> _submitReport() async {
     setState(() => _submitting = true);
 
-    // Mock API call delay
-    Future.delayed(const Duration(seconds: 1), () {
+    try {
+      final success = await ApiService.reportFakeIncident(widget.incidentId);
+      if (!mounted) return;
+      
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.loc.isAr 
+                  ? 'تم إلغاء البلاغ وحظر المستخدم بنجاح!' 
+                  : 'Incident cancelled and reporter banned successfully!',
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => MainShellScreen()),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.loc.isAr 
+                  ? 'حدث خطأ أثناء إرسال التقرير' 
+                  : 'Failed to submit report. Please try again.',
+              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+            ),
+            backgroundColor: const Color(0xFFE61717),
+          ),
+        );
+      }
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            context.loc.isAr 
-                ? 'تم إرسال بلاغك لمراجعة الإدارة بنجاح!' 
-                : 'Report submitted for admin review successfully!',
+            'Error: $e',
             style: const TextStyle(fontFamily: 'NotoSansArabic'),
           ),
-          backgroundColor: Colors.green,
+          backgroundColor: const Color(0xFFE61717),
         ),
       );
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => MainShellScreen()),
-        (route) => false,
-      );
-    });
+    } finally {
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
+    }
   }
 
   @override

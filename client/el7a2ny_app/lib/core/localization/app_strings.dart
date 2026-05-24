@@ -386,7 +386,7 @@ class AppStrings {
       isAr ? 'جهات الاتصال الطارئة' : 'Emergency Contacts';
 
   // Chatbot
-  String get chatBotTitle => isAr ? 'مساعد الطوارئ' : 'Emergency Assistant';
+  String get chatBotTitle => isAr ? 'دليل' : 'Daleel';
   String get chatBotSubtitle =>
       isAr ? 'متاح 24/7 لمساعدتك' : 'Available 24/7 to assist you';
   String get chatInputHint =>
@@ -833,7 +833,9 @@ class AppStrings {
   String get volunteersNeededLabel => isAr
       ? 'عدد المتطوعين المطلوب (تقريبي)'
       : 'Number of volunteers needed (approx)';
-  String get volunteersNeededHint => isAr ? 'مثال: 5' : 'e.g. 5';
+  String get volunteersNeededHint => isAr
+      ? 'سيبها فاضية لو عايز الذكاء الاصطناعي يحدد (اختياري)'
+      : 'Leave empty for AI recommendation (Optional)';
   String get addEvidenceLabel => isAr ? 'زود دليل' : 'Add Evidence';
   String get evidencePhoto => isAr ? 'صورة' : 'Photo';
   String get evidenceVideo => isAr ? 'فيديو' : 'Video';

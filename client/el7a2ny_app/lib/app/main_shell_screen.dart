@@ -13,6 +13,9 @@ import '../pages/admin_screen.dart';
 import '../pages/notifications_page.dart';
 import '../widgets/global_fab_overlay.dart';
 import '../widgets/artboard_logo.dart';
+import '../services/api_service.dart';
+import '../core/auth/auth_token_store.dart';
+import '../pages/banned_screen.dart';
 
 /// الهيكل الموحد: هيدر ثابت + محتوى + شريط تنقل سفلي.
 /// لا يُستخدم مع شاشات تسجيل الدخول / إنشاء الحساب.
@@ -43,6 +46,28 @@ class _MainShellScreenState extends State<MainShellScreen> {
   void initState() {
     super.initState();
     _index = widget.initialIndex;
+    _checkUserBanStatus();
+  }
+
+  Future<void> _checkUserBanStatus() async {
+    final userId = AuthTokenStore.userId;
+    if (userId == null || userId == 'guest' || userId.isEmpty) {
+      return;
+    }
+    try {
+      final user = await ApiService.fetchUserProfile(userId);
+      if (user.status == 'banned' && user.bannedUntil != null) {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => BannedScreen(bannedUntil: user.bannedUntil!),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking user ban status in MainShellScreen: $e');
+    }
   }
 
   void _updateIndex(int newIndex) {

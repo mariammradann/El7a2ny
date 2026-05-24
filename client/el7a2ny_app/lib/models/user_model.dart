@@ -25,6 +25,7 @@ class UserModel {
   final DateTime? renewalDate;
   final List<String>? certifications;
   final String? profileImageUrl;
+  final DateTime? bannedUntil;
 
   UserModel({
     required this.id,
@@ -50,6 +51,7 @@ class UserModel {
     this.planType,
     this.subscriptionDate,
     this.renewalDate,
+    this.bannedUntil,
   });
 
   String get name => '$firstName $lastName';
@@ -101,6 +103,7 @@ class UserModel {
       planType: json['plan_type'],
       subscriptionDate: json['subscription_date'] != null ? DateTime.parse(json['subscription_date']) : null,
       renewalDate: json['renewal_date'] != null ? DateTime.parse(json['renewal_date']) : null,
+      bannedUntil: json['banned_until'] != null ? DateTime.parse(json['banned_until']) : null,
     );
   }
 
@@ -128,6 +131,7 @@ class UserModel {
         'plan_type': planType,
         'subscription_date': subscriptionDate?.toIso8601String(),
         'renewal_date': renewalDate?.toIso8601String(),
+        'banned_until': bannedUntil?.toIso8601String(),
       };
 
 }

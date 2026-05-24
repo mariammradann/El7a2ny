@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status, serializers, permissions
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.db.models import Q
 from django.contrib.auth.hashers import check_password, make_password
@@ -62,6 +62,31 @@ class UserViewSet(viewsets.ModelViewSet):
         try:
             user = User.objects.get(email=email)
 
+            # Auto-unban if ban expired
+            if getattr(user, "status", None) == "banned" and getattr(user, "banned_until", None) and user.banned_until <= timezone.now():
+                user.status = "active"
+                user.banned_until = None
+                user.save()
+
+            if getattr(user, "status", None) == "banned":
+                remaining = user.banned_until - timezone.now() if user.banned_until else timedelta()
+                hours = int(remaining.total_seconds() // 3600)
+                days = hours // 24
+                remaining_hours = hours % 24
+                
+                if days > 0:
+                    time_msg = f"{days} أيام و {remaining_hours} ساعة"
+                elif hours > 0:
+                    time_msg = f"{hours} ساعة"
+                else:
+                    minutes = int(remaining.total_seconds() // 60)
+                    time_msg = f"{minutes} دقيقة"
+                
+                return Response(
+                    {"error": f"تم حظر هذا الحساب لمخالفة شروط الاستخدام (الإبلاغ الكاذب). متبقي: {time_msg}."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
             if check_password(password, user.password):
                 return Response(
                     {
@@ -88,6 +113,13 @@ class UserViewSet(viewsets.ModelViewSet):
     def profile_by_id(self, request, user_id=None):
         try:
             user = User.objects.get(user_id=user_id)
+            
+            # Auto-unban if ban expired
+            if getattr(user, "status", None) == "banned" and getattr(user, "banned_until", None) and user.banned_until <= timezone.now():
+                user.status = "active"
+                user.banned_until = None
+                user.save()
+
             serializer = UserSerializer(user)
             return Response(serializer.data)
         except User.DoesNotExist:
@@ -209,13 +241,14 @@ def trigger_auto_ai_analysis(incident):
                     BytesIO(img_f.read()),
                     filename=os.path.basename(abs_path),
                     content_type=content_type,
+                    description=incident.description,
+                    user_trust_score=getattr(incident.user, "trust_score", 1.0)
                 )
             _wrap_bilingual(ai_data)
-            save_ai_result(incident, ai_data, source="image")
-            print(
-                f"[SUCCESS] AI image analysis saved for incident {incident.incident_id} "
-                f"using {os.path.basename(abs_path)}"
-            )
+            analysis = save_ai_result(incident, ai_data, source="image")
+            run_dispatch_matching_and_notify(incident, analysis)
+            print(f"[SUCCESS] AI image analysis saved for incident {incident.incident_id} "
+                  f"using {os.path.basename(abs_path)}")
             analyzed_via_image = True
             break  # Only analyze first valid image
         except Exception as e:
@@ -231,10 +264,9 @@ def trigger_auto_ai_analysis(incident):
                 incident.description, location=incident.location.address
             )
             _wrap_bilingual(ai_data)
-            save_ai_result(incident, ai_data, source="text")
-            print(
-                f"[SUCCESS] AI text analysis triggered successfully for incident {incident.incident_id}"
-            )
+            analysis = save_ai_result(incident, ai_data, source="text")
+            run_dispatch_matching_and_notify(incident, analysis)
+            print(f"[SUCCESS] AI text analysis triggered successfully for incident {incident.incident_id}")
             return
     except Exception as e:
         print(
@@ -259,8 +291,18 @@ def trigger_auto_ai_analysis(incident):
             "ar": f"تم الإبلاغ عن حريق نشط. التصنيف: حريق. التفاصيل: {desc}",
         }
         responder_briefing = {
-            "en": "Approach with full fire gear and oxygen packs. Structural collapse risk. Evacuate adjacent buildings immediately.",
-            "ar": "الاقتراب بمعدات الإطفاء الكاملة وأجهزة الأكسجين. خطر انهيار الهيكل. إخلاء المباني المجاورة فوراً.",
+            "en": [
+                "Ensure your personal safety first and stay at a safe distance from active flames.",
+                "Alert everyone in the immediate vicinity to evacuate the area immediately.",
+                "Help guide people to a safe assembly point away from smoke and heat.",
+                "Keep bystanders away from the scene and warn oncoming traffic of the hazard."
+            ],
+            "ar": [
+                "تأكد من سلامتك الشخصية أولاً وخليك على مسافة آمنة من النار النشطة.",
+                "نبّه كل الناس اللي في الجوار عشان يخلوا المكان فوراً.",
+                "ساعد في توجيه الناس لمكان تجمع آمن بعيد عن الدخان والحرارة.",
+                "ابعد المتفرجين عن موقع الحادثة وحذّر العربيات اللي جاية من الخطر."
+            ]
         }
         instructions = {
             "en": [
@@ -291,8 +333,18 @@ def trigger_auto_ai_analysis(incident):
             "ar": f"حالة طبية طارئة. التصنيف: طبي. التفاصيل: {desc}",
         }
         responder_briefing = {
-            "en": "Bring AED, trauma kit, and oxygen. Be prepared to administer CPR or first aid upon arrival.",
-            "ar": "إحضار جهاز إزالة الرجفان (AED)، حقيبة إسعافات أولية، وأكسجين. الاستعداد لإجراء الإنعاش الرئوي فور الوصول.",
+            "en": [
+                "Check the patient gently to see if they are responsive and breathing.",
+                "If they are bleeding severely, apply direct pressure using a clean cloth.",
+                "Keep the patient calm, warm, and reassured until the ambulance arrives.",
+                "Do not move the patient unless they are in immediate, life-threatening danger."
+            ],
+            "ar": [
+                "اتأكد براحة لو الشخص المصاب واعي وبيتنفس بشكل طبيعي.",
+                "لو في نزيف شديد، اضغط عليه مباشرة بقطعة قماش نظيفة.",
+                "هدّي المصاب وطمنه وخليه دافي لحد ما عربية الإسعاف توصل.",
+                "بلاش تحرك المصاب من مكانه إلا لو كان في خطر مباشر على حياته."
+            ]
         }
         instructions = {
             "en": [
@@ -321,8 +373,18 @@ def trigger_auto_ai_analysis(incident):
             "ar": f"حادث أمني. التصنيف: أمن. التفاصيل: {desc}",
         }
         responder_briefing = {
-            "en": "Approach with caution. Scene may not be secure. Maintain defensive posture and contact law enforcement.",
-            "ar": "الاقتراب بحذر شديد. قد لا يكون الموقع آمناً بالكامل. حافظ على وضع دفاعي وتواصل مع الشرطة.",
+            "en": [
+                "Assess the situation from a safe distance and do not confront any threats.",
+                "Guide bystanders away from the hazard area to prevent further complications.",
+                "Reassure anyone in distress and stay with them in a secure spot.",
+                "Keep a clear view of the scene and wait for the police/authorities to arrive."
+            ],
+            "ar": [
+                "قيم الوضع من مسافة آمنة وماتواجهش أي مصدر للتهديد.",
+                "وجه الموجودين عشان يبعدوا عن منطقة الخطر لمنع أي إصابات.",
+                "طمن الناس الخايفة وافضل واقف معاهم في مكان آمن.",
+                "راقب الموقع من مكان آمن واستنى لحد ما قوات الأمن والشرطة توصل."
+            ]
         }
         instructions = {
             "en": [
@@ -351,8 +413,18 @@ def trigger_auto_ai_analysis(incident):
             "ar": f"تم استلام البلاغ. التصنيف: عام. التفاصيل: {desc}",
         }
         responder_briefing = {
-            "en": "Assess the scene carefully upon arrival. Establish contact with reporter to clarify situation.",
-            "ar": "تقييم الموقع بعناية عند الوصول. تواصل مع المُبلغ لتوضيح طبيعة الحالة.",
+            "en": [
+                "Approach the scene carefully and locate the person who reported the incident.",
+                "Identify if anyone is injured or needs immediate basic assistance.",
+                "Help keep the victims calm and comfortable while they wait for help.",
+                "Ensure that access paths remain clear for incoming emergency vehicles."
+            ],
+            "ar": [
+                "اقترب من الموقع بحذر وحدد مكان الشخص اللي بلغ عن الحادثة.",
+                "اتأكد لو في حد مصاب أو محتاج مساعدة أساسية فورية.",
+                "ساعد في تهدئة المصابين وخليهم مستريحين لحد ما المساعدة توصل.",
+                "اتأكد إن ممرات الدخول فاضية وسهلة لعربيات الطوارئ والإسعاف."
+            ]
         }
         instructions = {
             "en": [
@@ -460,7 +532,12 @@ class IncidentViewSet(viewsets.ModelViewSet):
 
         user_id = self.request.query_params.get("user_id")
         if user_id:
+            # "My Reports" tab — return full history for this user
             queryset = queryset.filter(user_id=user_id)
+        else:
+            # Public "Alerts" tab — only show incidents from the last 2 days
+            cutoff = timezone.now() - timedelta(days=2)
+            queryset = queryset.filter(created_at__gte=cutoff)
 
         return queryset
 
@@ -1825,6 +1902,102 @@ from .ai_client import (
 from .models import IncidentAIAnalysis
 
 
+def run_dispatch_matching_and_notify(incident, analysis):
+    """
+    Finds online volunteers within a 5km radius, matches their skills
+    against the AI-recommended volunteer counts, and creates IncidentDispatch records.
+    """
+    from .models import VolunteerProfile, IncidentDispatch, User
+    import math
+
+    rec = analysis.volunteers_recommended or {}
+    
+    # If the user did not specify the number of volunteers (i.e. it is 0),
+    # let the AI model dynamically set a suitable number of volunteers based on scene/text.
+    if getattr(incident, 'total_volunteers', 0) == 0:
+        recommended_sum = sum(int(count) for count in rec.values() if str(count).isdigit())
+        if recommended_sum > 0:
+            incident.total_volunteers = recommended_sum
+            incident.save()
+            print(f"[INFO] Incident {incident.incident_id} total_volunteers dynamically set to {recommended_sum} by AI analysis.")
+
+    if not rec:
+        print(f"[INFO] No volunteers recommended by AI for incident {incident.incident_id}.")
+        return
+
+    # Get incident coordinates
+    try:
+        incident_lat = float(incident.location.latitude)
+        incident_lng = float(incident.location.longitude)
+    except (ValueError, TypeError, AttributeError) as e:
+        print(f"[WARNING] Could not parse location for incident {incident.incident_id}: {e}")
+        return
+
+    # Get active online volunteers
+    online_volunteers = VolunteerProfile.objects.filter(is_online=True)
+    
+    # Calculate Haversine distance and filter within 5km
+    matched_volunteers = []
+    for v in online_volunteers:
+        if v.current_lat is None or v.current_lng is None:
+            continue
+        
+        # Haversine distance
+        R = 6371.0  # Earth's radius in km
+        lat1, lon1 = math.radians(incident_lat), math.radians(incident_lng)
+        lat2, lon2 = math.radians(v.current_lat), math.radians(v.current_lng)
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+        a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        dist = R * c
+
+        if dist <= 5.0:  # 5km limit
+            matched_volunteers.append((v, dist))
+
+    # Sort by distance (closest first)
+    matched_volunteers.sort(key=lambda x: x[1])
+
+    # Dispatch logic based on capability and count needed
+    dispatched_count = 0
+    
+    for role, count_needed in rec.items():
+        if not count_needed or count_needed <= 0:
+            continue
+            
+        dispatched_for_role = 0
+        for v, dist in matched_volunteers:
+            if dispatched_for_role >= count_needed:
+                break
+
+            # Check if this volunteer is already dispatched to this incident
+            if IncidentDispatch.objects.filter(incident=incident, volunteer=v.user).exists():
+                continue
+
+            # Check capability
+            has_skill = False
+            if role == "first_aid" and v.has_first_aid:
+                has_skill = True
+            elif role == "fire_response" and v.has_firefighting:
+                has_skill = True
+            elif role == "rescue" and v.has_rescue_training:
+                has_skill = True
+            elif role == "transportation" and v.has_transportation:
+                has_skill = True
+
+            if has_skill:
+                # Create dispatch record
+                IncidentDispatch.objects.create(
+                    incident=incident,
+                    volunteer=v.user,
+                    role_requested=role,
+                    status="pending"
+                )
+                print(f"[SUCCESS] Dispatched volunteer {v.user.name} ({role}) to Incident {incident.incident_id} (Dist: {dist:.2f} km)")
+                dispatched_for_role += 1
+                dispatched_count += 1
+
+
 def _get_incident_for_user(incident_id, user):
     """
     Fetch an Incident that belongs to the requesting user.
@@ -1869,8 +2042,11 @@ class AnalyzeIncidentImageView(APIView):
                 image_file,
                 filename=image_file.name,
                 content_type=image_file.content_type,
+                description=incident.description,
+                user_trust_score=getattr(request.user, "trust_score", 1.0)
             )
             analysis = save_ai_result(incident, ai_data, source="image")
+            run_dispatch_matching_and_notify(incident, analysis)
             from .serializers import IncidentAIAnalysisSerializer
 
             return Response(
@@ -1912,8 +2088,11 @@ class AnalyzeIncidentVideoView(APIView):
                 video_file,
                 filename=video_file.name,
                 content_type=video_file.content_type,
+                description=incident.description,
+                user_trust_score=getattr(request.user, "trust_score", 1.0)
             )
             analysis = save_ai_result(incident, ai_data, source="video")
+            run_dispatch_matching_and_notify(incident, analysis)
             from .serializers import IncidentAIAnalysisSerializer
 
             return Response(
@@ -1959,6 +2138,7 @@ class AnalyzeIncidentVoiceView(APIView):
             )
             # Voice response has nested 'analysis' — save_ai_result handles this
             analysis = save_ai_result(incident, ai_data, source="voice")
+            run_dispatch_matching_and_notify(incident, analysis)
             from .serializers import IncidentAIAnalysisSerializer
 
             return Response(
@@ -2006,6 +2186,7 @@ class AnalyzeIncidentTextView(APIView):
                 location=request.data.get("location"),
             )
             analysis = save_ai_result(incident, ai_data, source="text")
+            run_dispatch_matching_and_notify(incident, analysis)
             from .serializers import IncidentAIAnalysisSerializer
 
             return Response(
@@ -2224,3 +2405,112 @@ def admin_respond_sponsor_request(request, request_id):
     except Exception as e:
         logger.error(f"Error responding to sponsor request: {e}")
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def api_assistant_chat(request):
+    """
+    Proxy user chat history to Daleel assistant in FastAPI microservice.
+    """
+    import requests
+    try:
+        history = request.data.get("history", [])
+        user_name = None
+        
+        if request.user and request.user.is_authenticated:
+            user_name = getattr(request.user, "first_name", None) or getattr(request.user, "username", None)
+            
+        ai_service_url = getattr(settings, "AI_SERVICE_URL", "http://localhost:8001")
+        url = f"{ai_service_url}/api/v1/assistant/chat"
+        
+        payload = {
+            "history": history,
+            "user_name": user_name
+        }
+        
+        response = requests.post(url, json=payload, timeout=30)
+        if response.status_code == 200:
+            return Response(response.json(), status=status.HTTP_200_OK)
+        else:
+            logger.error(f"AI service returned error {response.status_code}: {response.text}")
+            return Response({"error": "Failed to communicate with AI Assistant service"}, status=response.status_code)
+            
+    except Exception as e:
+        logger.error(f"Error in assistant chat: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def report_fake_incident(request, incident_id):
+    """
+    Endpoint for reporting an incident as fake.
+    If reported, incident is cancelled, reporter user is banned,
+    and a log entry is created for the admin.
+    """
+    from django.shortcuts import get_object_or_404
+    from .models import Incident, User, ChatMessage, IncidentChat, AdminLog
+    import uuid
+    
+    try:
+        incident = get_object_or_404(Incident, incident_id=incident_id)
+        
+        # 1. Cancel the incident
+        incident.status = "cancelled"
+        incident.save()
+        
+        # 2. Ban the reporter
+        reporter = incident.user
+        reporter.status = "banned"
+        reporter.banned_until = timezone.now() + timedelta(days=3)
+        reporter.save()
+        
+        # 3. Log notification for the admin
+        action_msg = f"البلاغ #{str(incident.incident_id)[:8]} (حريق/طوارئ) تم حظره وإلغاؤه، وتم حظر المستخدم {reporter.name} (الهاتف: {reporter.phone_number}) للإبلاغ الكاذب."
+        AdminLog.objects.create(action=action_msg)
+        
+        # 4. Create chat notification
+        chat = IncidentChat.objects.filter(incident_id=incident.incident_id).first()
+        if chat:
+            ChatMessage.objects.create(
+                chat=chat,
+                sender_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                sender_name="System",
+                sender_type="system",
+                text=f"تم إلغاء البلاغ وحظر صاحب البلاغ ({reporter.name}) بسبب الإبلاغ عن بلاغ كاذب من قبل متطوع.",
+            )
+            
+        print(f"[ADMIN ALERT] {action_msg}")
+        
+        return Response({
+            "message": "Incident cancelled, reporter banned, and admin notified.",
+            "status": "success"
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Error in report_fake_incident: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def admin_logs(request):
+    """
+    Endpoint for fetching backend AdminLog entries.
+    """
+    from .models import AdminLog
+    try:
+        logs = AdminLog.objects.all().order_by("-timestamp")
+        data = []
+        for log in logs:
+            data.append({
+                "log_id": str(log.log_id),
+                "action": log.action,
+                "timestamp": log.timestamp.isoformat()
+            })
+        return Response(data, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error fetching admin logs: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

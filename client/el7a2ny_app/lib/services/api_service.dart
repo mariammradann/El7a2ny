@@ -381,6 +381,31 @@ class ApiService {
     }
   }
 
+  static Future<bool> reportFakeIncident(String incidentId) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/incidents/$incidentId/report-fake/"),
+        headers: {"Content-Type": "application/json"},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("🚨 Error reporting fake incident: $e");
+      return false;
+    }
+  }
+
+  static Future<List<dynamic>> fetchAdminLogs() async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/api/admin/logs/"));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+    } catch (e) {
+      print("🚨 Error fetching admin logs: $e");
+    }
+    return [];
+  }
+
   static Future<List<EmergencyContact>> fetchEmergencyContacts() async {
     final response = await http.get(Uri.parse("$baseUrl/api/contacts/"));
     if (response.statusCode == 200) {

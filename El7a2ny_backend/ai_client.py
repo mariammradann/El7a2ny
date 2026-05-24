@@ -52,24 +52,34 @@ def _post(endpoint: str, **kwargs) -> dict:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def analyze_image(image_file: IO, filename: str, content_type: str = "image/jpeg") -> dict:
+def analyze_image(image_file: IO, filename: str, content_type: str = "image/jpeg", description: str = None, user_trust_score: float = 1.0) -> dict:
     """
     Forward an image file to the AI microservice.
     Returns the raw AI JSON dict.
     """
     logger.info(f"Forwarding image to AI service: {filename}")
+    data = {}
+    if description:
+        data["description"] = description
+    data["user_trust_score"] = user_trust_score
     return _post(
         "/api/v1/analyze/image",
         files={"file": (filename, image_file, content_type)},
+        data=data,
     )
 
 
-def analyze_video(video_file: IO, filename: str, content_type: str = "video/mp4") -> dict:
+def analyze_video(video_file: IO, filename: str, content_type: str = "video/mp4", description: str = None, user_trust_score: float = 1.0) -> dict:
     """Forward a video file to the AI microservice."""
     logger.info(f"Forwarding video to AI service: {filename}")
+    data = {}
+    if description:
+        data["description"] = description
+    data["user_trust_score"] = user_trust_score
     return _post(
         "/api/v1/analyze/video",
         files={"file": (filename, video_file, content_type)},
+        data=data,
     )
 
 
@@ -91,7 +101,7 @@ def analyze_text(description: str, location: str | None = None) -> dict:
     payload = {"description": description}
     if location:
         payload["location"] = location
-    return _post("/api/v1/analyze/text", json=payload)
+    return _post("/api/v1/analyze/text", data=payload)
 
 
 def save_ai_result(incident, ai_data: dict, source: str):
@@ -116,13 +126,38 @@ def save_ai_result(incident, ai_data: dict, source: str):
             return _json.dumps(value, ensure_ascii=False)
         return value or ""
 
-    # summary and responder_briefing may now be bilingual dicts
     summary_raw   = analysis_data.get("summary", "")
     briefing_raw  = analysis_data.get("responder_briefing", "")
-
-    # instructions may be a bilingual dict {"en": [...], "ar": [...]}
-    # or a plain list — save as JSONField (dict or list both work)
     instructions_raw = analysis_data.get("instructions", [])
+
+    # Extract bilingual summaries
+    summary_en = ""
+    summary_ar = ""
+    if isinstance(summary_raw, dict):
+        summary_en = summary_raw.get("en", "")
+        summary_ar = summary_raw.get("ar", "")
+    else:
+        summary_en = str(summary_raw)
+
+    # Extract bilingual user instructions
+    user_inst_en = []
+    user_inst_ar = []
+    if isinstance(instructions_raw, dict):
+        user_inst_en = instructions_raw.get("en", [])
+        user_inst_ar = instructions_raw.get("ar", [])
+    elif isinstance(instructions_raw, list):
+        user_inst_en = instructions_raw
+        user_inst_ar = instructions_raw
+
+    # Extract bilingual volunteer/responder instructions
+    vol_inst_en = []
+    vol_inst_ar = []
+    if isinstance(briefing_raw, dict):
+        vol_inst_en = briefing_raw.get("en", [])
+        vol_inst_ar = briefing_raw.get("ar", [])
+    elif isinstance(briefing_raw, list):
+        vol_inst_en = briefing_raw
+        vol_inst_ar = briefing_raw
 
     # Delete any previous analysis for this incident (re-analysis case)
     IncidentAIAnalysis.objects.filter(incident=incident).delete()
@@ -135,9 +170,24 @@ def save_ai_result(incident, ai_data: dict, source: str):
         urgency_score     = int(analysis_data.get("urgency_score", 5)),
         risk_level        = analysis_data.get("risk_level", ""),
         dispatch_priority = analysis_data.get("dispatch_priority", ""),
+        
+        is_real           = analysis_data.get("is_real", True),
+        fake_probability  = analysis_data.get("fake_probability", 0.0),
+        verification_methods = analysis_data.get("verification_methods", {}),
+        raw_detections    = analysis_data.get("raw_detections", []),
+        detected_objects  = analysis_data.get("detected_objects", {}),
+        volunteers_recommended = analysis_data.get("volunteers_recommended", {}),
+
         summary           = _to_json_str(summary_raw),
         responder_briefing= _to_json_str(briefing_raw),
-        instructions      = instructions_raw,   # JSONField handles dict or list
+        summary_en        = summary_en,
+        summary_ar        = summary_ar,
+        instructions      = instructions_raw,
+        user_instructions_en = user_inst_en,
+        user_instructions_ar = user_inst_ar,
+        volunteer_instructions_en = vol_inst_en,
+        volunteer_instructions_ar = vol_inst_ar,
+
         responders_needed = analysis_data.get("responders_needed", []),
         confidence        = analysis_data.get("confidence"),
         source            = source,

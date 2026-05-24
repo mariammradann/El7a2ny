@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],
             options={
-                'db_table': 'ems_schema"."incident_chats',
+                'db_table': 'incident_chats',
                 'managed': True,
                 'indexes': [models.Index(fields=['incident_id', '-updated_at'], name='incident_ch_inciden_d4559a_idx')],
             },
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 ('chat', models.ForeignKey(db_column='chat_id', on_delete=django.db.models.deletion.CASCADE, related_name='messages', to='El7a2ny_backend.incidentchat')),
             ],
             options={
-                'db_table': 'ems_schema"."chat_messages',
+                'db_table': 'chat_messages',
                 'ordering': ['created_at'],
                 'managed': True,
                 'indexes': [models.Index(fields=['chat', '-created_at'], name='chat_messag_chat_id_281c8a_idx')],

@@ -37,8 +37,8 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
         setState(() {
           _messages.add(ChatMessage(
             text: context.loc.isAr 
-                ? 'مرحباً! أنا مساعد الطوارئ الذكي. كيف يمكنني مساعدتك اليوم؟' 
-                : 'Hello! I am your AI Emergency Assistant. How can I help you today?',
+                ? 'مرحباً! أنا دليل، مساعدك الذكي لتطبيق الحقني. كيف يمكنني مساعدتك اليوم؟' 
+                : 'Hello! I am Daleel, your smart assistant for El7a2ny app. How can I help you today?',
             source: MessageSource.bot,
             timestamp: DateTime.now(),
           ));
@@ -97,7 +97,8 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
     _scrollToBottom();
 
     // Get real response from Gemini
-    final response = await AiService.getResponse(userText, mediaFile: mediaToSend);
+    final historyToSend = _messages.sublist(0, _messages.length - 1);
+    final response = await AiService.getResponse(historyToSend);
     
     if (!mounted) return;
     

@@ -10,6 +10,7 @@ class User(models.Model):
     # الحقول الأساسية
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_type = models.CharField(max_length=50, default="normal")
+    trust_score = models.FloatField(default=1.0)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=20)
@@ -33,6 +34,7 @@ class User(models.Model):
     # حقول الحالة والتوثيق
     status = models.CharField(max_length=50, default="active")
     verification_status = models.CharField(max_length=50, default="pending")
+    banned_until = models.DateTimeField(null=True, blank=True)
     admin_id = models.UUIDField(null=True, blank=True)  # لو يوزر تبع أدمن معين
 
     # حقول إضافية
@@ -409,13 +411,33 @@ class IncidentAIAnalysis(models.Model):
     risk_level = models.CharField(max_length=255, null=True, blank=True)
     dispatch_priority = models.CharField(max_length=255, null=True, blank=True)
 
+    # ── Authenticity & Verification ──
+    is_real = models.BooleanField(default=True)
+    fake_probability = models.FloatField(default=0.0)
+    verification_methods = models.JSONField(default=dict, null=True, blank=True)
+    community_votes_real = models.IntegerField(default=0)
+    community_votes_fake = models.IntegerField(default=0)
+
+    # ── YOLOv8 Detections ──
+    raw_detections = models.JSONField(default=list, null=True, blank=True)
+    detected_objects = models.JSONField(default=dict, null=True, blank=True)
+
     # ── Text outputs ──────────────────────────────────────────────────────────
     summary = models.TextField(null=True, blank=True)
     responder_briefing = models.TextField(null=True, blank=True)
+    summary_en = models.TextField(null=True, blank=True)
+    summary_ar = models.TextField(null=True, blank=True)
 
     # ── JSON arrays ───────────────────────────────────────────────────────────
-    instructions = models.JSONField(default=list)  # ["Evacuate", "Stay low", ...]
-    responders_needed = models.JSONField(default=list)  # ["Firefighters", "Ambulance"]
+    instructions      = models.JSONField(default=list)   # ["Evacuate", "Stay low", ...]
+    responders_needed = models.JSONField(default=list)   # ["Firefighters", "Ambulance"]
+    user_instructions_en = models.JSONField(default=list, null=True, blank=True)
+    user_instructions_ar = models.JSONField(default=list, null=True, blank=True)
+    volunteer_instructions_en = models.JSONField(default=list, null=True, blank=True)
+    volunteer_instructions_ar = models.JSONField(default=list, null=True, blank=True)
+
+    # ── Volunteer Recommendations ──
+    volunteers_recommended = models.JSONField(default=dict, null=True, blank=True)
 
     # ── Metadata ──────────────────────────────────────────────────────────────
     confidence = models.FloatField(null=True, blank=True)  # 0.0 – 1.0
@@ -490,3 +512,58 @@ class SponsorRequest(models.Model):
 
     def __str__(self):
         return f"SponsorRequest {self.request_id} - {self.company_name} ({self.status})"
+
+
+class VolunteerProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="volunteer_profile")
+    is_online = models.BooleanField(default=False)
+    current_lat = models.FloatField(null=True, blank=True)
+    current_lng = models.FloatField(null=True, blank=True)
+    
+    # Skills and Credentials
+    has_first_aid = models.BooleanField(default=False)
+    has_firefighting = models.BooleanField(default=False)
+    has_rescue_training = models.BooleanField(default=False)
+    has_transportation = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'ems_schema"."volunteer_profiles'
+        managed = True
+
+    def __str__(self):
+        return f"Volunteer Profile: {self.user.name}"
+
+
+class IncidentDispatch(models.Model):
+    dispatch_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    incident = models.ForeignKey(Incident, on_delete=models.CASCADE, related_name="dispatches")
+    volunteer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assigned_dispatches")
+    role_requested = models.CharField(max_length=50) # 'first_aid', 'fire_response', etc.
+    status = models.CharField(max_length=20, choices=[
+        ("pending", "Pending"), 
+        ("accepted", "Accepted"), 
+        ("declined", "Declined"), 
+        ("completed", "Completed")
+    ], default="pending")
+    dispatched_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = 'ems_schema"."incident_dispatches'
+        managed = True
+
+    def __str__(self):
+        return f"Dispatch {self.dispatch_id} of {self.role_requested} to Incident {self.incident_id}"
+
+
+class AdminLog(models.Model):
+    log_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    action = models.CharField(max_length=500)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ems_schema"."admin_logs'
+        ordering = ["-timestamp"]
+        managed = True
+
+    def __str__(self):
+        return f"AdminLog {self.log_id} - {self.action}"

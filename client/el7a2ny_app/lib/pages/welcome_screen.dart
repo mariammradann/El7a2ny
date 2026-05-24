@@ -97,10 +97,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   // El7a2ny Logo
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.9,
-                    height: 240,
-                    child: Image.asset(
-                      'assets/images/artboard_1.png',
-                      fit: BoxFit.contain,
+                    height: 350,
+                    child: Transform.scale(
+                      scale: 1.8,
+                      child: Image.asset(
+                        'assets/images/Artboardيش f1.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ],

@@ -35,6 +35,9 @@ class AlertModel {
   final List<String>? aiInstructionsListAr;
   final String? volunteerInstructionsEn;
   final String? volunteerInstructionsAr;
+  final List<String>? volunteerInstructionsList;
+  final List<String>? volunteerInstructionsListEn;
+  final List<String>? volunteerInstructionsListAr;
 
   const AlertModel({
     required this.id,
@@ -68,6 +71,9 @@ class AlertModel {
     this.aiInstructionsListAr,
     this.volunteerInstructionsEn,
     this.volunteerInstructionsAr,
+    this.volunteerInstructionsList,
+    this.volunteerInstructionsListEn,
+    this.volunteerInstructionsListAr,
   });
 
   factory AlertModel.fromJson(Map<String, dynamic> json) {
@@ -151,11 +157,13 @@ class AlertModel {
     final rawVolunteerInstructions = aiAnalysisMap != null ? aiAnalysisMap['responder_briefing'] : null;
     final volunteerInstructionsEn = getBilingualString(rawVolunteerInstructions, false);
     final volunteerInstructionsAr = getBilingualString(rawVolunteerInstructions, true);
+    final volunteerInstructionsListEn = getBilingualList(rawVolunteerInstructions, false);
+    final volunteerInstructionsListAr = getBilingualList(rawVolunteerInstructions, true);
 
     return AlertModel(
       id: (json['incident_id'] ?? json['id'] ?? '').toString(),
       status: json['status'] ?? 'reported',
-      severity: json['severity'] ?? 'medium',
+      severity: json['severity'] ?? (aiAnalysisMap != null ? aiAnalysisMap['severity'] : null) ?? 'medium',
       totalVolunteers: json['total_volunteers'] ?? 0,
       currentVolunteers: json['current_volunteers'] ?? 0,
       type: json['category'] ?? json['type'] ?? 'emergency',
@@ -188,6 +196,9 @@ class AlertModel {
       aiInstructionsListAr: instructionsListAr,
       volunteerInstructionsEn: volunteerInstructionsEn,
       volunteerInstructionsAr: volunteerInstructionsAr,
+      volunteerInstructionsList: isAr ? volunteerInstructionsListAr : volunteerInstructionsListEn,
+      volunteerInstructionsListEn: volunteerInstructionsListEn,
+      volunteerInstructionsListAr: volunteerInstructionsListAr,
     );
   }
 
@@ -195,6 +206,23 @@ class AlertModel {
   String? getInstructions(bool isAr) => isAr ? aiInstructionsAr ?? aiInstructions : aiInstructionsEn ?? aiInstructions;
   List<String>? getInstructionsList(bool isAr) => isAr ? aiInstructionsListAr ?? aiInstructionsList : aiInstructionsListEn ?? aiInstructionsList;
   String? getVolunteerInstructions(bool isAr) => isAr ? volunteerInstructionsAr ?? volunteerInstructions : volunteerInstructionsEn ?? volunteerInstructions;
+
+  List<String>? getVolunteerInstructionsList(bool isAr) {
+    final list = isAr ? volunteerInstructionsListAr ?? volunteerInstructionsList : volunteerInstructionsListEn ?? volunteerInstructionsList;
+    if (list != null && list.isNotEmpty) {
+      return list;
+    }
+    // Fallback: split the string representation
+    final rawStr = getVolunteerInstructions(isAr);
+    if (rawStr == null || rawStr.isEmpty) return null;
+    
+    var cleanStr = rawStr.trim();
+    if (cleanStr.startsWith('[') && cleanStr.endsWith(']')) {
+      cleanStr = cleanStr.substring(1, cleanStr.length - 1);
+      return cleanStr.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    }
+    return [cleanStr];
+  }
 
   // --- Helper Methods ---
 
@@ -228,6 +256,7 @@ class AlertModel {
 
   String getLocalizedSeverity(AppStrings loc) {
     switch (severity.toLowerCase()) {
+      case 'critical': return loc.isAr ? 'حرجة للغاية' : 'Critical';
       case 'high': return loc.severityHigh;
       case 'medium': return loc.severityMedium;
       case 'low': return loc.severityLow;

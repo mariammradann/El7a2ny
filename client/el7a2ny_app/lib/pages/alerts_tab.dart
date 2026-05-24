@@ -8,8 +8,6 @@ import '../services/session_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'active_incident_tracking_screen.dart';
 
-// IMPORTANT: Define your server URL here
-const String BASE_URL = "http://127.0.0.1:8000"; 
 
 class AlertsTab extends StatefulWidget {
   const AlertsTab({super.key});
@@ -280,6 +278,21 @@ class _AlertCardState extends State<_AlertCard> {
 
   AlertModel get alert => widget.alert;
   bool get isMyAlerts => widget.isMyAlerts;
+
+  Color _getSeverityColor(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return const Color(0xFFE61717); // Red
+      case 'high':
+        return const Color(0xFFF18F34); // Orange
+      case 'medium':
+        return const Color(0xFFFDC800); // Yellow-Orange
+      case 'low':
+        return const Color(0xFFEAB308); // Yellow
+      default:
+        return const Color(0xFF64748B); // Slate Gray
+    }
+  }
 
   Future<void> _doAdminAction(String action) async {
     setState(() => _adminActionLoading = true);
@@ -562,6 +575,46 @@ class _AlertCardState extends State<_AlertCard> {
                       if (isAr) const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF94A3B8)),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: isAr ? MainAxisAlignment.end : MainAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _getSeverityColor(alert.severity).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _getSeverityColor(alert.severity).withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: _getSeverityColor(alert.severity),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              alert.getLocalizedSeverity(context.loc),
+                              style: TextStyle(
+                                color: _getSeverityColor(alert.severity),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'NotoSansArabic',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   if (alert.description != null)
                     Text(
@@ -588,7 +641,7 @@ class _AlertCardState extends State<_AlertCard> {
                           // Fix for relative paths and CORS
                           final String fullUrl = mediaUrl.startsWith('http') 
                             ? mediaUrl 
-                            : "$BASE_URL${mediaUrl.startsWith('/') ? '' : '/'}$mediaUrl";
+                            : "${ApiService.baseUrl}${mediaUrl.startsWith('/') ? '' : '/'}$mediaUrl";
 
                           return Padding(
                             padding: EdgeInsets.only(

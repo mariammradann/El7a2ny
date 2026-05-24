@@ -24,7 +24,7 @@ def test_photo_upload():
     base_url = "http://127.0.0.1:8000"
 
     # Use existing user from database
-    user_id = "a51fabd8-9752-4515-b53f-0ab508887064"
+    user_id = "423fcab5-4ff2-4552-ad52-b3f1eeab4cb3"
     test_image_path = create_test_image()
 
     try:
@@ -33,14 +33,14 @@ def test_photo_upload():
             files = {"media_files": (test_image_path, img_file, "image/jpeg")}
             data = {
                 "user_id": user_id,
-                "category": "test",
-                "description": "Test photo upload",
+                "category": "fire",
+                "description": "There is a massive fire in the building with a lot of smoke and people are injured and trapped inside.",
                 "latitude": 30.0444,
                 "longitude": 31.2357,
                 "address": "Test Location",
             }
 
-            print("📤 Sending test photo upload...")
+            print("Sending test photo upload...")
             print(f"   User ID: {user_id}")
             print(f"   Image: {test_image_path}")
 
@@ -48,24 +48,24 @@ def test_photo_upload():
                 f"{base_url}/api/incidents/", files=files, data=data
             )
 
-            print(f"📥 Response Status: {response.status_code}")
-            print(f"📥 Response: {response.json()}")
+            print(f"Response Status: {response.status_code}")
+            print(f"Response: {response.json()}")
 
             if response.status_code in [200, 201]:
-                print("✅ Upload successful!")
+                print("Upload successful!")
                 result = response.json()
                 if "media_files" in result:
-                    print(f"✅ Media files in response: {result['media_files']}")
+                    print(f"Media files in response: {result['media_files']}")
                 else:
-                    print("⚠️ No media_files in response")
+                    print("No media_files in response")
             else:
-                print(f"❌ Upload failed: {response.text}")
+                print(f"Upload failed: {response.text}")
 
     finally:
         # Cleanup
         if os.path.exists(test_image_path):
             os.remove(test_image_path)
-            print(f"🧹 Cleaned up test image")
+            print("Cleaned up test image")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 9
+names: ['FLOOD', 'INJURED PERSON', 'collapsed building', 'crushed car', 'fire', 'road block', 'smoke', 'turned over vechile', 'unconscious people']
+
+roboflow:
+  workspace: mariams-workspace-u3gv0
+  project: my-first-project-khgd2
+  version: 2
+  license: Private
+  url: https://app.roboflow.com/mariams-workspace-u3gv0/my-first-project-khgd2/2

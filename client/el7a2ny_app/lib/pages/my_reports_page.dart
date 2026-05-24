@@ -221,9 +221,12 @@ class _ReportCard extends StatelessWidget {
                           itemCount: report.mediaUrls!.length,
                           itemBuilder: (context, idx) {
                             final mediaUrl = report.mediaUrls![idx];
+                            final absoluteMediaUrl = mediaUrl.startsWith('http') 
+                                ? mediaUrl 
+                                : '${ApiService.baseUrl}${mediaUrl.startsWith('/') ? '' : '/'}$mediaUrl';
                             return _MediaThumbnail(
-                              mediaUrl: mediaUrl,
-                              onTap: () => _showMediaFullscreen(context, mediaUrl),
+                              mediaUrl: absoluteMediaUrl,
+                              onTap: () => _showMediaFullscreen(context, absoluteMediaUrl),
                             );
                           },
                         ),
