@@ -201,12 +201,25 @@ class PasswordResetToken(models.Model):
 
 
 class SensorReading(models.Model):
+    ALERT_LEVELS = [
+        ("NORMAL", "🟢 NORMAL"),
+        ("WARNING", "⚠️ WARNING"),
+        ("ALERT", "🚨 ALERT"),
+        ("CRITICAL", "🔥 CRITICAL"),
+    ]
+
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="sensor_readings"
     )
     temperature = models.FloatField()
     humidity = models.FloatField(null=True, blank=True)
     is_alert = models.BooleanField(default=False)
+    alert_level = models.CharField(
+        max_length=20,
+        choices=ALERT_LEVELS,
+        default="NORMAL",
+        help_text="Temperature alert level: NORMAL (<40°C), WARNING (40-70°C), ALERT (70-120°C), CRITICAL (≥120°C)",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -353,30 +366,28 @@ class IncidentAIAnalysis(models.Model):
 
     SEVERITY_CHOICES = [
         ("Critical", "Critical"),
-        ("High",     "High"),
-        ("Medium",   "Medium"),
-        ("Low",      "Low"),
-        ("Unknown",  "Unknown"),
+        ("High", "High"),
+        ("Medium", "Medium"),
+        ("Low", "Low"),
+        ("Unknown", "Unknown"),
     ]
 
     TRIAGE_CHOICES = [
-        ("Red",    "Red"),
+        ("Red", "Red"),
         ("Orange", "Orange"),
         ("Yellow", "Yellow"),
-        ("Green",  "Green"),
-        ("Black",  "Black"),
+        ("Green", "Green"),
+        ("Black", "Black"),
     ]
 
     SOURCE_CHOICES = [
         ("image", "Image"),
         ("video", "Video"),
         ("voice", "Voice"),
-        ("text",  "Text"),
+        ("text", "Text"),
     ]
 
-    analysis_id = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False
-    )
+    analysis_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     # Link to the existing Incident model
     incident = models.OneToOneField(
@@ -387,31 +398,39 @@ class IncidentAIAnalysis(models.Model):
     )
 
     # ── Core AI output fields ─────────────────────────────────────────────────
-    incident_type     = models.CharField(max_length=255)
-    severity          = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default="Unknown")
-    triage_level      = models.CharField(max_length=10, choices=TRIAGE_CHOICES,   default="Yellow")
-    urgency_score     = models.IntegerField(default=5)   # 1–10
-    risk_level        = models.CharField(max_length=255, null=True, blank=True)
+    incident_type = models.CharField(max_length=255)
+    severity = models.CharField(
+        max_length=20, choices=SEVERITY_CHOICES, default="Unknown"
+    )
+    triage_level = models.CharField(
+        max_length=10, choices=TRIAGE_CHOICES, default="Yellow"
+    )
+    urgency_score = models.IntegerField(default=5)  # 1–10
+    risk_level = models.CharField(max_length=255, null=True, blank=True)
     dispatch_priority = models.CharField(max_length=255, null=True, blank=True)
 
     # ── Text outputs ──────────────────────────────────────────────────────────
-    summary            = models.TextField(null=True, blank=True)
+    summary = models.TextField(null=True, blank=True)
     responder_briefing = models.TextField(null=True, blank=True)
 
     # ── JSON arrays ───────────────────────────────────────────────────────────
-    instructions      = models.JSONField(default=list)   # ["Evacuate", "Stay low", ...]
-    responders_needed = models.JSONField(default=list)   # ["Firefighters", "Ambulance"]
+    instructions = models.JSONField(default=list)  # ["Evacuate", "Stay low", ...]
+    responders_needed = models.JSONField(default=list)  # ["Firefighters", "Ambulance"]
 
     # ── Metadata ──────────────────────────────────────────────────────────────
-    confidence  = models.FloatField(null=True, blank=True)   # 0.0 – 1.0
-    source      = models.CharField(max_length=10, choices=SOURCE_CHOICES, null=True, blank=True)
-    raw_response = models.JSONField(null=True, blank=True)   # full AI JSON stored for debugging
+    confidence = models.FloatField(null=True, blank=True)  # 0.0 – 1.0
+    source = models.CharField(
+        max_length=10, choices=SOURCE_CHOICES, null=True, blank=True
+    )
+    raw_response = models.JSONField(
+        null=True, blank=True
+    )  # full AI JSON stored for debugging
     analyzed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'ems_schema"."incident_ai_analyses'
-        managed  = True
-        ordering = ["-analyzed_at"]
+        managed = True
+        # ordering = ["-analyzed_at"]
 
     def __str__(self):
         return f"AI Analysis for Incident {self.incident_id} — {self.severity}"
@@ -430,11 +449,11 @@ class IncidentAIAnalysis(models.Model):
     @property
     def triage_color(self) -> str:
         colors = {
-            "Red":    "#FF0000",
+            "Red": "#FF0000",
             "Orange": "#FF6600",
             "Yellow": "#FFD700",
-            "Green":  "#00AA00",
-            "Black":  "#222222",
+            "Green": "#00AA00",
+            "Black": "#222222",
         }
         return colors.get(self.triage_level, "#888888")
 
@@ -447,12 +466,22 @@ class SponsorRequest(models.Model):
     message = models.TextField()
     status = models.CharField(
         max_length=20,
-        choices=[("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected")],
+        choices=[
+            ("pending", "Pending"),
+            ("approved", "Approved"),
+            ("rejected", "Rejected"),
+        ],
         default="pending",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sponsor_requests", null=True, blank=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sponsor_requests",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         db_table = 'ems_schema"."sponsor_requests'

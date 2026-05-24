@@ -5,6 +5,8 @@ import '../../core/api/api_exception.dart';
 import '../../data/models/device_status.dart';
 import '../../data/repositories/device_repository.dart';
 import '../../widgets/emergency_dashboard_widgets.dart';
+import '../../models/sensor_model.dart';
+import '../../services/api_service.dart';
 import '../dashboard_tab.dart';
 import '../alerts_tab.dart';
 import '../sponsors_page.dart';
@@ -32,15 +34,31 @@ class _HomeTabPageState extends State<HomeTabPage> {
   Object? _error;
   bool _loading = true;
   Timer? _pollingTimer;
+  List<SensorModel> _fireAlerts = [];
 
   @override
   void initState() {
     super.initState();
     _loadDevices();
+    _checkForFireAlerts();
     // Poll every 15 seconds to match sensor update interval
     _pollingTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       _refreshSilently();
+      _checkForFireAlerts();
     });
+  }
+
+  /// Check for active fire alerts from sensors
+  Future<void> _checkForFireAlerts() async {
+    try {
+      final alerts = await ApiService.fetchFireAlerts();
+      if (!mounted) return;
+      setState(() {
+        _fireAlerts = alerts;
+      });
+    } catch (e) {
+      print('Error checking fire alerts: $e');
+    }
   }
 
   @override
@@ -165,6 +183,114 @@ class _HomeTabPageState extends State<HomeTabPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // 🔥 FIRE ALERT BANNER
+              if (_fireAlerts.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Colors.red.shade900,
+                        Colors.orange.shade700,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withValues(alpha: 0.4),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            '🔥',
+                            style: TextStyle(fontSize: 28),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'FIRE ALERT DETECTED',
+                                  style: TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_fireAlerts.length} sensor${_fireAlerts.length > 1 ? 's' : ''} detecting fire',
+                                  style: TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontSize: 13,
+                                    color: Colors.white.withValues(alpha: 0.85),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ..._fireAlerts.map((alert) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 40),
+                            Expanded(
+                              child: Text(
+                                '${alert.alertLabel} • ${alert.value}${alert.unit} ${alert.userName != null ? '(${alert.userName})' : ''}',
+                                style: TextStyle(
+                                  fontFamily: 'NotoSansArabic',
+                                  fontSize: 12,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.location_on_rounded),
+                          label: Text(
+                            'View on Sensors',
+                            style: TextStyle(
+                              fontFamily: 'NotoSansArabic',
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.red.shade900,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (context) => const SensorsPage(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const Center(
                 child: ArtboardLogo(size: 350),
               ),

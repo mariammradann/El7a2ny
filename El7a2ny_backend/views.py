@@ -119,6 +119,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 # 3. الـ IncidentViewSet
 
+
 def _wrap_bilingual(ai_data: dict):
     """
     Takes a raw AI microservice dict (English only) and wraps the
@@ -129,24 +130,24 @@ def _wrap_bilingual(ai_data: dict):
     import json
 
     ARABIC_SUMMARIES = {
-        "Building Fire":        "حريق في مبنى",
-        "Vehicle Fire":         "حريق في مركبة",
-        "Wildfire":             "حريق غابات",
-        "Traffic Accident":     "حادث مروري",
-        "Medical Emergency":    "حالة طبية طارئة",
-        "Chemical Spill":       "انسكاب مواد كيميائية",
-        "Gas Leak":             "تسرب غاز",
-        "Flood":                "فيضان",
-        "Earthquake":           "زلزال",
-        "Collapsed Structure":  "انهيار مبنى",
-        "Active Shooter":       "إطلاق نار نشط",
-        "Bomb Threat":          "تهديد بقنبلة",
-        "Hostage Situation":    "احتجاز رهائن",
-        "Missing Person":       "شخص مفقود",
+        "Building Fire": "حريق في مبنى",
+        "Vehicle Fire": "حريق في مركبة",
+        "Wildfire": "حريق غابات",
+        "Traffic Accident": "حادث مروري",
+        "Medical Emergency": "حالة طبية طارئة",
+        "Chemical Spill": "انسكاب مواد كيميائية",
+        "Gas Leak": "تسرب غاز",
+        "Flood": "فيضان",
+        "Earthquake": "زلزال",
+        "Collapsed Structure": "انهيار مبنى",
+        "Active Shooter": "إطلاق نار نشط",
+        "Bomb Threat": "تهديد بقنبلة",
+        "Hostage Situation": "احتجاز رهائن",
+        "Missing Person": "شخص مفقود",
     }
 
     inc_type = ai_data.get("incident_type", "")
-    ar_type  = ARABIC_SUMMARIES.get(inc_type, inc_type)
+    ar_type = ARABIC_SUMMARIES.get(inc_type, inc_type)
 
     # summary ─────────────────────────────────────────────────────────────────
     raw_summary = ai_data.get("summary", "")
@@ -190,7 +191,7 @@ def trigger_auto_ai_analysis(incident):
 
     for media_path in media_files:
         # media_path is like "/media/reports/<user>/<filename>"
-        rel_path = media_path.lstrip("/")       # "media/reports/..."
+        rel_path = media_path.lstrip("/")  # "media/reports/..."
         abs_path = os.path.join(settings.BASE_DIR, rel_path)
         ext = os.path.splitext(abs_path)[1].lower()
         if ext not in image_extensions:
@@ -200,7 +201,9 @@ def trigger_auto_ai_analysis(incident):
             continue
         try:
             print(f"[INFO] Running Gemini image analysis on: {abs_path}")
-            content_type = "image/jpeg" if ext in {".jpg", ".jpeg"} else f"image/{ext.lstrip('.')}"
+            content_type = (
+                "image/jpeg" if ext in {".jpg", ".jpeg"} else f"image/{ext.lstrip('.')}"
+            )
             with open(abs_path, "rb") as img_f:
                 ai_data = analyze_image(
                     BytesIO(img_f.read()),
@@ -209,10 +212,12 @@ def trigger_auto_ai_analysis(incident):
                 )
             _wrap_bilingual(ai_data)
             save_ai_result(incident, ai_data, source="image")
-            print(f"[SUCCESS] AI image analysis saved for incident {incident.incident_id} "
-                  f"using {os.path.basename(abs_path)}")
+            print(
+                f"[SUCCESS] AI image analysis saved for incident {incident.incident_id} "
+                f"using {os.path.basename(abs_path)}"
+            )
             analyzed_via_image = True
-            break   # Only analyze first valid image
+            break  # Only analyze first valid image
         except Exception as e:
             print(f"[WARNING] AI image analysis failed for {abs_path}: {e}")
 
@@ -222,19 +227,26 @@ def trigger_auto_ai_analysis(incident):
     # ── Step 2: Fall back to text analysis via AI microservice ────────────────
     try:
         if incident.description:
-            ai_data = analyze_text(incident.description, location=incident.location.address)
+            ai_data = analyze_text(
+                incident.description, location=incident.location.address
+            )
             _wrap_bilingual(ai_data)
             save_ai_result(incident, ai_data, source="text")
-            print(f"[SUCCESS] AI text analysis triggered successfully for incident {incident.incident_id}")
+            print(
+                f"[SUCCESS] AI text analysis triggered successfully for incident {incident.incident_id}"
+            )
             return
     except Exception as e:
-        print(f"[WARNING] AI microservice failed or offline: {e}. Falling back to default AI analysis.")
-    
+        print(
+            f"[WARNING] AI microservice failed or offline: {e}. Falling back to default AI analysis."
+        )
+
     # Fallback default AI analysis generation
     import json
+
     cat = str(incident.category).lower()
     desc = incident.description or "No description provided."
-    
+
     if "fire" in cat:
         incident_type = "Building Fire"
         severity = "Critical"
@@ -244,25 +256,25 @@ def trigger_auto_ai_analysis(incident):
         dispatch_priority = "DISPATCH IMMEDIATE FIRST-RESPONDERS (RED ALERT)."
         summary = {
             "en": f"Active fire reported. Category: Fire. Details: {desc}",
-            "ar": f"تم الإبلاغ عن حريق نشط. التصنيف: حريق. التفاصيل: {desc}"
+            "ar": f"تم الإبلاغ عن حريق نشط. التصنيف: حريق. التفاصيل: {desc}",
         }
         responder_briefing = {
             "en": "Approach with full fire gear and oxygen packs. Structural collapse risk. Evacuate adjacent buildings immediately.",
-            "ar": "الاقتراب بمعدات الإطفاء الكاملة وأجهزة الأكسجين. خطر انهيار الهيكل. إخلاء المباني المجاورة فوراً."
+            "ar": "الاقتراب بمعدات الإطفاء الكاملة وأجهزة الأكسجين. خطر انهيار الهيكل. إخلاء المباني المجاورة فوراً.",
         }
         instructions = {
             "en": [
                 "Evacuate the building immediately using the stairs. Do not use elevators.",
                 "If trapped by smoke, stay low to the ground and cover your nose and mouth with a wet cloth.",
                 "Feel doors for heat before opening them. If hot, do not open.",
-                "Alert others in the vicinity and stay a safe distance away once outside."
+                "Alert others in the vicinity and stay a safe distance away once outside.",
             ],
             "ar": [
                 "إخلاء المبنى فوراً باستخدام السلالم. لا تستخدم المصاعد الكهربائية.",
                 "إذا حاصرك الدخان، ابقَ منخفضاً قريباً من الأرض وغطِّ أنفك وفمك بقطعة قماش مبللة.",
                 "تحسس الأبواب للتأكد من حرارتها قبل فتحها. إذا كانت ساخنة، لا تفتحها.",
-                "قم بتنبيه الآخرين في الجوار وابقَ على مسافة آمنة بمجرد خروجك."
-            ]
+                "قم بتنبيه الآخرين في الجوار وابقَ على مسافة آمنة بمجرد خروجك.",
+            ],
         }
         responders_needed = ["Firefighters", "Ambulance", "Search and Rescue"]
     elif "medical" in cat:
@@ -270,29 +282,31 @@ def trigger_auto_ai_analysis(incident):
         severity = "High"
         triage_level = "Orange"
         urgency_score = 8
-        risk_level = "Potential cardiac or respiratory arrest, severe blood loss, shock risk."
+        risk_level = (
+            "Potential cardiac or respiratory arrest, severe blood loss, shock risk."
+        )
         dispatch_priority = "IMMEDIATE PARAMEDIC DISPATCH."
         summary = {
             "en": f"Emergency medical situation. Category: Medical. Details: {desc}",
-            "ar": f"حالة طبية طارئة. التصنيف: طبي. التفاصيل: {desc}"
+            "ar": f"حالة طبية طارئة. التصنيف: طبي. التفاصيل: {desc}",
         }
         responder_briefing = {
             "en": "Bring AED, trauma kit, and oxygen. Be prepared to administer CPR or first aid upon arrival.",
-            "ar": "إحضار جهاز إزالة الرجفان (AED)، حقيبة إسعافات أولية، وأكسجين. الاستعداد لإجراء الإنعاش الرئوي فور الوصول."
+            "ar": "إحضار جهاز إزالة الرجفان (AED)، حقيبة إسعافات أولية، وأكسجين. الاستعداد لإجراء الإنعاش الرئوي فور الوصول.",
         }
         instructions = {
             "en": [
                 "Check if the person is responsive and breathing.",
                 "If bleeding heavily, apply direct pressure using a clean cloth or bandage.",
                 "Keep the patient warm, quiet, and do not move them unless they are in immediate danger.",
-                "Loosen tight clothing and reassure the patient that help is on the way."
+                "Loosen tight clothing and reassure the patient that help is on the way.",
             ],
             "ar": [
                 "تأكد مما إذا كان الشخص واعياً ويتنفس.",
                 "في حالة النزيف الشديد، اضغط مباشرة باستخدام قطعة قماش نظيفة أو ضمادة.",
                 "حافظ على دفء المريض وهدوئه، ولا تحركه إلا إذا كان في خطر مباشر.",
-                "قم بفك الملابس الضيقة وطمأنة المريض بأن المساعدة في الطريق."
-            ]
+                "قم بفك الملابس الضيقة وطمأنة المريض بأن المساعدة في الطريق.",
+            ],
         }
         responders_needed = ["Ambulance"]
     elif "security" in cat:
@@ -304,25 +318,25 @@ def trigger_auto_ai_analysis(incident):
         dispatch_priority = "IMMEDIATE LAW ENFORCEMENT DISPATCH."
         summary = {
             "en": f"Security incident. Category: Security. Details: {desc}",
-            "ar": f"حادث أمني. التصنيف: أمن. التفاصيل: {desc}"
+            "ar": f"حادث أمني. التصنيف: أمن. التفاصيل: {desc}",
         }
         responder_briefing = {
             "en": "Approach with caution. Scene may not be secure. Maintain defensive posture and contact law enforcement.",
-            "ar": "الاقتراب بحذر شديد. قد لا يكون الموقع آمناً بالكامل. حافظ على وضع دفاعي وتواصل مع الشرطة."
+            "ar": "الاقتراب بحذر شديد. قد لا يكون الموقع آمناً بالكامل. حافظ على وضع دفاعي وتواصل مع الشرطة.",
         }
         instructions = {
             "en": [
                 "Find a safe place to hide, lock the doors, and turn off the lights.",
                 "Silence your mobile phone and remain completely quiet.",
                 "Only try to escape if there is a safe exit path available.",
-                "Do not confront the intruder or threat under any circumstances."
+                "Do not confront the intruder or threat under any circumstances.",
             ],
             "ar": [
                 "ابحث عن مكان آمن للاختباء، وأغلق الأبواب وأطفئ الأنوار.",
                 "ضع هاتفك المحمول على وضع الصامت وابقَ هادئاً تماماً.",
                 "لا تحاول الهرب إلا إذا كان هناك مسار خروج آمن تماماً.",
-                "لا تواجه المقتحم أو التهديد تحت أي ظرف من الظروف."
-            ]
+                "لا تواجه المقتحم أو التهديد تحت أي ظرف من الظروف.",
+            ],
         }
         responders_needed = ["Police"]
     else:
@@ -334,31 +348,31 @@ def trigger_auto_ai_analysis(incident):
         dispatch_priority = "Standard dispatch response."
         summary = {
             "en": f"Report received. Category: General. Details: {desc}",
-            "ar": f"تم استلام البلاغ. التصنيف: عام. التفاصيل: {desc}"
+            "ar": f"تم استلام البلاغ. التصنيف: عام. التفاصيل: {desc}",
         }
         responder_briefing = {
             "en": "Assess the scene carefully upon arrival. Establish contact with reporter to clarify situation.",
-            "ar": "تقييم الموقع بعناية عند الوصول. تواصل مع المُبلغ لتوضيح طبيعة الحالة."
+            "ar": "تقييم الموقع بعناية عند الوصول. تواصل مع المُبلغ لتوضيح طبيعة الحالة.",
         }
         instructions = {
             "en": [
                 "Stay calm and remain in a safe location near the reported area.",
                 "Keep your phone lines clear to receive updates from responders.",
                 "Ensure you are visible to volunteers as they approach.",
-                "Avoid unnecessary movement to preserve energy and safety."
+                "Avoid unnecessary movement to preserve energy and safety.",
             ],
             "ar": [
                 "حافظ على هدوئك وابقَ في مكان آمن بالقرب من المنطقة المبلّغ عنها.",
                 "ابقِ خط الهاتف شاغراً لاستقبال أي تحديثات من فرق المساعدة.",
                 "تأكد من أنك مرئي للمتطوعين أثناء اقترابهم.",
-                "تجنب التحركات غير الضرورية للحفاظ على سلامتك وطاقتك."
-            ]
+                "تجنب التحركات غير الضرورية للحفاظ على سلامتك وطاقتك.",
+            ],
         }
         responders_needed = ["Standard response team"]
-        
+
     # Delete any previous analysis (re-analysis case)
     IncidentAIAnalysis.objects.filter(incident=incident).delete()
-    
+
     # Save the fallback analysis object
     IncidentAIAnalysis.objects.create(
         incident=incident,
@@ -375,7 +389,9 @@ def trigger_auto_ai_analysis(incident):
         confidence=0.95,
         source="text",
     )
-    print(f"[SUCCESS] Auto-generated fallback AI analysis created successfully for incident {incident.incident_id}")
+    print(
+        f"[SUCCESS] Auto-generated fallback AI analysis created successfully for incident {incident.incident_id}"
+    )
 
 
 class IncidentViewSet(viewsets.ModelViewSet):
@@ -388,19 +404,50 @@ class IncidentViewSet(viewsets.ModelViewSet):
         return response
 
     def retrieve(self, request, *args, **kwargs):
-        """Override retrieve to ensure no caching and auto-generate AI analysis if missing or old format"""
+        """Override retrieve to ensure no caching, authorization, and auto-generate AI analysis if missing or old format"""
         instance = self.get_object()
+
+        # ✅ AUTHORIZATION CHECK: User must be the incident reporter or an admin
+        user_id = request.query_params.get("user_id") or request.data.get("user_id")
+        if user_id:
+            user_id_str = str(user_id)
+            incident_user_id_str = str(instance.user_id)
+
+            # Check if user is the incident reporter
+            if user_id_str != incident_user_id_str:
+                # If not the reporter, check if user is admin
+                try:
+                    user = User.objects.get(user_id=user_id_str)
+                    if user.user_type != "admin":
+                        return Response(
+                            {
+                                "error": "You don't have permission to view this incident"
+                            },
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                except User.DoesNotExist:
+                    return Response(
+                        {"error": "User not found"}, status=status.HTTP_404_NOT_FOUND
+                    )
+
         try:
             from .models import IncidentAIAnalysis
+
             analysis = IncidentAIAnalysis.objects.filter(incident=instance).first()
             # If analysis doesn't exist or summary is in old format (doesn't start with '{'), regenerate it
-            if not analysis or not analysis.summary or not str(analysis.summary).strip().startswith('{'):
+            if (
+                not analysis
+                or not analysis.summary
+                or not str(analysis.summary).strip().startswith("{")
+            ):
                 trigger_auto_ai_analysis(instance)
                 # Refresh instance from db to include the new relation
                 instance.refresh_from_db()
         except Exception as e:
-            print(f"[ERROR] Failed to auto-generate missing AI analysis on retrieve: {e}")
-            
+            print(
+                f"[ERROR] Failed to auto-generate missing AI analysis on retrieve: {e}"
+            )
+
         serializer = self.get_serializer(instance)
         response = Response(serializer.data)
         response["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -500,8 +547,6 @@ class IncidentViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-
-
         if "category" not in data or not data["category"]:
             data["category"] = "other"
 
@@ -562,7 +607,9 @@ class IncidentViewSet(viewsets.ModelViewSet):
                 }
                 print(f"[SUCCESS] Coordinates parsed: lat={lat}, lng={lng}")
             except (ValueError, TypeError) as e:
-                print(f"[ERROR] Error parsing coordinates: {e} (lat={lat_raw}, lng={lng_raw})")
+                print(
+                    f"[ERROR] Error parsing coordinates: {e} (lat={lat_raw}, lng={lng_raw})"
+                )
                 return Response(
                     {"error": f"Invalid coordinates: {e}"},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -902,10 +949,29 @@ def admin_stats(request):
     """
     Admin dashboard statistics endpoint.
     Returns: total_users, active_alerts, avg_response_time, success_rate, weekly_efficiency
+
+    ✅ AUTHORIZATION: Only admins can access this endpoint
     """
     from django.db.models import Count, Avg, Q
     from django.utils import timezone
     from datetime import timedelta
+
+    # ✅ AUTHORIZATION CHECK: User must be an admin
+    user_id = request.query_params.get("user_id")
+    if not user_id:
+        return Response(
+            {"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = User.objects.get(user_id=user_id)
+        if user.user_type != "admin":
+            return Response(
+                {"error": "Only admins can access admin statistics"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
     try:
         total_users = User.objects.count()
@@ -946,7 +1012,26 @@ def admin_users(request):
     Admin users management endpoint.
     Returns list of all users with their details.
     Query params: search (optional), status (optional)
+
+    ✅ AUTHORIZATION: Only admins can access this endpoint
     """
+    # ✅ AUTHORIZATION CHECK: User must be an admin
+    user_id = request.query_params.get("user_id")
+    if not user_id:
+        return Response(
+            {"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = User.objects.get(user_id=user_id)
+        if user.user_type != "admin":
+            return Response(
+                {"error": "Only admins can manage users"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
     try:
         users = User.objects.all()
 
@@ -972,7 +1057,30 @@ def admin_users(request):
 def admin_update_user(request, user_id):
     """
     Update user details by admin.
+
+    ✅ AUTHORIZATION: Only admins can update users
     """
+    # ✅ AUTHORIZATION CHECK: User must be an admin
+    admin_user_id = request.data.get("admin_user_id") or request.query_params.get(
+        "admin_user_id"
+    )
+    if not admin_user_id:
+        return Response(
+            {"error": "admin_user_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        admin_user = User.objects.get(user_id=admin_user_id)
+        if admin_user.user_type != "admin":
+            return Response(
+                {"error": "Only admins can update users"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    except User.DoesNotExist:
+        return Response(
+            {"error": "Admin user not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
     try:
         user = User.objects.get(user_id=user_id)
 
@@ -1001,7 +1109,30 @@ def admin_update_user(request, user_id):
 def admin_delete_user(request, user_id):
     """
     Delete a user (soft delete by marking as inactive).
+
+    ✅ AUTHORIZATION: Only admins can delete users
     """
+    # ✅ AUTHORIZATION CHECK: User must be an admin
+    admin_user_id = request.data.get("admin_user_id") or request.query_params.get(
+        "admin_user_id"
+    )
+    if not admin_user_id:
+        return Response(
+            {"error": "admin_user_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        admin_user = User.objects.get(user_id=admin_user_id)
+        if admin_user.user_type != "admin":
+            return Response(
+                {"error": "Only admins can delete users"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    except User.DoesNotExist:
+        return Response(
+            {"error": "Admin user not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
     try:
         user = User.objects.get(user_id=user_id)
 
@@ -1020,8 +1151,30 @@ def admin_delete_user(request, user_id):
 def admin_incidents(request):
     """
     Get all incidents for admin dashboard.
-    Query params: status (optional), user_id (optional)
+    Query params: status (optional), user_id (optional for filtering)
+    Required: admin_user_id (the admin making the request)
+
+    ✅ AUTHORIZATION: Only admins can access this endpoint
     """
+    # ✅ AUTHORIZATION CHECK: User must be an admin
+    admin_user_id = request.query_params.get("admin_user_id")
+    if not admin_user_id:
+        return Response(
+            {"error": "admin_user_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        admin_user = User.objects.get(user_id=admin_user_id)
+        if admin_user.user_type != "admin":
+            return Response(
+                {"error": "Only admins can view all incidents"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    except User.DoesNotExist:
+        return Response(
+            {"error": "Admin user not found"}, status=status.HTTP_404_NOT_FOUND
+        )
+
     try:
         incidents = Incident.objects.all().order_by("-created_at")
 
@@ -1045,7 +1198,33 @@ def admin_update_incident(request, incident_id):
     Admin action on a specific incident.
     PATCH body: {"action": "monitor" | "cancel" | "resolve"}
     DELETE: soft-delete the incident (status = 'deleted')
+
+    ✅ AUTHORIZATION: Only admins can update incidents
     """
+    # ✅ AUTHORIZATION CHECK: User must be an admin
+    user_id = (
+    request.data.get("user_id")           # works for PATCH
+    or request.query_params.get("user_id") # works for DELETE
+    or request.headers.get("X-User-Id")   # optional: header fallback
+    
+)
+    
+    print(user_id) 
+    if not user_id:
+        return Response(
+            {"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        user = User.objects.get(user_id=user_id)
+        if user.user_type != "admin":
+            return Response(
+                {"error": "Only admins can perform this action"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
     try:
         incident = Incident.objects.get(incident_id=incident_id)
     except Incident.DoesNotExist:
@@ -1149,18 +1328,61 @@ def subscribe_user(request):
         return Response({"error": str(e)}, status=500)
 
 
+def classify_temperature(temp):
+    """
+    Classify temperature based on Arduino thresholds.
+    Matches: 40°C=WARNING, 70°C=ALERT, 120°C=CRITICAL
+    """
+    if temp >= 120.0:
+        return "CRITICAL"
+    elif temp >= 70.0:
+        return "ALERT"
+    elif temp >= 40.0:
+        return "WARNING"
+    return "NORMAL"
+
+
+def get_alert_label(alert_level):
+    """
+    Convert alert level to display label matching Arduino code.
+    """
+    labels = {
+        "CRITICAL": "🔥 CRITICAL",
+        "ALERT": "🚨 ALERT",
+        "WARNING": "⚠️ WARNING",
+        "NORMAL": "🟢 NORMAL",
+    }
+    return labels.get(alert_level, "🟢 NORMAL")
+
+
 @api_view(["POST"])
 def receive_temperature(request):
     """
-    Receives DHT11 data from ESP32.
-    If is_alert=True, auto-creates an Incident and stores the reading.
+    Receives K-Type Thermocouple data from ESP32.
+    Endpoint: /api/sensor/temperature/
+
+    Request JSON:
+    {
+        "user_id": "fef5bed0-1c2e-4a04-bb5c-e5c590c3dcf1",
+        "temperature": 85.5,
+        "humidity": 0,
+        "is_alert": true,
+        "alert_level": "🚨 ALERT"
+    }
+
+    Thresholds (°C):
+    - NORMAL: < 40°C
+    - WARNING: 40-70°C (logged, not sent as alert)
+    - ALERT: 70-120°C (auto-incident created)
+    - CRITICAL: ≥ 120°C (urgent incident created)
     """
     from .models import Location
 
     user_id = request.data.get("user_id")
     temperature = request.data.get("temperature")
-    humidity = request.data.get("humidity")
+    humidity = request.data.get("humidity", 0)
     is_alert = request.data.get("is_alert", False)
+    alert_level_label = request.data.get("alert_level", "🟢 NORMAL")
 
     if not user_id or temperature is None:
         return Response({"error": "user_id and temperature are required"}, status=400)
@@ -1170,7 +1392,8 @@ def receive_temperature(request):
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
 
-    # ✅ FIX: Use timezone.now() (already imported at top of file)
+    # Classify the temperature locally to ensure consistency
+    alert_level = classify_temperature(float(temperature))
     current_time = timezone.now()
 
     # Always save the reading for history/charts
@@ -1179,39 +1402,50 @@ def receive_temperature(request):
         temperature=temperature,
         humidity=humidity,
         is_alert=is_alert,
+        alert_level=alert_level,
     )
 
     incident = None
-    # Auto-create an incident report when threshold is crossed
-    if is_alert:
+    # Auto-create an incident report when alert level is reached (ALERT or CRITICAL)
+    if is_alert and alert_level in ["ALERT", "CRITICAL"]:
         try:
             location, _ = Location.objects.get_or_create(
-                latitude=30.0444,
+                latitude=29.964988,
                 longitude=31.2357,
                 defaults={
                     "city": "Cairo",
                     "region": "Cairo",
-                    "address": "Sensor Location (Auto-Alert)",
+                    "address": "Thermocouple Sensor Location",
                 },
             )
 
-            # ✅ FIX: status="active" so it shows as a new/active alert, not "بلاغ سابق"
+            # Set incident status and category based on alert level
+            incident_status = "critical" if alert_level == "CRITICAL" else "active"
+            incident_category = "fire"  # K-type thermocouple is for fire detection
+
+            description = (
+                f"[AUTO FIRE SENSOR ALERT] {get_alert_label(alert_level)}\n"
+                f"Temperature: {temperature}°C\n"
+                f"Humidity: {humidity}%\n"
+                f"Timestamp: {current_time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"Alert Level: {alert_level}\n"
+                f"Device: El7a2ny Fire sensor"
+            )
+
             incident = Incident.objects.create(
                 user=user,
                 location=location,
-                category="fire",
-                description=(
-                    f"[AUTO SENSOR ALERT] High temperature detected: "
-                    f"{temperature}°C / Humidity: {humidity}% "
-                    f"at {current_time.strftime('%Y-%m-%d %H:%M:%S')}"
-                ),
-                status="active",
+                category=incident_category,
+                description=description,
+                status=incident_status,
             )
-            print(
-                f"✅ Incident created: {incident.incident_id} with status: {incident.status}"
+            logger.info(
+                f"✅ Fire Incident created: {incident.incident_id} | "
+                f"Status: {incident_status} | Temp: {temperature}°C | "
+                f"Alert Level: {alert_level}"
             )
         except Exception as e:
-            print(f"❌ Error creating incident: {e}")
+            logger.error(f"❌ Error creating fire incident: {e}")
             import traceback
 
             traceback.print_exc()
@@ -1222,6 +1456,8 @@ def receive_temperature(request):
             "temperature": temperature,
             "humidity": humidity,
             "is_alert": is_alert,
+            "alert_level": alert_level,
+            "alert_label": get_alert_label(alert_level),
             "timestamp": reading.created_at.isoformat(),
             "incident_id": str(incident.incident_id) if incident else None,
             "incident_status": incident.status if incident else None,
@@ -1272,12 +1508,15 @@ def get_latest_sensor_reading(request):
 def fetch_sensors(request):
     """
     Returns list of all sensors with latest readings.
-    Format matches SensorModel expectations from Flutter app.
+    Matches Arduino K-Type Thermocouple thresholds:
+    - NORMAL: < 40°C (status: normal, green)
+    - WARNING: 40-70°C (status: warning, yellow)
+    - ALERT: 70-120°C (status: danger, orange)
+    - CRITICAL: ≥ 120°C (status: critical, red)
     """
-    # Get the latest reading for each user
     from django.db.models import Max
 
-    # Get all distinct users with sensor readings
+    # Get the latest reading for each user
     users_with_readings = (
         SensorReading.objects.values("user")
         .annotate(latest_id=Max("id"))
@@ -1290,25 +1529,35 @@ def fetch_sensors(request):
     sensor_id = 1
 
     for reading in latest_readings.order_by("-created_at"):
-        # Determine status based on temperature and alert flag
-        if reading.is_alert:
-            status = "danger"
-        elif reading.temperature >= 30.0:  # Warning threshold
-            status = "warning"
-        else:
-            status = "normal"
+        temp = float(reading.temperature)
 
-        # Determine sensor type (heat sensor for temperature)
+        # Determine status based on Arduino temperature thresholds
+        if temp >= 120.0:
+            status = "critical"  # 🔥 CRITICAL
+        elif temp >= 70.0:
+            status = "danger"  # 🚨 ALERT
+        elif temp >= 40.0:
+            status = "warning"  # ⚠️ WARNING
+        else:
+            status = "normal"  # 🟢 NORMAL
+
+        # Determine sensor type (heat sensor for K-Type thermocouple)
         sensor_type = "heat"
 
         sensor_data = {
             "id": sensor_id,
             "type": sensor_type,
-            "value": str(round(reading.temperature, 1)),
+            "value": str(round(temp, 1)),
             "unit": "°C",
             "status": status,
-            "lat": 30.0444,  # Default Cairo location
-            "lng": 31.2357,
+            "alert_level": reading.alert_level,
+            "alert_label": get_alert_label(reading.alert_level),
+            "is_alert": reading.is_alert,
+            "humidity": reading.humidity if reading.humidity else 0,
+            "user_id": str(reading.user.user_id),
+            "user_name": reading.user.name,
+            "lat": 29.9649,  # Default Cairo location
+            "lng": 31.2592,
             "updated_at": reading.created_at.isoformat(),
         }
         sensors.append(sensor_data)
@@ -1323,6 +1572,12 @@ def fetch_sensors(request):
                 "value": "28.5",
                 "unit": "°C",
                 "status": "normal",
+                "alert_level": "NORMAL",
+                "alert_label": "🟢 NORMAL",
+                "is_alert": False,
+                "humidity": 0,
+                "user_id": "test-user-id",
+                "user_name": "Test Sensor",
                 "lat": 30.0444,
                 "lng": 31.2357,
                 "updated_at": timezone.now().isoformat(),
@@ -1452,7 +1707,7 @@ def update_responder_location(request, incident_id):
         responder.save(update_fields=["lat", "lng", "last_location_updated"])
         return Response({"status": "ok"})
     except Responder.DoesNotExist:
-        return Response({'detail': 'Not a responder for this incident.'}, status=404)
+        return Response({"detail": "Not a responder for this incident."}, status=404)
 
 
 # ============ CHAT ENDPOINTS ============
@@ -1591,8 +1846,9 @@ class AnalyzeIncidentImageView(APIView):
     Flutter sends: incident_id (UUID) + image file
     Django forwards to AI service, saves result, returns analysis.
     """
+
     authentication_classes = [JWTAuthentication]
-    permission_classes     = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         incident_id = request.data.get("incident_id")
@@ -1601,7 +1857,7 @@ class AnalyzeIncidentImageView(APIView):
         if not incident_id or not image_file:
             return Response(
                 {"error": "incident_id and image are required"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         incident, err = _get_incident_for_user(incident_id, request.user)
@@ -1616,13 +1872,16 @@ class AnalyzeIncidentImageView(APIView):
             )
             analysis = save_ai_result(incident, ai_data, source="image")
             from .serializers import IncidentAIAnalysisSerializer
+
             return Response(
                 IncidentAIAnalysisSerializer(analysis).data,
                 status=status.HTTP_201_CREATED,
             )
         except AIServiceError as e:
             logger.error(f"AI image analysis failed: {e}")
-            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
 
 class AnalyzeIncidentVideoView(APIView):
@@ -1630,8 +1889,9 @@ class AnalyzeIncidentVideoView(APIView):
     POST /api/incidents/analyze/video/
     Flutter sends: incident_id (UUID) + video file
     """
+
     authentication_classes = [JWTAuthentication]
-    permission_classes     = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         incident_id = request.data.get("incident_id")
@@ -1640,7 +1900,7 @@ class AnalyzeIncidentVideoView(APIView):
         if not incident_id or not video_file:
             return Response(
                 {"error": "incident_id and video are required"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         incident, err = _get_incident_for_user(incident_id, request.user)
@@ -1655,13 +1915,16 @@ class AnalyzeIncidentVideoView(APIView):
             )
             analysis = save_ai_result(incident, ai_data, source="video")
             from .serializers import IncidentAIAnalysisSerializer
+
             return Response(
                 IncidentAIAnalysisSerializer(analysis).data,
                 status=status.HTTP_201_CREATED,
             )
         except AIServiceError as e:
             logger.error(f"AI video analysis failed: {e}")
-            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
 
 class AnalyzeIncidentVoiceView(APIView):
@@ -1670,8 +1933,9 @@ class AnalyzeIncidentVoiceView(APIView):
     Flutter sends: incident_id (UUID) + audio file
     Returns both transcription and emergency analysis.
     """
+
     authentication_classes = [JWTAuthentication]
-    permission_classes     = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         incident_id = request.data.get("incident_id")
@@ -1680,7 +1944,7 @@ class AnalyzeIncidentVoiceView(APIView):
         if not incident_id or not audio_file:
             return Response(
                 {"error": "incident_id and audio are required"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         incident, err = _get_incident_for_user(incident_id, request.user)
@@ -1688,7 +1952,7 @@ class AnalyzeIncidentVoiceView(APIView):
             return err
 
         try:
-            ai_data  = analyze_voice(
+            ai_data = analyze_voice(
                 audio_file,
                 filename=audio_file.name,
                 content_type=audio_file.content_type,
@@ -1699,16 +1963,18 @@ class AnalyzeIncidentVoiceView(APIView):
 
             return Response(
                 {
-                    "transcription":    ai_data.get("transcription", ""),
-                    "panic_detected":   ai_data.get("panic_detected", False),
-                    "distress_keywords":ai_data.get("distress_keywords", []),
-                    "analysis":         IncidentAIAnalysisSerializer(analysis).data,
+                    "transcription": ai_data.get("transcription", ""),
+                    "panic_detected": ai_data.get("panic_detected", False),
+                    "distress_keywords": ai_data.get("distress_keywords", []),
+                    "analysis": IncidentAIAnalysisSerializer(analysis).data,
                 },
                 status=status.HTTP_201_CREATED,
             )
         except AIServiceError as e:
             logger.error(f"AI voice analysis failed: {e}")
-            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
 
 class AnalyzeIncidentTextView(APIView):
@@ -1716,8 +1982,9 @@ class AnalyzeIncidentTextView(APIView):
     POST /api/incidents/analyze/text/
     Flutter sends: incident_id (UUID) + description string
     """
+
     authentication_classes = [JWTAuthentication]
-    permission_classes     = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         incident_id = request.data.get("incident_id")
@@ -1726,7 +1993,7 @@ class AnalyzeIncidentTextView(APIView):
         if not incident_id or not description:
             return Response(
                 {"error": "incident_id and description are required"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         incident, err = _get_incident_for_user(incident_id, request.user)
@@ -1734,19 +2001,22 @@ class AnalyzeIncidentTextView(APIView):
             return err
 
         try:
-            ai_data  = analyze_text(
+            ai_data = analyze_text(
                 description=description,
                 location=request.data.get("location"),
             )
             analysis = save_ai_result(incident, ai_data, source="text")
             from .serializers import IncidentAIAnalysisSerializer
+
             return Response(
                 IncidentAIAnalysisSerializer(analysis).data,
                 status=status.HTTP_201_CREATED,
             )
         except AIServiceError as e:
             logger.error(f"AI text analysis failed: {e}")
-            return Response({"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
 
 class IncidentAIAnalysisDetailView(APIView):
@@ -1754,8 +2024,9 @@ class IncidentAIAnalysisDetailView(APIView):
     GET /api/incidents/<incident_id>/analysis/
     Flutter fetches the saved AI analysis for an incident.
     """
+
     authentication_classes = [JWTAuthentication]
-    permission_classes     = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, incident_id):
         incident, err = _get_incident_for_user(incident_id, request.user)
@@ -1765,6 +2036,7 @@ class IncidentAIAnalysisDetailView(APIView):
         try:
             analysis = incident.ai_analysis  # via OneToOneField related_name
             from .serializers import IncidentAIAnalysisSerializer
+
             return Response(IncidentAIAnalysisSerializer(analysis).data)
         except IncidentAIAnalysis.DoesNotExist:
             return Response(
@@ -1784,19 +2056,23 @@ def get_sponsors(request):
             "title": "غبور أوتو (GB Auto)" if is_ar else "GB Auto (Ghabour)",
             "rating": "4.8",
             "badge_label": "شريك النخبة" if is_ar else "Elite Partner",
-            "description": "خدمات صيانة وإغاثة على الطريق على مدار الساعة." if is_ar else "24/7 roadside assistance and vehicle maintenance services.",
-            "services": [
-                "إغاثة طريق / Roadside Assistance",
-                "سحب سيارات / Towing",
-                "صيانة متنقلة / Mobile Maintenance"
-            ] if is_ar else [
-                "Roadside Assistance",
-                "Towing",
-                "Mobile Maintenance"
-            ],
+            "description": (
+                "خدمات صيانة وإغاثة على الطريق على مدار الساعة."
+                if is_ar
+                else "24/7 roadside assistance and vehicle maintenance services."
+            ),
+            "services": (
+                [
+                    "إغاثة طريق / Roadside Assistance",
+                    "سحب سيارات / Towing",
+                    "صيانة متنقلة / Mobile Maintenance",
+                ]
+                if is_ar
+                else ["Roadside Assistance", "Towing", "Mobile Maintenance"]
+            ),
             "phone": "19999",
             "branch": "القاهرة" if is_ar else "Cairo",
-            "is_featured": True
+            "is_featured": True,
         },
         {
             "id": 2,
@@ -1804,19 +2080,23 @@ def get_sponsors(request):
             "title": "أكسا للتأمين" if is_ar else "AXA Insurance",
             "rating": "4.7",
             "badge_label": "تأمين معتمد" if is_ar else "Certified Insurer",
-            "description": "تغطية تأمينية شاملة للحوادث والرعاية الطبية." if is_ar else "Comprehensive insurance coverage for accidents and healthcare.",
-            "services": [
-                "تأمين طبي / Medical Insurance",
-                "تأمين حوادث / Accident Insurance",
-                "دعم مالي / Financial Support"
-            ] if is_ar else [
-                "Medical Insurance",
-                "Accident Insurance",
-                "Financial Support"
-            ],
+            "description": (
+                "تغطية تأمينية شاملة للحوادث والرعاية الطبية."
+                if is_ar
+                else "Comprehensive insurance coverage for accidents and healthcare."
+            ),
+            "services": (
+                [
+                    "تأمين طبي / Medical Insurance",
+                    "تأمين حوادث / Accident Insurance",
+                    "دعم مالي / Financial Support",
+                ]
+                if is_ar
+                else ["Medical Insurance", "Accident Insurance", "Financial Support"]
+            ),
             "phone": "16111",
             "branch": "الجيزة" if is_ar else "Giza",
-            "is_featured": True
+            "is_featured": True,
         },
         {
             "id": 3,
@@ -1824,20 +2104,24 @@ def get_sponsors(request):
             "title": "مستشفى دار الفؤاد" if is_ar else "Dar Al Fouad Hospital",
             "rating": "4.9",
             "badge_label": "شريك طبي" if is_ar else "Medical Partner",
-            "description": "رعاية طبية طارئة وغرف عناية مركزة مجهزة بالكامل." if is_ar else "Emergency medical care and fully equipped intensive care units.",
-            "services": [
-                "طوارئ 24 ساعة / 24/7 ER",
-                "عناية مركزة / ICU",
-                "إرسال إسعاف / Ambulance Dispatch"
-            ] if is_ar else [
-                "24/7 ER",
-                "ICU",
-                "Ambulance Dispatch"
-            ],
+            "description": (
+                "رعاية طبية طارئة وغرف عناية مركزة مجهزة بالكامل."
+                if is_ar
+                else "Emergency medical care and fully equipped intensive care units."
+            ),
+            "services": (
+                [
+                    "طوارئ 24 ساعة / 24/7 ER",
+                    "عناية مركزة / ICU",
+                    "إرسال إسعاف / Ambulance Dispatch",
+                ]
+                if is_ar
+                else ["24/7 ER", "ICU", "Ambulance Dispatch"]
+            ),
             "phone": "16370",
             "branch": "السادس من أكتوبر" if is_ar else "6th of October",
-            "is_featured": True
-        }
+            "is_featured": True,
+        },
     ]
     return Response(sponsors, status=status.HTTP_200_OK)
 
@@ -1852,28 +2136,33 @@ def apply_sponsor(request):
                 user = User.objects.get(user_id=user_id)
             except User.DoesNotExist:
                 pass
-        
+
         company_name = request.data.get("company_name")
         contact_person = request.data.get("contact_person")
         phone_number = request.data.get("phone_number")
         message = request.data.get("message")
-        
+
         if not all([company_name, contact_person, phone_number, message]):
-            return Response({"error": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return Response(
+                {"error": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         sponsor_request = SponsorRequest.objects.create(
             company_name=company_name,
             contact_person=contact_person,
             phone_number=phone_number,
             message=message,
             user=user,
-            status="pending"
+            status="pending",
         )
-        
-        return Response({
-            "message": "Sponsor application submitted successfully",
-            "request_id": str(sponsor_request.request_id)
-        }, status=status.HTTP_201_CREATED)
+
+        return Response(
+            {
+                "message": "Sponsor application submitted successfully",
+                "request_id": str(sponsor_request.request_id),
+            },
+            status=status.HTTP_201_CREATED,
+        )
     except Exception as e:
         logger.error(f"Error submitting sponsor application: {e}")
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -1885,17 +2174,19 @@ def admin_sponsor_requests(request):
         requests = SponsorRequest.objects.all().order_by("-created_at")
         data = []
         for req in requests:
-            data.append({
-                "request_id": str(req.request_id),
-                "company_name": req.company_name,
-                "contact_person": req.contact_person,
-                "phone_number": req.phone_number,
-                "message": req.message,
-                "status": req.status,
-                "created_at": req.created_at.isoformat(),
-                "user_id": str(req.user.user_id) if req.user else None,
-                "user_name": req.user.name if req.user else None,
-            })
+            data.append(
+                {
+                    "request_id": str(req.request_id),
+                    "company_name": req.company_name,
+                    "contact_person": req.contact_person,
+                    "phone_number": req.phone_number,
+                    "message": req.message,
+                    "status": req.status,
+                    "created_at": req.created_at.isoformat(),
+                    "user_id": str(req.user.user_id) if req.user else None,
+                    "user_name": req.user.name if req.user else None,
+                }
+            )
         return Response(data, status=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error fetching sponsor requests: {e}")
@@ -1907,21 +2198,29 @@ def admin_respond_sponsor_request(request, request_id):
     try:
         action = request.data.get("action")  # 'approve' or 'reject'
         if action not in ["approve", "reject"]:
-            return Response({"error": "Invalid action. Must be 'approve' or 'reject'"}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return Response(
+                {"error": "Invalid action. Must be 'approve' or 'reject'"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             sponsor_request = SponsorRequest.objects.get(request_id=request_id)
         except SponsorRequest.DoesNotExist:
-            return Response({"error": "Sponsor request not found"}, status=status.HTTP_404_NOT_FOUND)
-            
+            return Response(
+                {"error": "Sponsor request not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
         sponsor_request.status = "approved" if action == "approve" else "rejected"
         sponsor_request.save()
-        
-        return Response({
-            "message": f"Sponsor request {action}d successfully",
-            "request_id": str(sponsor_request.request_id),
-            "status": sponsor_request.status
-        }, status=status.HTTP_200_OK)
+
+        return Response(
+            {
+                "message": f"Sponsor request {action}d successfully",
+                "request_id": str(sponsor_request.request_id),
+                "status": sponsor_request.status,
+            },
+            status=status.HTTP_200_OK,
+        )
     except Exception as e:
         logger.error(f"Error responding to sponsor request: {e}")
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,15 +1,15 @@
 import '../../core/api/api_client.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/auth/auth_token_store.dart';
+import '../../services/session_service.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // ضيف الـ import ده
 import 'dart:convert'; // <--- السطر ده هو اللي ناقصك
-
 
 class AuthRepository {
   AuthRepository({ApiClient? client}) : _client = client ?? ApiClient();
   final ApiClient _client;
 
-// ... باقي الـ imports
+  // ... باقي الـ imports
 
   Future<void> login({
     required String identifier,
@@ -31,10 +31,10 @@ class AuthRepository {
 
     if (raw['user_id'] != null) {
       String userId = raw['user_id'].toString();
-      
+
       // ✅ التعديل الجوهري: احفظ الـ user_id في الـ SharedPreferences فوراً
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_id', userId); 
+      await prefs.setString('user_id', userId);
       print("✅ User ID $userId saved to SharedPreferences");
 
       AuthTokenStore.saveUserData(
@@ -44,39 +44,60 @@ class AuthRepository {
         userType: raw['user_type']?.toString(),
       );
     } else {
-       throw ApiException(401, 'بيانات المستخدم غير مكتملة في الرد');
+      throw ApiException(401, 'بيانات المستخدم غير مكتملة في الرد');
     }
   }
 
-Future<void> register(Map<String, dynamic> body) async {
-  try {
-    // تأكد إن الـ body مطبوع هنا عشان تشوفه في الـ Console قبل ما يتبعت
-    print("Sending Body: ${jsonEncode(body)}"); 
-    
-    final response = await _client.post('register/', body);
-    print("✅ Register Success: $response");
-  } on ApiException catch (e) {
-    // لو الـ e.message لسه غامضة، اطبع الـ e نفسه
-    print("🚨 Register Error: ${e.message}");
-    rethrow;
+  Future<void> register(Map<String, dynamic> body) async {
+    try {
+      // تأكد إن الـ body مطبوع هنا عشان تشوفه في الـ Console قبل ما يتبعت
+      print("Sending Body: ${jsonEncode(body)}");
+
+      final response = await _client.post('register/', body);
+      print("✅ Register Success: $response");
+    } on ApiException catch (e) {
+      // لو الـ e.message لسه غامضة، اطبع الـ e نفسه
+      print("🚨 Register Error: ${e.message}");
+      rethrow;
+    }
   }
-}
 
   Future<void> logout() async {
+    // Clear auth tokens and user data
     AuthTokenStore.clear();
+
+    // Clear active incident session to prevent access to admin pages
+    SessionService().setActiveIncident(null);
   }
 
   // --- ميثودز الـ Password Reset و OTP ---
-  Future<void> requestPasswordReset({required String contact, required bool isEmail}) async {
-    await _client.post('auth/password/reset/request/', {isEmail ? 'email' : 'phone': contact});
+  Future<void> requestPasswordReset({
+    required String contact,
+    required bool isEmail,
+  }) async {
+    await _client.post('auth/password/reset/request/', {
+      isEmail ? 'email' : 'phone': contact,
+    });
   }
 
-  Future<void> verifyOtp({required String contact, required bool isEmail, required String code}) async {
-    await _client.post('auth/password/reset/verify/', {isEmail ? 'email' : 'phone': contact, 'code': code});
+  Future<void> verifyOtp({
+    required String contact,
+    required bool isEmail,
+    required String code,
+  }) async {
+    await _client.post('auth/password/reset/verify/', {
+      isEmail ? 'email' : 'phone': contact,
+      'code': code,
+    });
   }
 
-  Future<void> resendOtp({required String contact, required bool isEmail}) async {
-    await _client.post('auth/password/reset/resend/', {isEmail ? 'email' : 'phone': contact});
+  Future<void> resendOtp({
+    required String contact,
+    required bool isEmail,
+  }) async {
+    await _client.post('auth/password/reset/resend/', {
+      isEmail ? 'email' : 'phone': contact,
+    });
   }
 
   Future<void> validateCurrentPassword(String password) async {
@@ -87,7 +108,10 @@ Future<void> register(Map<String, dynamic> body) async {
     });
   }
 
-  Future<void> changePassword({required String oldPassword, required String newPassword}) async {
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
     final userId = AuthTokenStore.userId;
     await _client.post('auth/password/change/', {
       'user_id': userId,

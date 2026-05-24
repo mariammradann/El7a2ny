@@ -19,6 +19,9 @@ class SessionService extends ChangeNotifier {
   double? _activeIncidentLat;
   double? _activeIncidentLng;
   IncidentRole? _incidentRole;
+  String? _userId;
+  String? get userId => _userId;
+
 
   UserRole get currentRole => _currentRole;
   bool get isAdmin => _currentRole == UserRole.admin;
@@ -84,17 +87,15 @@ class SessionService extends ChangeNotifier {
     }
   }
 
-  void initFromUser(UserModel user) {
-    _isPlus = user.isPlus;
-    _isYearlyPlan = user.planType == 'yearly';
-    _subscriptionDate = user.subscriptionDate;
-    _currentRole = _roleFromString(user.role);
-
-    // Start sensor monitoring when user logs in
-    SensorMonitorService().startMonitoring();
-
-    notifyListeners();
-  }
+void initFromUser(UserModel user) {
+  _userId = user.id; // ← check your UserModel for the exact field name
+  _isPlus = user.isPlus;
+  _isYearlyPlan = user.planType == 'yearly';
+  _subscriptionDate = user.subscriptionDate;
+  _currentRole = _roleFromString(user.role);
+  SensorMonitorService().startMonitoring();
+  notifyListeners();
+}
 
   UserRole _roleFromString(String role) {
     switch (role) {

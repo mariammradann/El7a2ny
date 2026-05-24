@@ -17,6 +17,8 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart'; // Needed for MediaType
 import 'package:cross_file/cross_file.dart'; // Usually comes with image_picker
 import '../core/config/api_config.dart';
+import '../core/auth/auth_token_store.dart';
+import 'session_service.dart'; // adjust path if needed
 
 // ─────────────────────────────────────────────────────────
 //  API SERVICE
@@ -235,6 +237,23 @@ class ApiService {
     return [];
   }
 
+  /// Fetch all sensors and filter for fire alerts (ALERT or CRITICAL status)
+  static Future<List<SensorModel>> fetchFireAlerts() async {
+    try {
+      final sensors = await fetchSensors();
+      // Filter for fire sensors (heat type) with ALERT or CRITICAL status
+      return sensors
+          .where((s) =>
+              s.type == 'heat' &&
+              (s.status == 'danger' || s.status == 'critical') &&
+              (s.alertLevel == 'ALERT' || s.alertLevel == 'CRITICAL'))
+          .toList();
+    } catch (e) {
+      print('Error fetching fire alerts: $e');
+      return [];
+    }
+  }
+
   static Future<List<HelpInitiative>> fetchHelpInitiatives() async {
     final response = await http.get(Uri.parse("$baseUrl/api/initiatives/"));
     if (response.statusCode == 200) {
@@ -287,7 +306,9 @@ class ApiService {
     }
   }
 
-  static Future<List<SponsorModel>> fetchSponsors({bool isArabic = false}) async {
+  static Future<List<SponsorModel>> fetchSponsors({
+    bool isArabic = false,
+  }) async {
     try {
       final response = await http.get(
         Uri.parse("$baseUrl/api/sponsors/?lang=${isArabic ? 'ar' : 'en'}"),
@@ -331,7 +352,9 @@ class ApiService {
 
   static Future<List<dynamic>> fetchSponsorRequests() async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/api/admin/sponsors/requests/"));
+      final response = await http.get(
+        Uri.parse("$baseUrl/api/admin/sponsors/requests/"),
+      );
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as List<dynamic>;
       }
@@ -341,7 +364,10 @@ class ApiService {
     return [];
   }
 
-  static Future<bool> respondToSponsorRequest(String requestId, String action) async {
+  static Future<bool> respondToSponsorRequest(
+    String requestId,
+    String action,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/api/admin/sponsors/requests/$requestId/respond/"),
@@ -699,10 +725,15 @@ class ApiService {
     String action,
   ) async {
     try {
+      final userId = AuthTokenStore.userId;
+      if (userId == null) {
+        throw Exception("User not authenticated");
+      }
+
       final response = await http.patch(
         Uri.parse("$baseUrl/api/admin/incidents/$incidentId/"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"action": action}),
+        body: jsonEncode({"action": action, "user_id": userId}),
       );
       if (response.statusCode != 200) {
         throw Exception(
@@ -716,21 +747,25 @@ class ApiService {
   }
 
   /// Admin: delete (soft-delete) incident
-  static Future<void> adminDeleteIncident(String incidentId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse("$baseUrl/api/admin/incidents/$incidentId/"),
+static Future<void> adminDeleteIncident(String incidentId) async {
+  try {
+    final userId = SessionService().userId; // ← instance access
+    
+    final uri = Uri.parse("$baseUrl/api/admin/incidents/$incidentId/")
+        .replace(queryParameters: {'user_id': userId});
+    
+    final response = await http.delete(uri);
+    
+    if (response.statusCode != 200) {
+      throw Exception(
+        "Failed to delete incident: ${response.statusCode} - ${response.body}",
       );
-      if (response.statusCode != 200) {
-        throw Exception(
-          "Failed to delete incident: ${response.statusCode} - ${response.body}",
-        );
-      }
-    } catch (e) {
-      print("Error deleting incident: $e");
-      rethrow;
     }
+  } catch (e) {
+    print("Error deleting incident: $e");
+    rethrow;
   }
+}
 
   // ========== SUBSCRIPTION METHODS ==========
 

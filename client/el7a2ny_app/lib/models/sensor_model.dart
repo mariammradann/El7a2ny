@@ -9,7 +9,13 @@
 //      "type": "gas",          // "gas" | "heat" | "smartwatch"
 //      "value": "71",
 //      "unit": "ppm",
-//      "status": "normal",    // "normal" | "warning" | "danger"
+//      "status": "normal",     // "normal" | "warning" | "danger" | "critical"
+//      "alert_level": "NORMAL",// "NORMAL" | "WARNING" | "ALERT" | "CRITICAL"
+//      "alert_label": "🟢 NORMAL",
+//      "is_alert": false,
+//      "humidity": 0,
+//      "user_id": "uuid",
+//      "user_name": "Device Name",
 //      "lat": 30.0444,
 //      "lng": 31.2357,
 //      "updated_at": "2024-01-01T12:00:00Z"
@@ -19,10 +25,16 @@
 
 class SensorModel {
   final int id;
-  final String type;       // "gas" | "heat" | "smartwatch"
+  final String type;              // "gas" | "heat" | "smartwatch"
   final String value;
   final String unit;
-  final String status;     // "normal" | "warning" | "danger"
+  final String status;            // "normal" | "warning" | "danger" | "critical"
+  final String? alertLevel;       // "NORMAL" | "WARNING" | "ALERT" | "CRITICAL"
+  final String? alertLabel;       // "🟢 NORMAL", "⚠️ WARNING", "🚨 ALERT", "🔥 CRITICAL"
+  final bool? isAlert;            // true if alert level is ALERT or CRITICAL
+  final double? humidity;
+  final String? userId;
+  final String? userName;
   final double lat;
   final double lng;
   final DateTime? updatedAt;
@@ -35,6 +47,12 @@ class SensorModel {
     required this.status,
     required this.lat,
     required this.lng,
+    this.alertLevel,
+    this.alertLabel,
+    this.isAlert,
+    this.humidity,
+    this.userId,
+    this.userName,
     this.updatedAt,
   });
 
@@ -47,6 +65,12 @@ class SensorModel {
       status: json['status'] as String,
       lat: (json['lat'] as num).toDouble(),
       lng: (json['lng'] as num).toDouble(),
+      alertLevel: json['alert_level'] as String?,
+      alertLabel: json['alert_label'] as String?,
+      isAlert: json['is_alert'] as bool?,
+      humidity: (json['humidity'] as num?)?.toDouble(),
+      userId: json['user_id'] as String?,
+      userName: json['user_name'] as String?,
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'] as String)
           : null,
@@ -59,19 +83,38 @@ class SensorModel {
         'value': value,
         'unit': unit,
         'status': status,
+        'alert_level': alertLevel,
+        'alert_label': alertLabel,
+        'is_alert': isAlert,
+        'humidity': humidity,
+        'user_id': userId,
+        'user_name': userName,
         'lat': lat,
         'lng': lng,
         'updated_at': updatedAt?.toIso8601String(),
       };
 
-  SensorModel copyWith({String? status, String? value}) => SensorModel(
+  SensorModel copyWith({
+    String? status,
+    String? value,
+    String? alertLevel,
+    String? alertLabel,
+    bool? isAlert,
+  }) =>
+      SensorModel(
         id: id,
         type: type,
         value: value ?? this.value,
         unit: unit,
         status: status ?? this.status,
+        alertLevel: alertLevel ?? this.alertLevel,
+        alertLabel: alertLabel ?? this.alertLabel,
+        isAlert: isAlert ?? this.isAlert,
         lat: lat,
         lng: lng,
+        humidity: humidity,
+        userId: userId,
+        userName: userName,
         updatedAt: updatedAt,
       );
 }
