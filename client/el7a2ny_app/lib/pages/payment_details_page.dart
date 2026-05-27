@@ -12,12 +12,16 @@ class PaymentDetailsPage extends StatefulWidget {
   final PaymentMethodType method;
   final double amount;
   final bool isYearly;
+  final String? courseId;
+  final String? courseTitle;
 
   const PaymentDetailsPage({
     super.key,
     required this.method,
     this.amount = 299,
     this.isYearly = false,
+    this.courseId,
+    this.courseTitle,
   });
 
   @override
@@ -103,6 +107,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             amount: widget.amount,
             method: widget.method,
             methodTitle: _methodTitle,
+            courseId: widget.courseId,
+            courseTitle: widget.courseTitle,
           ),
         ),
       );
@@ -115,6 +121,8 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
             amount: widget.amount,
             methodTitle: _methodTitle,
             isYearly: widget.isYearly,
+            courseId: widget.courseId,
+            courseTitle: widget.courseTitle,
           ),
         ),
       );
@@ -536,6 +544,7 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
 
   // ── Summary card ─────────────────────────────────────────────────────────
   Widget _buildSummaryCard() {
+    final isAr = context.loc.isAr;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -551,7 +560,10 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
       ),
       child: Column(
         children: [
-          _summaryRow(context.loc.planLabel, widget.isYearly ? context.loc.plusYearly : context.loc.plusMonthly),
+          if (widget.courseId != null)
+            _summaryRow(isAr ? 'الدورة' : 'Course', widget.courseTitle ?? '')
+          else
+            _summaryRow(context.loc.planLabel, widget.isYearly ? context.loc.plusYearly : context.loc.plusMonthly),
           const Divider(height: 20),
           _summaryRow(context.loc.paymentMethodLabel, _methodTitle),
           const Divider(height: 20),

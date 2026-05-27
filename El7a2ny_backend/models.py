@@ -567,3 +567,84 @@ class AdminLog(models.Model):
 
     def __str__(self):
         return f"AdminLog {self.log_id} - {self.action}"
+
+
+class TrainingCourse(models.Model):
+    course_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title_en = models.CharField(max_length=255)
+    title_ar = models.CharField(max_length=255)
+    description_en = models.TextField()
+    description_ar = models.TextField()
+    category_en = models.CharField(max_length=100)
+    category_ar = models.CharField(max_length=100)
+    difficulty = models.CharField(max_length=20, choices=[("beginner", "Beginner"), ("intermediate", "Intermediate"), ("advanced", "Advanced")], default="beginner")
+    duration_minutes = models.IntegerField(default=30)
+    badge_name_en = models.CharField(max_length=255, default="Certified Responder")
+    badge_name_ar = models.CharField(max_length=255, default="مسعف معتمد")
+    created_at = models.DateTimeField(auto_now_add=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=150.00)
+    is_irl = models.BooleanField(default=True)
+    location_info_en = models.CharField(max_length=255, default="Cairo Training Center")
+    location_info_ar = models.CharField(max_length=255, default="مركز تدريب القاهرة")
+    schedule_info_en = models.CharField(max_length=255, default="Fridays at 2:00 PM")
+    schedule_info_ar = models.CharField(max_length=255, default="الجمعة الساعة ٢:٠٠ ظهراً")
+
+    class Meta:
+        db_table = 'ems_schema"."training_courses'
+        managed = True
+
+    def __str__(self):
+        return self.title_en
+
+
+class TrainingLesson(models.Model):
+    lesson_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    course = models.ForeignKey(TrainingCourse, on_delete=models.CASCADE, related_name="lessons")
+    order_index = models.IntegerField(default=0)
+    title_en = models.CharField(max_length=255)
+    title_ar = models.CharField(max_length=255)
+    content_en = models.TextField()
+    content_ar = models.TextField()
+    reading_time_minutes = models.IntegerField(default=5)
+
+    class Meta:
+        db_table = 'ems_schema"."training_lessons'
+        ordering = ["order_index"]
+        managed = True
+
+    def __str__(self):
+        return f"{self.course.title_en} - Lesson {self.order_index}: {self.title_en}"
+
+
+class CourseQuizQuestion(models.Model):
+    question_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    course = models.ForeignKey(TrainingCourse, on_delete=models.CASCADE, related_name="quiz_questions")
+    question_text_en = models.TextField()
+    question_text_ar = models.TextField()
+    options_en = models.JSONField(default=list)
+    options_ar = models.JSONField(default=list)
+    correct_option_index = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'ems_schema"."course_quiz_questions'
+        managed = True
+
+    def __str__(self):
+        return f"Quiz for {self.course.title_en} - {self.question_text_en[:50]}"
+
+
+class VolunteerCourseProgress(models.Model):
+    progress_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="course_progress")
+    course = models.ForeignKey(TrainingCourse, on_delete=models.CASCADE)
+    is_completed = models.BooleanField(default=False)
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'ems_schema"."volunteer_course_progress'
+        unique_together = ("user", "course")
+        managed = True
+
+    def __str__(self):
+        return f"{self.user.name} - {self.course.title_en} ({'Completed' if self.is_completed else 'In Progress'})"

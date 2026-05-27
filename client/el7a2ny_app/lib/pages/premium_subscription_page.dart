@@ -553,14 +553,16 @@ class _PremiumHeader extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const EditPlanPage()));
+                        builder: (_) => const EditPlanPage(),
+                        settings: const RouteSettings(name: '/edit-plan')));
                   },
                   icon: const Icon(Icons.edit_calendar_rounded,
                       color: Colors.white, size: 18),
-                  label: const Text('Edit Plan',
-                      style: TextStyle(
+                  label: Text(context.loc.editPlanTitle,
+                      style: const TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.bold)),
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'NotoSansArabic')),
                   style: TextButton.styleFrom(
                       backgroundColor: Colors.white24,
                       shape: RoundedRectangleBorder(

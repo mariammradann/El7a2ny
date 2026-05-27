@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'payment_types.dart';
-import 'home_screen.dart';
+import '../app/main_shell_screen.dart';
 import '../services/session_service.dart';
 import '../core/localization/app_strings.dart';
 
@@ -14,6 +14,8 @@ class PaymentReceiptPage extends StatefulWidget {
   final double amount;
   final String methodTitle;
   final bool isYearly;
+  final String? courseId;
+  final String? courseTitle;
 
   const PaymentReceiptPage({
     super.key,
@@ -21,6 +23,8 @@ class PaymentReceiptPage extends StatefulWidget {
     required this.amount,
     required this.methodTitle,
     this.isYearly = false,
+    this.courseId,
+    this.courseTitle,
   });
 
   @override
@@ -41,8 +45,10 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
   void initState() {
     super.initState();
     
-    // Activate Premium Status with plan type
-    SessionService().setPlus(true, isYearly: widget.isYearly);
+    // Activate Premium Status with plan type only if subscription
+    if (widget.courseId == null) {
+      SessionService().setPlus(true, isYearly: widget.isYearly);
+    }
 
     _ctrl = AnimationController(
       vsync: this,
@@ -86,7 +92,7 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                         isAr ? Icons.arrow_forward_ios_rounded : Icons.arrow_back_ios_new_rounded,
                         color: const Color(0xFF374151), size: 20),
                     onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                      MaterialPageRoute(builder: (_) => MainShellScreen()),
                       (route) => false,
                     ),
                   ),
@@ -138,7 +144,9 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              context.loc.subscriptionActiveMsg,
+                              widget.courseId != null
+                                  ? (isAr ? 'تم تسجيلك بنجاح في الدورة التدريبية!' : 'You have successfully enrolled in the training course!')
+                                  : context.loc.subscriptionActiveMsg,
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontFamily: 'NotoSansArabic',
@@ -176,6 +184,7 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
 
   // ── Receipt card ──────────────────────────────────────────────────────────
   Widget _buildReceiptCard() {
+    final isAr = context.loc.isAr;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -218,7 +227,9 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                       ),
                     ),
                     Text(
-                      context.loc.premiumPlusTitle,
+                      widget.courseId != null
+                          ? (isAr ? 'تسجيل دورة تدريبية' : 'Training Course Enrollment')
+                          : context.loc.premiumPlusTitle,
                       style: const TextStyle(
                         fontFamily: 'NotoSansArabic',
                         fontSize: 12,
@@ -258,7 +269,10 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                 _divider(),
                 _receiptRow(context.loc.dateTimeLabel, _formattedDate),
                 _divider(),
-                _receiptRow(context.loc.planLabel, widget.isYearly ? context.loc.plusYearly : context.loc.plusMonthly),
+                if (widget.courseId != null)
+                  _receiptRow(isAr ? 'الدورة' : 'Course', widget.courseTitle ?? '')
+                else
+                  _receiptRow(context.loc.planLabel, widget.isYearly ? context.loc.plusYearly : context.loc.plusMonthly),
                 _divider(),
                 _receiptRow(context.loc.paymentMethodLabel, widget.methodTitle),
                 _divider(),
@@ -300,8 +314,65 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
     );
   }
 
-  // ── Premium badge ─────────────────────────────────────────────────────────
+  // ── Premium badge / Course badge ──────────────────────────────────────────
   Widget _buildPremiumBadge() {
+    final isAr = context.loc.isAr;
+    if (widget.courseId != null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFEEFBF4), Color(0xFFE8F5E9)],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF16A34A).withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: const BoxDecoration(
+                color: Color(0xFF16A34A),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.school_rounded,
+                  color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAr ? 'تهانينا على الانضمام! 🎉' : 'Congrats on joining! 🎉',
+                    style: const TextStyle(
+                      fontFamily: 'NotoSansArabic',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF15803D),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isAr
+                        ? 'يمكنك الآن بدء دراسة الدروس وحضور الحصص مباشرة.'
+                        : 'You can now study lessons and attend classes immediately.',
+                    style: const TextStyle(
+                      fontFamily: 'NotoSansArabic',
+                      fontSize: 12,
+                      color: Color(0xFF16A34A),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -381,7 +452,7 @@ class _PaymentReceiptPageState extends State<PaymentReceiptPage>
                 HapticFeedback.mediumImpact();
                 Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
-                      builder: (_) => const HomeScreen(initialTabIndex: 0),
+                      builder: (_) => MainShellScreen(),
                     ),
                     (route) => false,
                 );

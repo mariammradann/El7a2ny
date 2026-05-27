@@ -29,6 +29,7 @@ from .views import (
     admin_update_incident,
     get_user_subscription,
     subscribe_user,
+    cancel_subscription,
     submit_user_rating,
     submit_volunteer_rating,
     incident_chat_messages,
@@ -45,6 +46,19 @@ from .views import (
     api_assistant_chat,
     report_fake_incident,
     admin_logs,
+    courses_list,
+    enroll_course,
+    complete_course,
+    get_user_badges,
+    admin_hard_delete_incident,
+    admin_initiatives,
+    admin_delete_initiative,
+    admin_courses,
+    admin_delete_course,
+    admin_create_course,
+    admin_edit_course,
+    admin_subscriptions,
+    admin_cancel_subscription,
 )
 
 # 1. إعداد الـ Router
@@ -116,6 +130,7 @@ urlpatterns = [
         name="get-subscription",
     ),
     path("api/subscription/subscribe/", subscribe_user, name="subscribe-user"),
+    path("api/subscription/cancel/", cancel_subscription, name="cancel-subscription"),
     path("api/sponsors/", get_sponsors, name="get-sponsors"),
     path("api/sponsors/apply/", apply_sponsor, name="apply-sponsor"),
     path("api/admin/sponsors/requests/", admin_sponsor_requests, name="admin-sponsor-requests"),
@@ -166,6 +181,23 @@ urlpatterns = [
     path("api/assistant/chat/", api_assistant_chat, name="assistant-chat"),
     path("api/incidents/<uuid:incident_id>/report-fake/", report_fake_incident, name="report-fake-incident"),
     path("api/admin/logs/", admin_logs, name="admin-logs"),
+
+    # ── Admin Extended Management ──────────────────────────────────────────────
+    path("api/admin/incidents/<str:incident_id>/hard-delete/", admin_hard_delete_incident, name="admin-hard-delete-incident"),
+    path("api/admin/initiatives/", admin_initiatives, name="admin-initiatives"),
+    path("api/admin/initiatives/<int:initiative_id>/", admin_delete_initiative, name="admin-delete-initiative"),
+    path("api/admin/courses/", admin_courses, name="admin-courses"),
+    path("api/admin/courses/create/", admin_create_course, name="admin-create-course"),
+    path("api/admin/courses/<uuid:course_id>/", admin_delete_course, name="admin-delete-course"),
+    path("api/admin/courses/<uuid:course_id>/edit/", admin_edit_course, name="admin-edit-course"),
+    path("api/admin/subscriptions/", admin_subscriptions, name="admin-subscriptions"),
+    path("api/admin/subscriptions/<uuid:user_id>/cancel/", admin_cancel_subscription, name="admin-cancel-subscription"),
+
+    # Volunteer Training Academy
+    path("api/training/courses/", courses_list, name="courses-list"),
+    path("api/training/courses/<uuid:course_id>/enroll/", enroll_course, name="enroll-course"),
+    path("api/training/courses/<uuid:course_id>/complete/", complete_course, name="complete-course"),
+    path("api/training/badges/<uuid:user_id>/", get_user_badges, name="user-badges"),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير

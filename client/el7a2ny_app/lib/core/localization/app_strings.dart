@@ -102,8 +102,8 @@ class AppStrings {
       isAr ? 'تفعيل تنبيه الطوارئ 🚨' : 'Trigger Emergency 🚨';
   String get sensors => isAr ? 'حساسات' : 'Sensors';
   String get homeSensor => isAr ? 'حساس المنزل' : 'Home Sensor';
-  String get theWatch => isAr ? 'الساعة' : 'Watch';
-  String get smartWatch => isAr ? 'الساعة الذكية' : 'Smart Watch';
+  String get theWatch => isAr ? 'الكاميرا' : 'Camera';
+  String get smartWatch => isAr ? 'الكاميرا الأمنية' : 'Security Camera';
   String get sponsors => isAr ? 'الرعاة' : 'Sponsors';
   String get premiumSub => isAr ? 'اشتراك Premium' : 'Premium Subscription';
   String get emergencyDashboard =>
@@ -353,7 +353,7 @@ class AppStrings {
   String get addContactsLabel =>
       isAr ? 'إضافة جهات اتصال' : 'Add Emergency Contacts';
   String get smartWatchLabel =>
-      isAr ? 'الساعة الذكية (اختياري)' : 'Smart Watch (Optional)';
+      isAr ? 'الكاميرا الأمنية (اختياري)' : 'Security Camera (Optional)';
   String get selectModel => isAr ? 'اختر الطراز' : 'Select Model';
   String get otherModel => isAr ? 'أخرى' : 'Other';
   String get sensorLabel => isAr ? 'الحساس (اختياري)' : 'Sensor (Optional)';
@@ -715,15 +715,15 @@ class AppStrings {
 
   // Smart Watch
   String get watchMonitoring =>
-      isAr ? 'مراقبة الساعة الذكية' : 'Smart Watch Monitoring';
+      isAr ? 'مراقبة الكاميرات الأمنية' : 'Security Camera Monitoring';
   String get vitalSignsUnstable =>
-      isAr ? 'علامات حيوية غير مستقرة ⚠️' : 'Vital signs unstable ⚠️';
-  String get lifeDanger => isAr ? 'خطر على الحياة 🚨' : 'Life in danger 🚨';
+      isAr ? 'إشارة الكاميرا غير مستقرة ⚠️' : 'Camera signal unstable ⚠️';
+  String get lifeDanger => isAr ? 'اختراق أمني مكتشف 🚨' : 'Security breach alert 🚨';
   String get stableHealthStatus =>
-      isAr ? 'الحالة الصحية مستقرة' : 'Health status stable';
-  String get heartRate => isAr ? 'نبض القلب' : 'Heart Rate';
-  String get oxygenLevel => isAr ? 'مستوى الأكسجين' : 'Oxygen Level';
-  String get caloriesBurned => isAr ? 'السعرات الحرارية' : 'Calories Burned';
+      isAr ? 'حالة الكاميرا مستقرة' : 'Camera status stable';
+  String get heartRate => isAr ? 'معدل الإطارات' : 'Frame Rate';
+  String get oxygenLevel => isAr ? 'قوة الإشارة' : 'Signal Strength';
+  String get caloriesBurned => isAr ? 'المساحة المستخدمة' : 'Storage Used';
 
   String get paymentOther => isAr ? 'أخرى' : 'Other';
   String get cardNumber => isAr ? 'رقم البطاقة' : 'Card Number';
@@ -1110,4 +1110,84 @@ class AppStrings {
   String get skills => isAr ? 'المهارات' : 'Skills';
   String get subscriptionInfo =>
       isAr ? 'معلومات الاشتراك' : 'Subscription Information';
+
+  // Training
+  String get trainingAcademy => isAr ? 'التدريب' : 'Training';
+  String get readinessLevel => isAr ? 'مستوى استعدادك' : 'Your Readiness Level';
+  String get expertReady => isAr ? 'خبير مستعد' : 'Expert Ready';
+  String get activeVolunteerStatus => isAr ? 'متطوع مستجد' : 'Active Volunteer';
+  String get learnToSaveLives => isAr ? 'تعلّم لتنقذ حياة الآخرين' : 'Learn to Save Lives';
+  String get trainingPageTitle => isAr ? 'ليه التدريب مهم؟' : 'Why Training Matters';
+  String get trainingPageDesc => isAr
+      ? 'في لحظات الأزمات، كل ثانية بتفرق.\nالتدريب مش بس عشان تحمي نفسك — هو عشان تكون قادر تساعد اللي حواليك لما هيحتاجوك أكتر.\nمع إلحقني، بنؤمن إن المجتمع اللي بيتدرب مع بعض هو المجتمع اللي بينجو مع بعض.'
+      : 'In moments of crisis, every second counts.\nTraining isn\'t just about protecting yourself — it\'s about being ready to help those around you when they need you most.\nAt El7a2ny, we believe a community that trains together is a community that survives together.';
+  String get completeTrainingBadges => isAr
+      ? 'أكمل الدورات التدريبية للحصول على شارات المتطوعين المعتمدة!'
+      : 'Complete training courses to earn official volunteer badges!';
+  String get noCoursesAvailable => isAr
+      ? 'لا توجد دورات متاحة في هذا القسم حالياً'
+      : 'No courses available in this category yet';
+  String get enrolledStatus => isAr ? 'قيد الدراسة' : 'Enrolled';
+  String get enrollFree => isAr ? 'سجل في الدورة مجاناً' : 'Enroll in Course Free';
+  String get startCourseStudy => isAr ? 'ابدأ الدراسة والتعلم' : 'Start Course Study';
+  String get coursePassed => isAr ? 'تجاوزت الاختبار (إعادة الاختبار)' : 'Quiz Passed (Retake Quiz)';
+  String get aboutCourse => isAr ? 'عن الدورة التدريبية' : 'About the Course';
+  String get courseCurriculum => isAr ? 'منهج الدورة التدريبية' : 'Course Curriculum';
+  String get enrollRequiredMsg => isAr 
+      ? 'يرجى التسجيل في الدورة أولاً للبدء بقراءة الدروس!' 
+      : 'Please enroll in the course first to start reading lessons!';
+  String get startCourseQuiz => isAr ? 'ابدأ اختبار الدورة' : 'Start Course Quiz';
+  String get nextLesson => isAr ? 'الدرس التالي' : 'Next Lesson';
+  String get quizPassedTitle => isAr ? 'تهانينا! لقد نجحت في الاختبار' : 'Congratulations! You Passed';
+  String get quizFailedTitle => isAr ? 'للأسف، لم تتجاوز الاختبار' : 'Quiz Failed';
+  String get claimBadge => isAr ? 'احصل على شارتك المعتمدة' : 'Claim Your Badge Certificate';
+  String get retakeQuiz => isAr ? 'إعادة محاولة الاختبار' : 'Retake the Quiz';
+  String get returnToCourse => isAr ? 'العودة للدورة التدريبية' : 'Return to Course Overview';
+  String get backToAcademy => isAr ? 'العودة للتدريب' : 'Back to Training';
+  String get enrolledSuccess => isAr ? 'تم التسجيل في الدورة بنجاح!' : 'Successfully enrolled in course!';
+  String get lessonCompleteTip => isAr 
+      ? 'أحسنت! تأكد من استيعاب المفاهيم السابقة قبل الانتقال.' 
+      : 'Great job! Make sure you understand the concepts before moving on.';
+  String lessonProgress(int current, int total) => isAr
+      ? 'درس $current من $total'
+      : 'Lesson $current of $total';
+
+  // Quiz Academy
+  String get courseQuiz => isAr ? 'اختبار الدورة' : 'Course Quiz';
+  String get noQuizAvailable => isAr
+      ? 'لا يوجد اختبار متاح لهذه الدورة حالياً'
+      : 'No quiz available for this course yet';
+  String questionProgress(int current, int total) => isAr
+      ? 'السؤال $current من $total'
+      : 'Question $current of $total';
+  String get finishQuizSubmit => isAr ? 'إنهاء الاختبار وإرسال الإجابات' : 'Finish Quiz & Submit';
+  String get nextQuestion => isAr ? 'السؤال التالي' : 'Next Question';
+  String get quizScoreLabel => isAr ? 'الدرجة' : 'Score';
+  String quizPassedDesc(int score, int total) => isAr
+      ? 'لقد أجبت بشكل صحيح على $score من أصل $total أسئلة وحصلت على شارة الدورة التدريبية معتمدة كمتطوع مؤهل!'
+      : 'You answered $score out of $total questions correctly and earned your verified course badge!';
+  String quizFailedDesc(int score, int total) => isAr
+      ? 'لقد أجبت بشكل صحيح على $score من أصل $total أسئلة. يجب عليك إحراز 70% على الأقل لتجاوز الاختبار.'
+      : 'You answered $score out of $total questions correctly. You need at least 70% to pass this quiz.';
+
+  // Badge Celebration
+  String get congratulationsTitle => isAr ? 'تهانينا الحارة!' : 'Congratulations!';
+  String get badgeEarnedDesc => isAr
+      ? 'لقد اجتزت بنجاح جميع متطلبات الدورة وحصلت على اللقب والشارة المعتمدة:'
+      : 'You have successfully completed the course and earned the verified title and badge:';
+
+  // Paid and IRL Class Strings
+  String get irlClass => isAr ? 'تدريب حضوري' : 'IRL Class';
+  String get locationLabelField => isAr ? 'الموقع: ' : 'Location: ';
+  String get scheduleLabelField => isAr ? 'المواعيد: ' : 'Schedule: ';
+  String get plusDiscountApplied => isAr ? 'تم تطبيق خصم ٥٠٪ لإلحقني بلس' : '50% Plus Discount Applied';
+  String enrollAndPay(double price) => isAr ? 'تسجيل ودفع ${price.toStringAsFixed(0)} ج.م' : 'Enroll & Pay ${price.toStringAsFixed(0)} EGP';
+  String get checkoutTitle => isAr ? 'إتمام الدفع' : 'Payment Checkout';
+  String get paymentMethod => isAr ? 'طريقة الدفع' : 'Payment Method';
+  String get creditCard => isAr ? 'بطاقة ائتمانية' : 'Credit Card';
+  String get wallet => isAr ? 'محفظة إلكترونية' : 'Mobile Wallet';
+  String get fawry => isAr ? 'فوري' : 'Fawry';
+  String get originalPrice => isAr ? 'السعر الأصلي' : 'Original Price';
+  String get discountedPrice => isAr ? 'السعر مع بلس' : 'Price with Plus';
+  String get upgradePromo => isAr ? 'اشترك في إلحقني بلس للحصول على خصم ٥٠٪ على التدريب!' : 'Subscribe to El7a2ny Plus to get a 50% discount on all training!';
 }

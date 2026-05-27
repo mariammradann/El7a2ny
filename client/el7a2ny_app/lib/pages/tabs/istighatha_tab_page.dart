@@ -105,8 +105,7 @@ class _IstighathaTabPageState extends State<IstighathaTabPage> with SingleTicker
                     _buildMotivationalText(),
                     const SizedBox(height: 100),
                     _buildSOSButton(),
-                    const SizedBox(height: 100),
-                    _buildVibrationToggle(isDark, theme),
+                    const SizedBox(height: 80),
             ],
           ),
         ),
@@ -168,19 +167,4 @@ class _IstighathaTabPageState extends State<IstighathaTabPage> with SingleTicker
   }
 
   Widget _buildGlowCircle(double size, double opacity) => Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFE61717).withOpacity(opacity)));
-
-  Widget _buildVibrationToggle(bool isDark, ThemeData theme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: theme.colorScheme.surfaceVariant, borderRadius: BorderRadius.circular(24)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(context.loc.constantVibration, style: const TextStyle(fontWeight: FontWeight.w700)),
-          CupertinoSwitch(value: _isVibrationEnabled, activeTrackColor: const Color(0xFFE61717), onChanged: (v) => setState(() => _isVibrationEnabled = v)),
-        ],
-      ),
-    );
-  }
 }

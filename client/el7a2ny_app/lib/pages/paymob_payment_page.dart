@@ -15,6 +15,8 @@ class PaymobPaymentPage extends StatefulWidget {
   final double amount;
   final PaymentMethodType method;
   final String methodTitle;
+  final String? courseId;
+  final String? courseTitle;
 
   const PaymobPaymentPage({
     super.key,
@@ -22,6 +24,8 @@ class PaymobPaymentPage extends StatefulWidget {
     required this.amount,
     required this.method,
     required this.methodTitle,
+    this.courseId,
+    this.courseTitle,
   });
 
   @override
@@ -116,8 +120,12 @@ class _PaymobPaymentPageState extends State<PaymobPaymentPage> {
       final userId = prefs.getString('user_id');
       
       if (userId != null) {
-        final planType = widget.isYearly ? 'yearly' : 'monthly';
-        await ApiService.subscribeUser(userId, planType);
+        if (widget.courseId != null) {
+          await ApiService.enrollInCourse(widget.courseId!, userId);
+        } else {
+          final planType = widget.isYearly ? 'yearly' : 'monthly';
+          await ApiService.subscribeUser(userId, planType);
+        }
       }
 
       if (!mounted) return;
@@ -129,6 +137,8 @@ class _PaymobPaymentPageState extends State<PaymobPaymentPage> {
             amount: widget.amount,
             methodTitle: widget.methodTitle,
             isYearly: widget.isYearly,
+            courseId: widget.courseId,
+            courseTitle: widget.courseTitle,
           ),
           transitionsBuilder: (_, anim, __, child) =>
               FadeTransition(opacity: anim, child: child),

@@ -14,6 +14,7 @@ class GlobalFabController {
   static final ValueNotifier<bool> isVisible = ValueNotifier<bool>(false);
   static final ValueNotifier<bool> isChatButtonVisible = ValueNotifier<bool>(true);
   static final ValueNotifier<String?> currentRoute = ValueNotifier<String?>(null);
+  static bool isAdminScreenActive = false;
 
   static void show() => isVisible.value = true;
   static void hide() => isVisible.value = false;
@@ -40,7 +41,6 @@ class GlobalFabOverlay extends StatelessWidget {
           builder: (context, visible, _) {
             if (!visible) return const SizedBox.shrink();
 
-            final isGuest = AuthTokenStore.userId == null || AuthTokenStore.userId == 'guest';
             final isAr = AppConfigProvider.of(context).isArabic;
 
             return Stack(
@@ -149,7 +149,7 @@ class GlobalFabOverlay extends StatelessWidget {
                           builder: (context, chatVisible, _) {
                             if (!chatVisible) return const SizedBox.shrink();
                             return HoverExpandableFab(
-                              label: isAr ? 'مساعد ذكي' : 'Smart Assistant',
+                              label: isAr ? 'دليل' : 'Smart Assistant',
                               icon: Icons.forum_rounded,
                               backgroundColor: isDark ? theme.colorScheme.primaryContainer : const Color(0xFF2D3243),
                               iconColor: isDark ? theme.colorScheme.onPrimaryContainer : Colors.white,
@@ -168,12 +168,11 @@ class GlobalFabOverlay extends StatelessWidget {
                     ),
                   ),
                 ),
-
               ],
             );
           },
         ),
-
+        
         // ── Volunteer Active Incident Alert Bar (RED BAR) ──
         ListenableBuilder(
           listenable: SessionService(),
@@ -367,6 +366,11 @@ class GlobalFabRouteObserver extends NavigatorObserver {
     '/welcome',
     '/login',
     '/signup',
+    '/premium',
+    '/sponsors',
+    '/edit-plan',
+    '/incident-analysis',
+    '/user-detail',
   ];
 
   void _updateVisibility(Route<dynamic>? route) {
@@ -374,9 +378,9 @@ class GlobalFabRouteObserver extends NavigatorObserver {
 
     final name = route?.settings.name;
     GlobalFabController.currentRoute.value = name;
-    if (name == null) return;
 
-    final isExcluded = excludedRoutes.contains(name);
+    final isExcluded = (name != null && excludedRoutes.contains(name)) ||
+        GlobalFabController.isAdminScreenActive;
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (isExcluded) {

@@ -14,6 +14,8 @@ from .models import (
     IncidentChat,
     ChatMessage,
     SponsorRequest,
+    VolunteerCourseProgress,
+    TrainingCourse,
 )
 from .serializers import (
     ResponderSerializer,
@@ -531,6 +533,11 @@ class IncidentViewSet(viewsets.ModelViewSet):
         queryset = Incident.objects.all().order_by("-created_at")
 
         user_id = self.request.query_params.get("user_id")
+        show_all = self.request.query_params.get("all") == "true" or self.request.query_params.get("historical") == "true"
+
+        if show_all:
+            return queryset
+
         if user_id:
             # "My Reports" tab — return full history for this user
             queryset = queryset.filter(user_id=user_id)
@@ -720,6 +727,53 @@ class IncidentViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         self.perform_create(serializer)
+        incident = serializer.instance
+
+        # Trigger emergency contacts alerts if the incident is for the user
+        is_for_me_raw = request.data.get("is_for_me") or data.get("is_for_me", "true")
+        if isinstance(is_for_me_raw, list) and is_for_me_raw:
+            is_for_me_raw = is_for_me_raw[0]
+
+        is_for_me = str(is_for_me_raw).lower() == 'true'
+
+        if is_for_me and resolved_user:
+            contacts = getattr(resolved_user, 'emergency_contacts', []) or []
+            if contacts:
+                print(f"[SMS ALERT] User {resolved_user.name} reported emergency for themselves! Notifying emergency contacts:")
+                for contact in contacts:
+                    name = contact.get("name", "Contact")
+                    phone = contact.get("phone", "")
+                    relation = contact.get("relationship", "Contact")
+                    msg = f"Alert! {resolved_user.name} has reported an emergency ({incident.category}) at Lat: {incident.location.latitude}, Lng: {incident.location.longitude}. Description: {incident.description or 'No details'}. Please check on them immediately!"
+                    print(f"  -> SMS sent to {name} ({phone}) [{relation}]: {msg}")
+
+                # Send confirmation email to the user
+                try:
+                    subject = "SOS Emergency Alerts Sent - El7a2ny"
+                    contact_details = "\n".join([f"- {c.get('name')} ({c.get('phone')}) [{c.get('relationship')}]" for c in contacts])
+                    email_body = f"""
+                    أهلاً {resolved_user.name}،
+
+                    لقد تلقينا بلاغ الاستغاثة الخاص بك بنجاح.
+                    بناءً على طلبك، تم إرسال رسائل استغاثة طارئة إلى جهات الاتصال الخاصة بك:
+                    {contact_details}
+
+                    يرجى البقاء في مكان آمن. فرق المساعدة والمتطوعين في طريقهم إليك.
+
+                    تحياتنا،
+                    فريق El7a2ny
+                    """
+                    send_mail(
+                        subject,
+                        email_body,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [resolved_user.email],
+                        fail_silently=True
+                    )
+                    print(f"[EMAIL] SOS Alert email sent to user {resolved_user.email}")
+                except Exception as mail_err:
+                    print(f"[ERROR] Failed to send email confirmation: {mail_err}")
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
@@ -1405,6 +1459,37 @@ def subscribe_user(request):
         return Response({"error": str(e)}, status=500)
 
 
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def cancel_subscription(request):
+    """
+    Cancel user Plus subscription.
+    Request data: user_id
+    """
+    try:
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response({"error": "user_id is required"}, status=400)
+
+        user = User.objects.get(user_id=user_id)
+        user.is_plus = False
+        user.plan_type = None
+        user.subscription_date = None
+        user.renewal_date = None
+        user.save()
+
+        return Response(
+            {"message": "Subscription cancelled successfully", "is_plus": False},
+            status=200,
+        )
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+    except Exception as e:
+        logger.error(f"Error cancelling subscription: {e}")
+        return Response({"error": str(e)}, status=500)
+
+
 def classify_temperature(temp):
     """
     Classify temperature based on Arduino thresholds.
@@ -1739,7 +1824,7 @@ def respond_to_alert(request, incident_id):
 @api_view(["GET"])
 def get_incident_responders(request, incident_id):
     """
-    Get all responders for an incident with their details.
+    Get all responders for an incident with their details including earned training badges.
     """
     responders = Responder.objects.filter(incident_id=incident_id)
     data = []
@@ -1748,9 +1833,24 @@ def get_incident_responders(request, incident_id):
             user = User.objects.get(user_id=r.user_id)
             name = user.name or ""
             phone = user.phone_number if hasattr(user, "phone_number") else ""
+            # Fetch earned badges from completed training courses
+            completed = VolunteerCourseProgress.objects.filter(
+                user=user, is_completed=True
+            ).select_related("course")
+            badges = [
+                {
+                    "badge_name_en": cp.course.badge_name_en,
+                    "badge_name_ar": cp.course.badge_name_ar,
+                    "course_title_en": cp.course.title_en,
+                    "course_title_ar": cp.course.title_ar,
+                    "completed_at": str(cp.completed_at) if cp.completed_at else None,
+                }
+                for cp in completed
+            ]
         except User.DoesNotExist:
             name = "Unknown"
             phone = ""
+            badges = []
 
         data.append(
             {
@@ -1761,6 +1861,7 @@ def get_incident_responders(request, incident_id):
                 "lat": r.lat,
                 "lng": r.lng,
                 "response_time": str(r.response_time),
+                "badges": badges,
             }
         )
     return Response(data, status=status.HTTP_200_OK)
@@ -2514,3 +2615,393 @@ def admin_logs(request):
         logger.error(f"Error fetching admin logs: {e}")
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+from django.utils import timezone
+from .models import TrainingCourse, VolunteerCourseProgress
+from .serializers import TrainingCourseSerializer
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def courses_list(request):
+    try:
+        user_id = request.query_params.get("user_id")
+        courses = TrainingCourse.objects.all().order_by("created_at")
+        serializer = TrainingCourseSerializer(courses, many=True, context={"user_id": user_id})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error listing courses: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def enroll_course(request, course_id):
+    try:
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            course = TrainingCourse.objects.get(course_id=course_id)
+        except TrainingCourse.DoesNotExist:
+            return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+        progress, created = VolunteerCourseProgress.objects.get_or_create(
+            user=user,
+            course=course,
+        )
+        return Response({
+            "message": "Enrolled successfully",
+            "is_completed": progress.is_completed,
+            "enrolled_at": progress.enrolled_at.isoformat()
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error enrolling in course: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def complete_course(request, course_id):
+    try:
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            course = TrainingCourse.objects.get(course_id=course_id)
+        except TrainingCourse.DoesNotExist:
+            return Response({"error": "Course not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+        progress, created = VolunteerCourseProgress.objects.get_or_create(
+            user=user,
+            course=course,
+        )
+        progress.is_completed = True
+        progress.completed_at = timezone.now()
+        progress.save()
+        
+        return Response({
+            "message": "Course completed successfully",
+            "is_completed": True,
+            "completed_at": progress.completed_at.isoformat()
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error completing course: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def get_user_badges(request, user_id):
+    """
+    Returns all earned training badges for a user (completed courses only).
+    """
+    try:
+        user = User.objects.get(user_id=user_id)
+        completed = VolunteerCourseProgress.objects.filter(
+            user=user, is_completed=True
+        ).select_related("course")
+        badges = [
+            {
+                "badge_name_en": cp.course.badge_name_en,
+                "badge_name_ar": cp.course.badge_name_ar,
+                "course_title_en": cp.course.title_en,
+                "course_title_ar": cp.course.title_ar,
+                "course_id": str(cp.course.course_id),
+                "category_en": cp.course.category_en,
+                "category_ar": cp.course.category_ar,
+                "completed_at": cp.completed_at.isoformat() if cp.completed_at else None,
+            }
+            for cp in completed
+        ]
+        return Response({"badges": badges, "total": len(badges)}, status=200)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+    except Exception as e:
+        logger.error(f"Error fetching user badges: {e}")
+        return Response({"error": str(e)}, status=500)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  ADMIN — EXTENDED MANAGEMENT ENDPOINTS
+# ═══════════════════════════════════════════════════════════════
+
+def _require_admin(request):
+    """Helper: returns (admin_user, error_response). Pass request."""
+    uid = (
+        request.data.get("admin_user_id")
+        or request.query_params.get("admin_user_id")
+        or request.headers.get("X-Admin-Id")
+    )
+    if not uid:
+        return None, Response({"error": "admin_user_id is required"}, status=400)
+    try:
+        u = User.objects.get(user_id=uid)
+        if u.user_type != "admin":
+            return None, Response({"error": "Admin access required"}, status=403)
+        return u, None
+    except User.DoesNotExist:
+        return None, Response({"error": "Admin not found"}, status=404)
+
+
+# ── 1. Hard-delete a specific incident ──────────────────────────────────────
+@api_view(["DELETE"])
+@permission_classes([permissions.AllowAny])
+def admin_hard_delete_incident(request, incident_id):
+    """
+    Permanently removes an incident from the database.
+    Required: admin_user_id (query param or body)
+    """
+    admin, err = _require_admin(request)
+    if err:
+        return err
+    try:
+        try:
+            incident = Incident.objects.get(incident_id=incident_id)
+        except Incident.DoesNotExist:
+            incident = Incident.objects.get(pk=incident_id)
+        incident.delete()
+        return Response({"message": f"Incident {incident_id} permanently deleted"})
+    except Incident.DoesNotExist:
+        return Response({"error": "Incident not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ── 2. List all community initiatives ───────────────────────────────────────
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def admin_initiatives(request):
+    """
+    Returns all community initiatives for admin management.
+    Required: admin_user_id (query param)
+    """
+    admin, err = _require_admin(request)
+    if err:
+        return err
+    try:
+        initiatives = Initiative.objects.all().order_by("-created_at")
+        data = []
+        for init in initiatives:
+            data.append({
+                "id": init.pk,
+                "title": init.title,
+                "description": init.description,
+                "created_at": init.created_at.isoformat() if init.created_at else "",
+                "user_id": str(init.user_id) if init.user_id else "",
+            })
+        return Response(data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ── 3. Delete a community initiative ────────────────────────────────────────
+@api_view(["DELETE"])
+@permission_classes([permissions.AllowAny])
+def admin_delete_initiative(request, initiative_id):
+    """
+    Permanently deletes a community initiative.
+    Required: admin_user_id
+    """
+    admin, err = _require_admin(request)
+    if err:
+        return err
+    try:
+        initiative = Initiative.objects.get(pk=initiative_id)
+        initiative.delete()
+        return Response({"message": f"Initiative {initiative_id} deleted"})
+    except Initiative.DoesNotExist:
+        return Response({"error": "Initiative not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ── 4. List all training courses ─────────────────────────────────────────────
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def admin_courses(request):
+    """
+    Returns all training courses for admin management.
+    Required: admin_user_id (query param)
+    """
+    admin, err = _require_admin(request)
+    if err:
+        return err
+    try:
+        courses = TrainingCourse.objects.all().order_by("created_at")
+        serializer = TrainingCourseSerializer(courses, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ── 5. Delete a training course ──────────────────────────────────────────────
+@api_view(["DELETE"])
+@permission_classes([permissions.AllowAny])
+def admin_delete_course(request, course_id):
+    """
+    Permanently deletes a training course and all related progress.
+    Required: admin_user_id
+    """
+    admin, err = _require_admin(request)
+    if err:
+        return err
+    try:
+        course = TrainingCourse.objects.get(course_id=course_id)
+        course.delete()
+        return Response({"message": f"Course {course_id} deleted"})
+    except TrainingCourse.DoesNotExist:
+        return Response({"error": "Course not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ── 5b. Create a new training course ─────────────────────────────────────────
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def admin_create_course(request):
+    """
+    Admin creates a new training course.
+    Required body: admin_user_id, title_en, title_ar, description_en, description_ar,
+                   category_en, category_ar, difficulty, duration_minutes, price,
+                   badge_name_en, badge_name_ar, is_irl (optional)
+    """
+    admin, err = _require_admin(request)
+    if err:
+        return err
+    try:
+        data = request.data
+        required = ['title_en', 'title_ar', 'description_en', 'description_ar',
+                    'category_en', 'category_ar', 'difficulty', 'duration_minutes', 'price']
+        for field in required:
+            if not data.get(field):
+                return Response({"error": f"'{field}' is required"}, status=400)
+
+        course = TrainingCourse.objects.create(
+            title_en=data['title_en'],
+            title_ar=data['title_ar'],
+            description_en=data['description_en'],
+            description_ar=data['description_ar'],
+            category_en=data['category_en'],
+            category_ar=data['category_ar'],
+            difficulty=data.get('difficulty', 'beginner'),
+            duration_minutes=int(data.get('duration_minutes', 60)),
+            price=float(data.get('price', 0)),
+            badge_name_en=data.get('badge_name_en', data['title_en'] + ' Badge'),
+            badge_name_ar=data.get('badge_name_ar', data['title_ar'] + ' شارة'),
+            is_irl=data.get('is_irl', False),
+            location_info_en=data.get('location_info_en', ''),
+            location_info_ar=data.get('location_info_ar', ''),
+            schedule_info_en=data.get('schedule_info_en', ''),
+            schedule_info_ar=data.get('schedule_info_ar', ''),
+        )
+        serializer = TrainingCourseSerializer(course)
+        return Response(serializer.data, status=201)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ── 5c. Edit a training course (name + price) ─────────────────────────────────
+@api_view(["PATCH"])
+@permission_classes([permissions.AllowAny])
+def admin_edit_course(request, course_id):
+    """
+    Admin edits a training course (title, description, price, difficulty, duration).
+    Required: admin_user_id in body
+    """
+    admin, err = _require_admin(request)
+    if err:
+        return err
+    try:
+        course = TrainingCourse.objects.get(course_id=course_id)
+        data = request.data
+        editable_fields = [
+            'title_en', 'title_ar', 'description_en', 'description_ar',
+            'price', 'difficulty', 'duration_minutes',
+            'category_en', 'category_ar',
+            'badge_name_en', 'badge_name_ar',
+            'is_irl', 'location_info_en', 'location_info_ar',
+            'schedule_info_en', 'schedule_info_ar',
+        ]
+        for field in editable_fields:
+            if field in data:
+                val = data[field]
+                if field == 'price':
+                    val = float(val)
+                elif field == 'duration_minutes':
+                    val = int(val)
+                setattr(course, field, val)
+        course.save()
+        serializer = TrainingCourseSerializer(course)
+        return Response(serializer.data)
+    except TrainingCourse.DoesNotExist:
+        return Response({"error": "Course not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ── 6. List all active subscriptions ─────────────────────────────────────────
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def admin_subscriptions(request):
+    """
+    Returns all users with active Plus subscriptions.
+    Required: admin_user_id (query param)
+    """
+    admin, err = _require_admin(request)
+    if err:
+        return err
+    try:
+        subscribers = User.objects.filter(is_plus=True).order_by("-subscription_date")
+        data = []
+        for u in subscribers:
+            data.append({
+                "user_id": str(u.user_id),
+                "name": u.name,
+                "email": u.email,
+                "phone_number": u.phone_number,
+                "plan_type": u.plan_type,
+                "subscription_date": u.subscription_date.isoformat() if u.subscription_date else None,
+                "renewal_date": u.renewal_date.isoformat() if u.renewal_date else None,
+                "status": u.status,
+            })
+        return Response({"subscriptions": data, "total": len(data)})
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+# ── 7. Cancel any user's subscription ────────────────────────────────────────
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def admin_cancel_subscription(request, user_id):
+    """
+    Admin cancels a specific user's Plus subscription immediately.
+    Required: admin_user_id in body
+    """
+    admin, err = _require_admin(request)
+    if err:
+        return err
+    try:
+        user = User.objects.get(user_id=user_id)
+        user.is_plus = False
+        user.plan_type = None
+        user.subscription_date = None
+        user.renewal_date = None
+        user.save()
+        return Response({"message": f"Subscription cancelled for {user.name}"})
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

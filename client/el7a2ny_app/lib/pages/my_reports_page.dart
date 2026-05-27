@@ -3,6 +3,7 @@ import '../core/localization/app_strings.dart';
 import '../services/api_service.dart';
 import '../models/incident_model.dart';
 import '../models/alert_model.dart';
+import '../core/auth/auth_token_store.dart';
 import 'package:intl/intl.dart';
 
 class MyReportsPage extends StatefulWidget {
@@ -18,7 +19,7 @@ class _MyReportsPageState extends State<MyReportsPage> {
   @override
   void initState() {
     super.initState();
-    _reportsFuture = ApiService.fetchAlerts();
+    _reportsFuture = ApiService.fetchAlerts(userId: AuthTokenStore.userId);
   }
 
   @override
@@ -55,7 +56,7 @@ class _MyReportsPageState extends State<MyReportsPage> {
                   Text(isAr ? 'خطأ في تحميل التقارير' : 'Error loading reports'),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => setState(() => _reportsFuture = ApiService.fetchAlerts()),
+                    onPressed: () => setState(() => _reportsFuture = ApiService.fetchAlerts(userId: AuthTokenStore.userId)),
                     child: Text(isAr ? 'إعادة محاولة' : 'Retry'),
                   ),
                 ],
@@ -83,7 +84,7 @@ class _MyReportsPageState extends State<MyReportsPage> {
 
           return RefreshIndicator(
             onRefresh: () async {
-              setState(() => _reportsFuture = ApiService.fetchAlerts());
+              setState(() => _reportsFuture = ApiService.fetchAlerts(userId: AuthTokenStore.userId));
             },
             child: ListView.builder(
               padding: const EdgeInsets.all(16),

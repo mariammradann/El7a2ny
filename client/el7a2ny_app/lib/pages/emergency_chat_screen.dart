@@ -276,7 +276,7 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
                 onPressed: () => Navigator.of(context).maybePop(),
               ),
               const SizedBox(width: 8),
-              _PulseIndicator(),
+              const _AnimatedSuperhero(size: 38),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,21 +304,6 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
           ),
           Row(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE61717).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextButton.icon(
-                  onPressed: () => _endReportAndShowRatingPopup(context),
-                  icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 18),
-                  label: Text(
-                    context.loc.isAr ? 'إنهاء البلاغ' : 'End Report',
-                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.1),
@@ -724,21 +709,29 @@ class _EmergencyChatScreenState extends State<EmergencyChatScreen> {
   }
 }
 
-class _PulseIndicator extends StatefulWidget {
+class _AnimatedSuperhero extends StatefulWidget {
+  final double size;
+  const _AnimatedSuperhero({super.key, this.size = 36});
+
   @override
-  State<_PulseIndicator> createState() => _PulseIndicatorState();
+  State<_AnimatedSuperhero> createState() => _AnimatedSuperheroState();
 }
 
-class _PulseIndicatorState extends State<_PulseIndicator>
+class _AnimatedSuperheroState extends State<_AnimatedSuperhero>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
-  late Animation<double> _scale;
+  late Animation<double> _translate;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(duration: const Duration(seconds: 1), vsync: this)..repeat(reverse: true);
-    _scale = Tween(begin: 1.0, end: 1.4).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _ctrl = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+    _translate = Tween(begin: -2.0, end: 2.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -749,12 +742,37 @@ class _PulseIndicatorState extends State<_PulseIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scale,
+    return AnimatedBuilder(
+      animation: _translate,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _translate.value),
+          child: child,
+        );
+      },
       child: Container(
-        width: 10,
-        height: 10,
-        decoration: const BoxDecoration(color: Color(0xFF00C853), shape: BoxShape.circle),
+        width: widget.size,
+        height: widget.size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white30, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipOval(
+          child: Transform.scale(
+            scale: 1.32,
+            child: Image.asset(
+              'assets/images/superhero.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
       ),
     );
   }

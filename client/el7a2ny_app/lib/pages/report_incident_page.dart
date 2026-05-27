@@ -35,6 +35,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
   final List<Map<String, String>> _evidenceItems = [];
   final ImagePicker _picker = ImagePicker();
   bool _isSubmitting = false;
+  bool? _isForMe;
 
   @override
   void initState() {
@@ -197,6 +198,20 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
       totalVolunteers = parsed;
     }
 
+    if (_isForMe == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.loc.isAr
+                ? 'يرجى تحديد ما إذا كان هذا البلاغ لك أم لشخص آخر'
+                : 'Please select whether this report is for you or someone else',
+          ),
+          backgroundColor: const Color(0xFFF18F34),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
     try {
       print("📤 Sending to API with ${realFiles.length} files...");
@@ -209,6 +224,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
         description: _descriptionCtrl.text, // ← clean description only
         totalVolunteers: totalVolunteers, // ← new param
         evidenceItems: _evidenceItems,
+        isForMe: _isForMe!,
       );
       _makeEmergencyCalls();
       if (mounted) {
@@ -426,6 +442,119 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
                   borderSide: BorderSide.none,
                 ),
               ),
+            ),
+
+            const SizedBox(height: 30),
+            _SectionLabel(
+              label: context.loc.isAr
+                  ? 'هل هذا البلاغ لك؟ *'
+                  : 'Is this report for you? *',
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _isForMe = true;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(15),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: _isForMe == true
+                              ? theme.primaryColor
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _isForMe == true
+                                ? Icons.check_box_rounded
+                                : Icons.check_box_outline_blank_rounded,
+                            color: _isForMe == true
+                                ? theme.primaryColor
+                                : theme.colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              context.loc.isAr ? 'نعم، البلاغ لي' : 'Yes, it is for me',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                fontFamily: 'NotoSansArabic',
+                                color: _isForMe == true
+                                    ? theme.primaryColor
+                                    : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _isForMe = false;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(15),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: _isForMe == false
+                              ? theme.primaryColor
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _isForMe == false
+                                ? Icons.check_box_rounded
+                                : Icons.check_box_outline_blank_rounded,
+                            color: _isForMe == false
+                                ? theme.primaryColor
+                                : theme.colorScheme.onSurface.withOpacity(0.4),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              context.loc.isAr ? 'لا، لشخص آخر' : 'No, for someone else',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                fontFamily: 'NotoSansArabic',
+                                color: _isForMe == false
+                                    ? theme.primaryColor
+                                    : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 40),

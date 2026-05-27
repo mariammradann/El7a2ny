@@ -42,5 +42,58 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    function requestNotificationPermission() {
+      if ('Notification' in window) {
+        Notification.requestPermission();
+      }
+    }
+
+    function showWebNotification(title, body) {
+      if ('Notification' in window) {
+        if (Notification.permission === 'default') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              new Notification(title, { body: body });
+            }
+          });
+        } else if (Notification.permission === 'granted') {
+          new Notification(title, { body: body });
+        }
+      }
+      playUrgentAlarmSound();
+    }
+
+    function playUrgentAlarmSound() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        
+        // Play an oscillating siren sound (urgent sound)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        
+        // Siren sound oscillation
+        osc.frequency.linearRampToValueAtTime(1200, ctx.currentTime + 0.4);
+        osc.frequency.linearRampToValueAtTime(800, ctx.currentTime + 0.8);
+        osc.frequency.linearRampToValueAtTime(1200, ctx.currentTime + 1.2);
+        osc.frequency.linearRampToValueAtTime(800, ctx.currentTime + 1.6);
+        
+        gain.gain.setValueAtTime(0.5, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.8);
+        
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 2.0);
+      } catch (e) {
+        console.error("Failed to play alarm sound", e);
+      }
+    }
+  </script>
 </body>
 </html>

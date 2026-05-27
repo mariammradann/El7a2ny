@@ -13,6 +13,8 @@ class PaymentProcessingPage extends StatefulWidget {
   final double amount;
   final String methodTitle;
   final bool isYearly;
+  final String? courseId;
+  final String? courseTitle;
 
   const PaymentProcessingPage({
     super.key,
@@ -20,6 +22,8 @@ class PaymentProcessingPage extends StatefulWidget {
     required this.amount,
     required this.methodTitle,
     this.isYearly = false,
+    this.courseId,
+    this.courseTitle,
   });
 
   @override
@@ -35,10 +39,13 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
   int _step = 0;
   List<String> get _steps {
     final loc = context.loc;
+    final isAr = loc.isAr;
     return [
       loc.processingVerifying,
       loc.processingPayment,
-      loc.processingSubscription,
+      widget.courseId != null
+          ? (isAr ? 'تسجيل في الدورة التدريبية...' : 'Enrolling in training course...')
+          : loc.processingSubscription,
       loc.processingSuccess,
     ];
   }
@@ -80,7 +87,7 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
   if (!mounted) return;
   setState(() => _step = 1);
 
-  // Step 2 - Activating subscription  ← actual API call happens here
+  // Step 2 - Activating subscription/enrollment  ← actual API call happens here
   await Future.delayed(const Duration(milliseconds: 900));
   if (!mounted) return;
   setState(() => _step = 2);
@@ -89,11 +96,15 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('user_id');
     if (userId != null) {
-      final planType = widget.isYearly ? 'yearly' : 'monthly';
-      await ApiService.subscribeUser(userId, planType);
+      if (widget.courseId != null) {
+        await ApiService.enrollInCourse(widget.courseId!, userId);
+      } else {
+        final planType = widget.isYearly ? 'yearly' : 'monthly';
+        await ApiService.subscribeUser(userId, planType);
+      }
     }
   } catch (e) {
-    print('Subscription save error: $e');
+    print('Payment save error: $e');
     // Still proceed to receipt — don't block the user
   }
 
@@ -113,6 +124,8 @@ class _PaymentProcessingPageState extends State<PaymentProcessingPage>
         amount: widget.amount,
         methodTitle: widget.methodTitle,
         isYearly: widget.isYearly,
+        courseId: widget.courseId,
+        courseTitle: widget.courseTitle,
       ),
       transitionsBuilder: (_, anim, __, child) =>
           FadeTransition(opacity: anim, child: child),

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/localization/app_strings.dart';
 import '../../services/api_service.dart';
+import '../../services/session_service.dart';
 import '../../models/help_initiative_model.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../app/main_shell_screen.dart';
 import '../create_initiative_screen.dart';
 
 class CommunityTabPage extends StatefulWidget {
@@ -210,10 +210,13 @@ class _CommunityTabPageState extends State<CommunityTabPage> {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: _HelpInitiativeCard(
                           initiative: initiative,
-                          onDelete: (_currentUserId != null && _currentUserId == initiative.userId)
+                          onDelete: (SessionService().isAdmin ||
+                                  (_currentUserId != null &&
+                                      _currentUserId == initiative.userId))
                               ? () => _deleteInitiative(initiative)
                               : null,
-                          onEdit: (_currentUserId != null && _currentUserId == initiative.userId)
+                          onEdit: (_currentUserId != null &&
+                                  _currentUserId == initiative.userId)
                               ? () => _editInitiative(initiative)
                               : null,
                         ),

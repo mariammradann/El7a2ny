@@ -10,9 +10,10 @@ import '../data/models/emergency_contact.dart';
 import '../models/alert_model.dart';
 import '../models/incident_model.dart';
 import '../models/activity_history_model.dart';
+import '../models/course_model.dart';
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb; // Needed for kIsWeb
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint; // Needed for kIsWeb
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart'; // Needed for MediaType
 import 'package:cross_file/cross_file.dart'; // Usually comes with image_picker
@@ -110,6 +111,7 @@ class ApiService {
     String? description,
     required int totalVolunteers,
     required List<Map<String, String>> evidenceItems,
+    bool isForMe = true,
   }) async {
     double formattedLat = double.parse(lat.toStringAsFixed(7));
     double formattedLng = double.parse(lng.toStringAsFixed(7));
@@ -127,6 +129,7 @@ class ApiService {
     request.fields['longitude'] = formattedLng.toString();
     request.fields['address'] = "Current Location";
     request.fields['total_volunteers'] = totalVolunteers.toString();
+    request.fields['is_for_me'] = isForMe.toString();
 
     // 2. Add Media Files
     print("📸 Processing ${evidenceItems.length} evidence items...");
@@ -201,9 +204,12 @@ class ApiService {
   }
 
   // --- 3. جلب البيانات العامة (Lists) ---
-  static Future<List<AlertModel>> fetchAlerts() async {
+  static Future<List<AlertModel>> fetchAlerts({String? userId, bool all = false}) async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/api/incidents/"));
+      final url = userId != null
+          ? "$baseUrl/api/incidents/?user_id=$userId"
+          : (all ? "$baseUrl/api/incidents/?all=true" : "$baseUrl/api/incidents/");
+      final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         List data = jsonDecode(response.body);
         return data.map((item) => AlertModel.fromJson(item)).toList();
@@ -229,12 +235,77 @@ class ApiService {
   }
 
   static Future<List<SensorModel>> fetchSensors() async {
-    final response = await http.get(Uri.parse("$baseUrl/api/sensors/"));
-    if (response.statusCode == 200) {
-      List data = jsonDecode(response.body);
-      return data.map((item) => SensorModel.fromJson(item)).toList();
+    List<SensorModel> serverSensors = [];
+    try {
+      final response = await http.get(Uri.parse("$baseUrl/api/sensors/"));
+      if (response.statusCode == 200) {
+        List data = jsonDecode(response.body);
+        serverSensors = data.map((item) => SensorModel.fromJson(item)).toList();
+      }
+    } catch (e) {
+      print("Error fetching sensors from server: $e");
     }
-    return [];
+
+    final localSensors = await getLocalSensors();
+    final List<SensorModel> allSensors = [...serverSensors];
+    for (var local in localSensors) {
+      if (!allSensors.any((s) => s.id == local.id)) {
+        allSensors.add(local);
+      }
+    }
+    return allSensors;
+  }
+
+  static Future<List<SensorModel>> getLocalSensors() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? raw = prefs.getString('local_sensors');
+      if (raw == null || raw.isEmpty) return [];
+      final List decoded = jsonDecode(raw);
+      return decoded.map((item) => SensorModel.fromJson(item)).toList();
+    } catch (e) {
+      print("Error reading local sensors: $e");
+      return [];
+    }
+  }
+
+  static Future<void> saveLocalSensor(SensorModel sensor) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<SensorModel> current = await getLocalSensors();
+      
+      int newId = sensor.id;
+      if (newId <= 0) {
+        int maxId = 1000;
+        for (var s in current) {
+          if (s.id > maxId) maxId = s.id;
+        }
+        newId = maxId + 1;
+      }
+      
+      final updatedSensor = SensorModel(
+        id: newId,
+        type: sensor.type,
+        value: sensor.value,
+        unit: sensor.unit,
+        status: sensor.status,
+        lat: sensor.lat,
+        lng: sensor.lng,
+        alertLevel: sensor.alertLevel,
+        alertLabel: sensor.alertLabel,
+        isAlert: sensor.isAlert,
+        humidity: sensor.humidity,
+        userId: sensor.userId,
+        userName: sensor.userName,
+        updatedAt: sensor.updatedAt,
+      );
+
+      current.add(updatedSensor);
+      final String encoded = jsonEncode(current.map((s) => s.toJson()).toList());
+      await prefs.setString('local_sensors', encoded);
+    } catch (e) {
+      print("Error saving local sensor: $e");
+    }
   }
 
   /// Fetch all sensors and filter for fire alerts (ALERT or CRITICAL status)
@@ -846,6 +917,25 @@ static Future<void> adminDeleteIncident(String incidentId) async {
     }
   }
 
+  /// Cancel user's subscription
+  static Future<void> cancelSubscription(String userId) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/subscription/cancel/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"user_id": userId}),
+      );
+      if (response.statusCode != 200) {
+        throw Exception(
+          "Failed to cancel: ${response.statusCode} - ${response.body}",
+        );
+      }
+    } catch (e) {
+      print("Error cancelling subscription: $e");
+      rethrow;
+    }
+  }
+
   static Future<Map<String, dynamic>> getLatestSensorReading(
     String userId,
   ) async {
@@ -993,4 +1083,219 @@ static Future<void> adminDeleteIncident(String incidentId) async {
       return [];
     }
   }
+
+  // --- 14. فصول التدريب (Training Classes) ---
+  static Future<List<CourseModel>> fetchCourses({String? userId}) async {
+    try {
+      final url = userId != null
+          ? '$baseUrl/api/training/courses/?user_id=$userId'
+          : '$baseUrl/api/training/courses/';
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List decoded = jsonDecode(response.body);
+        return decoded.map((item) => CourseModel.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error fetching training courses: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> enrollInCourse(String courseId, String userId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/training/courses/$courseId/enroll/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"user_id": userId}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error enrolling in course $courseId: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> completeCourse(String courseId, String userId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/training/courses/$courseId/complete/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"user_id": userId}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error completing course $courseId: $e');
+      return false;
+    }
+  }
+
+  /// Fetch all training badges earned by a user
+  static Future<List<Map<String, dynamic>>> getUserBadges(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/training/badges/$userId/'),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List badges = data['badges'] ?? [];
+        return badges.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error fetching user badges: $e');
+      return [];
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  ADMIN — EXTENDED MANAGEMENT METHODS
+  // ═══════════════════════════════════════════════════════════
+
+  /// Hard-delete an incident permanently
+  static Future<void> adminHardDeleteIncident(
+    String incidentId,
+    String adminUserId,
+  ) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/admin/incidents/$incidentId/hard-delete/?admin_user_id=$adminUserId'),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete incident: ${response.statusCode}');
+    }
+  }
+
+  /// Fetch all community initiatives (admin)
+  static Future<List<Map<String, dynamic>>> adminFetchInitiatives(
+    String adminUserId,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/admin/initiatives/?admin_user_id=$adminUserId'),
+      );
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error fetching admin initiatives: $e');
+      return [];
+    }
+  }
+
+  /// Delete a community initiative (admin)
+  static Future<void> adminDeleteInitiative(
+    int initiativeId,
+    String adminUserId,
+  ) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/admin/initiatives/$initiativeId/?admin_user_id=$adminUserId'),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete initiative: ${response.statusCode}');
+    }
+  }
+
+  /// Fetch all training courses (admin view)
+  static Future<List<Map<String, dynamic>>> adminFetchCourses(
+    String adminUserId,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/admin/courses/?admin_user_id=$adminUserId'),
+      );
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error fetching admin courses: $e');
+      return [];
+    }
+  }
+
+  /// Delete a training course (admin)
+  static Future<void> adminDeleteCourse(
+    String courseId,
+    String adminUserId,
+  ) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/admin/courses/$courseId/?admin_user_id=$adminUserId'),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete course: ${response.statusCode}');
+    }
+  }
+
+  /// Admin creates a new training course
+  static Future<Map<String, dynamic>> adminCreateCourse(
+    Map<String, dynamic> courseData,
+    String adminUserId,
+  ) async {
+    final body = {...courseData, 'admin_user_id': adminUserId};
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/admin/courses/create/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to create course: ${response.statusCode} ${response.body}');
+  }
+
+  /// Admin edits a training course (price, name, etc.)
+  static Future<Map<String, dynamic>> adminEditCourse(
+    String courseId,
+    Map<String, dynamic> updates,
+    String adminUserId,
+  ) async {
+    final body = {...updates, 'admin_user_id': adminUserId};
+    final response = await http.patch(
+      Uri.parse('$baseUrl/api/admin/courses/$courseId/edit/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to edit course: ${response.statusCode} ${response.body}');
+  }
+
+  /// Fetch all active Plus subscriptions (admin)
+  static Future<Map<String, dynamic>> adminFetchSubscriptions(
+    String adminUserId,
+  ) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/admin/subscriptions/?admin_user_id=$adminUserId'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {'subscriptions': [], 'total': 0};
+    } catch (e) {
+      debugPrint('Error fetching subscriptions: $e');
+      return {'subscriptions': [], 'total': 0};
+    }
+  }
+
+  /// Admin cancels a user's Plus subscription
+  static Future<void> adminCancelSubscription(
+    String userId,
+    String adminUserId,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/admin/subscriptions/$userId/cancel/'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'admin_user_id': adminUserId}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to cancel subscription: ${response.statusCode}');
+    }
+  }
 }
+

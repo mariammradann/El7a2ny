@@ -338,7 +338,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: _AppDropdown<String>(
                   label: loc.selectModel,
                   value: _smartWatch,
-                  items: const ['Apple Watch', 'Samsung Galaxy Watch', 'Huawei Watch', 'other'],
+                  items: const ['Ring Video Doorbell', 'Arlo Pro', 'Nest Cam', 'Hikvision', 'other'],
                   itemLabel: (v) => v == 'other' ? loc.otherModel : v,
                   onChanged: (v) => setState(() => _smartWatch = v),
                   isRequired: false,

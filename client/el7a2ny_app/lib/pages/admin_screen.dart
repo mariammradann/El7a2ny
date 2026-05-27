@@ -26,24 +26,46 @@ class _AdminScreenState extends State<AdminScreen>
   List<UserModel> _users = [];
   List<dynamic> _sponsorRequests = [];
   List<dynamic> _adminLogs = [];
+  List<dynamic> _incidents = [];
+  List<Map<String, dynamic>> _initiatives = [];
+  List<Map<String, dynamic>> _courses = [];
+  List<Map<String, dynamic>> _subscriptions = [];
+  int _subscriptionsTotal = 0;
+
   bool _loadingStats = true;
   bool _loadingUsers = true;
   bool _loadingRequests = true;
   bool _loadingLogs = true;
+  bool _loadingIncidents = true;
+  bool _loadingInitiatives = true;
+  bool _loadingCourses = true;
+  bool _loadingSubscriptions = true;
+
   String? _statsError;
   String? _usersError;
   String? _requestsError;
   String? _logsError;
-  Map<String, bool> _actionLoading = {}; // Track loading state per user/request
+  String? _incidentsError;
+  String? _initiativesError;
+  String? _coursesError;
+  String? _subscriptionsError;
+
+  Map<String, bool> _actionLoading = {};
+
+  String get _adminId => SessionService().userId ?? '';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 8, vsync: this);
     _loadStats();
     _loadUsers();
     _loadSponsorRequests();
     _loadAdminLogs();
+    _loadIncidents();
+    _loadInitiatives();
+    _loadCourses();
+    _loadSubscriptions();
   }
 
   Future<void> _loadSponsorRequests() async {
@@ -184,6 +206,50 @@ class _AdminScreenState extends State<AdminScreen>
     }
   }
 
+  Future<void> _loadIncidents() async {
+    try {
+      setState(() { _loadingIncidents = true; _incidentsError = null; });
+      final data = await ApiService.fetchAdminIncidents();
+      if (mounted) setState(() { _incidents = data; _loadingIncidents = false; });
+    } catch (e) {
+      if (mounted) setState(() { _incidentsError = e.toString(); _loadingIncidents = false; });
+    }
+  }
+
+  Future<void> _loadInitiatives() async {
+    try {
+      setState(() { _loadingInitiatives = true; _initiativesError = null; });
+      final data = await ApiService.adminFetchInitiatives(_adminId);
+      if (mounted) setState(() { _initiatives = data; _loadingInitiatives = false; });
+    } catch (e) {
+      if (mounted) setState(() { _initiativesError = e.toString(); _loadingInitiatives = false; });
+    }
+  }
+
+  Future<void> _loadCourses() async {
+    try {
+      setState(() { _loadingCourses = true; _coursesError = null; });
+      final data = await ApiService.adminFetchCourses(_adminId);
+      if (mounted) setState(() { _courses = data; _loadingCourses = false; });
+    } catch (e) {
+      if (mounted) setState(() { _coursesError = e.toString(); _loadingCourses = false; });
+    }
+  }
+
+  Future<void> _loadSubscriptions() async {
+    try {
+      setState(() { _loadingSubscriptions = true; _subscriptionsError = null; });
+      final data = await ApiService.adminFetchSubscriptions(_adminId);
+      if (mounted) setState(() {
+        _subscriptions = List<Map<String, dynamic>>.from(data['subscriptions'] ?? []);
+        _subscriptionsTotal = data['total'] ?? 0;
+        _loadingSubscriptions = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() { _subscriptionsError = e.toString(); _loadingSubscriptions = false; });
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -196,51 +262,50 @@ class _AdminScreenState extends State<AdminScreen>
     final loc = context.loc;
     final primary = theme.primaryColor;
 
+    final tabs = [
+      Tab(icon: const Icon(Icons.dashboard_rounded, size: 18), text: loc.dashboard),
+      Tab(icon: const Icon(Icons.people_rounded, size: 18), text: loc.userManagement),
+      Tab(icon: const Icon(Icons.warning_amber_rounded, size: 18), text: loc.isAr ? 'البلاغات' : 'Reports'),
+      Tab(icon: const Icon(Icons.groups_rounded, size: 18), text: loc.isAr ? 'المجتمع' : 'Community'),
+      Tab(icon: const Icon(Icons.school_rounded, size: 18), text: loc.isAr ? 'التدريب' : 'Training'),
+      Tab(icon: const Icon(Icons.star_rounded, size: 18), text: loc.isAr ? 'الاشتراكات' : 'Plans'),
+      Tab(icon: const Icon(Icons.article_rounded, size: 18), text: loc.adminLogs),
+      Tab(icon: const Icon(Icons.inventory_2_rounded, size: 18), text: loc.resources),
+    ];
+
+    final tabViews = [
+      RefreshIndicator(onRefresh: _loadStats, color: primary, child: _buildDashboardTab(context)),
+      RefreshIndicator(onRefresh: _loadUsers, color: primary, child: _buildUsersTab(context)),
+      RefreshIndicator(onRefresh: _loadIncidents, color: primary, child: _buildReportsTab(context)),
+      RefreshIndicator(onRefresh: _loadInitiatives, color: primary, child: _buildCommunityTab(context)),
+      RefreshIndicator(onRefresh: _loadCourses, color: primary, child: _buildTrainingTab(context)),
+      RefreshIndicator(onRefresh: _loadSubscriptions, color: primary, child: _buildSubscriptionsTab(context)),
+      RefreshIndicator(onRefresh: _loadAllLogs, color: primary, child: _buildLogsTab(context)),
+      _buildResourcesTab(context),
+    ];
+
+    final tabBarStyle = TabBar(
+      controller: _tabController,
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      labelColor: primary,
+      unselectedLabelColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+      indicatorColor: primary,
+      indicatorWeight: 3,
+      labelStyle: const TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+        fontFamily: 'NotoSansArabic',
+      ),
+      tabs: tabs,
+    );
+
     if (widget.isNested) {
       return Column(
         children: [
-          TabBar(
-            controller: _tabController,
-            labelColor: primary,
-            unselectedLabelColor: theme.colorScheme.onSurface.withValues(
-              alpha: 0.5,
-            ),
-            indicatorColor: primary,
-            indicatorWeight: 3,
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              fontFamily: 'NotoSansArabic',
-            ),
-            tabs: [
-              Tab(text: loc.dashboard),
-              Tab(text: loc.userManagement),
-              Tab(text: loc.resources),
-              Tab(text: loc.adminLogs),
-            ],
-          ),
+          tabBarStyle,
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                RefreshIndicator(
-                  onRefresh: _loadStats,
-                  color: primary,
-                  child: _buildDashboardTab(context),
-                ),
-                RefreshIndicator(
-                  onRefresh: _loadUsers,
-                  color: primary,
-                  child: _buildUsersTab(context),
-                ),
-                _buildResourcesTab(context),
-                RefreshIndicator(
-                  onRefresh: _loadAllLogs,
-                  color: primary,
-                  child: _buildLogsTab(context),
-                ),
-              ],
-            ),
+            child: TabBarView(controller: _tabController, children: tabViews),
           ),
         ],
       );
@@ -253,48 +318,11 @@ class _AdminScreenState extends State<AdminScreen>
         elevation: 0,
         title: Text(
           loc.adminDashboard,
-          style: const TextStyle(
-            fontWeight: FontWeight.w900,
-            fontFamily: 'NotoSansArabic',
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic'),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: primary,
-          unselectedLabelColor: theme.colorScheme.onSurface.withValues(
-            alpha: 0.5,
-          ),
-          indicatorColor: primary,
-          indicatorWeight: 3,
-          tabs: [
-            Tab(text: loc.dashboard),
-            Tab(text: loc.userManagement),
-            Tab(text: loc.resources),
-            Tab(text: loc.adminLogs),
-          ],
-        ),
+        bottom: tabBarStyle,
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          RefreshIndicator(
-            onRefresh: _loadStats,
-            color: primary,
-            child: _buildDashboardTab(context),
-          ),
-          RefreshIndicator(
-            onRefresh: _loadUsers,
-            color: primary,
-            child: _buildUsersTab(context),
-          ),
-          _buildResourcesTab(context),
-          RefreshIndicator(
-            onRefresh: _loadAllLogs,
-            color: primary,
-            child: _buildLogsTab(context),
-          ),
-        ],
-      ),
+      body: TabBarView(controller: _tabController, children: tabViews),
     );
   }
 
@@ -795,9 +823,10 @@ class _AdminScreenState extends State<AdminScreen>
           subtitle: loc.addEditRemoveSponsor,
           icon: Icons.handshake_rounded,
           onTap: () {
-            Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const SponsorsPage()));
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const SponsorsPage(),
+              settings: const RouteSettings(name: '/sponsors'),
+            ));
           },
         ),
         const SizedBox(height: 16),
@@ -809,6 +838,7 @@ class _AdminScreenState extends State<AdminScreen>
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => const PremiumSubscriptionPage(),
+                settings: const RouteSettings(name: '/premium'),
               ),
             );
           },
@@ -820,7 +850,10 @@ class _AdminScreenState extends State<AdminScreen>
           icon: Icons.analytics_rounded,
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const IncidentAnalysisPage()),
+              MaterialPageRoute(
+                builder: (_) => const IncidentAnalysisPage(),
+                settings: const RouteSettings(name: '/incident-analysis'),
+              ),
             );
           },
         ),
@@ -866,7 +899,10 @@ class _AdminScreenState extends State<AdminScreen>
         return GestureDetector(
           onTap: () async {
             final shouldRefresh = await Navigator.of(context).push<bool>(
-              MaterialPageRoute(builder: (_) => UserDetailScreen(user: user)),
+              MaterialPageRoute(
+                builder: (_) => UserDetailScreen(user: user),
+                settings: const RouteSettings(name: '/user-detail'),
+              ),
             );
             if (shouldRefresh == true) {
               _loadUsers();
@@ -959,13 +995,13 @@ class _AdminScreenState extends State<AdminScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(loc.cancel ?? 'Cancel'),
+                child: Text(loc.cancel),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(
-                  loc.confirm ?? 'Confirm',
-                  style: const TextStyle(color: const Color(0xFFE61717)),
+                  loc.confirm,
+                  style: const TextStyle(color: Color(0xFFE61717)),
                 ),
               ),
             ],
@@ -1050,7 +1086,406 @@ class _AdminScreenState extends State<AdminScreen>
       ),
     );
   }
+
+  // ────────────────────────────────────────────────────────────
+  //  NEW TAB: Reports (all incidents)
+  // ────────────────────────────────────────────────────────────
+  Widget _buildReportsTab(BuildContext context) {
+    final isAr = context.loc.isAr;
+    final theme = Theme.of(context);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        _SectionHeader(title: isAr ? 'جميع البلاغات' : 'All Reports'),
+        const SizedBox(height: 12),
+        if (_loadingIncidents)
+          const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()))
+        else if (_incidentsError != null)
+          Center(child: Text('Error: $_incidentsError', style: const TextStyle(color: Color(0xFFE61717))))
+        else if (_incidents.isEmpty)
+          Center(child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: Text(isAr ? 'لا توجد بلاغات' : 'No reports found',
+                style: const TextStyle(color: Colors.grey)),
+          ))
+        else
+          ..._incidents.map((item) {
+            final id = item.incidentId ?? '';
+            final category = item.category ?? '';
+            final status = item.status ?? '';
+            final isDeleting = _actionLoading['incident_$id'] ?? false;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE61717).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFE61717), size: 20),
+                ),
+                title: Text(category, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                subtitle: Text('${isAr ? 'الحالة' : 'Status'}: $status\nID: ${id.toString().substring(0, 8)}...',
+                    style: const TextStyle(fontSize: 12, fontFamily: 'NotoSansArabic')),
+                trailing: isDeleting
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : IconButton(
+                        icon: const Icon(Icons.delete_forever_rounded, color: Color(0xFFE61717)),
+                        tooltip: isAr ? 'حذف نهائي' : 'Hard Delete',
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: Text(isAr ? 'حذف البلاغ؟' : 'Delete Report?'),
+                              content: Text(isAr ? 'سيتم حذف البلاغ نهائياً ولا يمكن التراجع.' : 'This will permanently delete the report.'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text(isAr ? 'إلغاء' : 'Cancel')),
+                                TextButton(onPressed: () => Navigator.pop(context, true), child: Text(isAr ? 'حذف' : 'Delete', style: const TextStyle(color: Color(0xFFE61717)))),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            setState(() => _actionLoading['incident_$id'] = true);
+                            try {
+                              await ApiService.adminHardDeleteIncident(id.toString(), _adminId);
+                              await _loadIncidents();
+                            } catch (e) {
+                              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFE61717)));
+                            } finally {
+                              if (mounted) setState(() => _actionLoading['incident_$id'] = false);
+                            }
+                          }
+                        },
+                      ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  NEW TAB: Community (initiatives)
+  // ────────────────────────────────────────────────────────────
+  Widget _buildCommunityTab(BuildContext context) {
+    final isAr = context.loc.isAr;
+    final theme = Theme.of(context);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        _SectionHeader(title: isAr ? 'منشورات المجتمع' : 'Community Posts'),
+        const SizedBox(height: 12),
+        if (_loadingInitiatives)
+          const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()))
+        else if (_initiativesError != null)
+          Center(child: Text('Error: $_initiativesError', style: const TextStyle(color: Color(0xFFE61717))))
+        else if (_initiatives.isEmpty)
+          Center(child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: Text(isAr ? 'لا توجد منشورات' : 'No posts found', style: const TextStyle(color: Colors.grey)),
+          ))
+        else
+          ..._initiatives.map((item) {
+            final id = item['id'];
+            final title = item['title'] ?? '';
+            final description = item['description'] ?? '';
+            final isDeleting = _actionLoading['init_$id'] ?? false;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.groups_rounded, color: Color(0xFF10B981), size: 20),
+                ),
+                title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                subtitle: Text(
+                  description.length > 60 ? '${description.substring(0, 60)}...' : description,
+                  style: const TextStyle(fontSize: 12, fontFamily: 'NotoSansArabic'),
+                ),
+                trailing: isDeleting
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : IconButton(
+                        icon: const Icon(Icons.delete_rounded, color: Color(0xFFE61717)),
+                        tooltip: isAr ? 'حذف' : 'Delete',
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: Text(isAr ? 'حذف المنشور؟' : 'Delete Post?'),
+                              content: Text(isAr ? 'سيتم حذف المنشور نهائياً.' : 'This will permanently delete the post.'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text(isAr ? 'إلغاء' : 'Cancel')),
+                                TextButton(onPressed: () => Navigator.pop(context, true), child: Text(isAr ? 'حذف' : 'Delete', style: const TextStyle(color: Color(0xFFE61717)))),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            setState(() => _actionLoading['init_$id'] = true);
+                            try {
+                              await ApiService.adminDeleteInitiative(id as int, _adminId);
+                              await _loadInitiatives();
+                            } catch (e) {
+                              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFE61717)));
+                            } finally {
+                              if (mounted) setState(() => _actionLoading['init_$id'] = false);
+                            }
+                          }
+                        },
+                      ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  NEW TAB: Training (courses)
+  // ────────────────────────────────────────────────────────────
+  Widget _buildTrainingTab(BuildContext context) {
+    final isAr = context.loc.isAr;
+    final theme = Theme.of(context);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        _SectionHeader(title: isAr ? 'كورسات التدريب' : 'Training Courses'),
+        const SizedBox(height: 12),
+        if (_loadingCourses)
+          const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()))
+        else if (_coursesError != null)
+          Center(child: Text('Error: $_coursesError', style: const TextStyle(color: Color(0xFFE61717))))
+        else if (_courses.isEmpty)
+          Center(child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: Text(isAr ? 'لا توجد كورسات' : 'No courses found', style: const TextStyle(color: Colors.grey)),
+          ))
+        else
+          ..._courses.map((item) {
+            final id = item['course_id'] ?? item['id'] ?? '';
+            final titleAr = item['title_ar'] ?? item['title'] ?? '';
+            final titleEn = item['title_en'] ?? item['title'] ?? '';
+            final title = isAr ? titleAr : titleEn;
+            final category = isAr ? (item['category_ar'] ?? '') : (item['category_en'] ?? '');
+            final isDeleting = _actionLoading['course_$id'] ?? false;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.school_rounded, color: Color(0xFFF59E0B), size: 20),
+                ),
+                title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                subtitle: Text(category, style: const TextStyle(fontSize: 12, fontFamily: 'NotoSansArabic')),
+                trailing: isDeleting
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : IconButton(
+                        icon: const Icon(Icons.delete_rounded, color: Color(0xFFE61717)),
+                        tooltip: isAr ? 'حذف الكورس' : 'Delete Course',
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: Text(isAr ? 'حذف الكورس؟' : 'Delete Course?'),
+                              content: Text(isAr ? 'سيتم حذف الكورس وكل تقدم المتدربين.' : 'This will delete the course and all learner progress.'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context, false), child: Text(isAr ? 'إلغاء' : 'Cancel')),
+                                TextButton(onPressed: () => Navigator.pop(context, true), child: Text(isAr ? 'حذف' : 'Delete', style: const TextStyle(color: Color(0xFFE61717)))),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            setState(() => _actionLoading['course_$id'] = true);
+                            try {
+                              await ApiService.adminDeleteCourse(id.toString(), _adminId);
+                              await _loadCourses();
+                            } catch (e) {
+                              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFE61717)));
+                            } finally {
+                              if (mounted) setState(() => _actionLoading['course_$id'] = false);
+                            }
+                          }
+                        },
+                      ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────
+  //  NEW TAB: Subscriptions
+  // ────────────────────────────────────────────────────────────
+  Widget _buildSubscriptionsTab(BuildContext context) {
+    final isAr = context.loc.isAr;
+    final theme = Theme.of(context);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _SectionHeader(title: isAr ? 'الاشتراكات النشطة' : 'Active Subscriptions'),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${isAr ? 'الإجمالي' : 'Total'}: $_subscriptionsTotal',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFF59E0B)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_loadingSubscriptions)
+          const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()))
+        else if (_subscriptionsError != null)
+          Center(child: Text('Error: $_subscriptionsError', style: const TextStyle(color: Color(0xFFE61717))))
+        else if (_subscriptions.isEmpty)
+          Center(child: Padding(
+            padding: const EdgeInsets.all(40),
+            child: Text(isAr ? 'لا يوجد مشتركون حالياً' : 'No active subscribers', style: const TextStyle(color: Colors.grey)),
+          ))
+        else
+          ..._subscriptions.map((item) {
+            final userId = item['user_id'] ?? '';
+            final name = item['name'] ?? '';
+            final email = item['email'] ?? '';
+            final planType = item['plan_type'] ?? '';
+            final renewalDate = item['renewal_date'];
+            final isCancelling = _actionLoading['sub_$userId'] ?? false;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.2)),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFF59E0B), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                          Text(email, style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'NotoSansArabic')),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  planType == 'yearly'
+                                      ? (isAr ? 'سنوي' : 'Yearly')
+                                      : (isAr ? 'شهري' : 'Monthly'),
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFF59E0B)),
+                                ),
+                              ),
+                              if (renewalDate != null) ...[
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${isAr ? 'يجدد' : 'Renews'}: ${renewalDate.toString().substring(0, 10)}',
+                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    isCancelling
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE61717)))
+                        : IconButton(
+                            icon: const Icon(Icons.cancel_rounded, color: Color(0xFFE61717)),
+                            tooltip: isAr ? 'إلغاء الاشتراك' : 'Cancel Subscription',
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: Text(isAr ? 'إلغاء اشتراك $name؟' : 'Cancel $name\'s subscription?'),
+                                  content: Text(isAr ? 'سيفقد المستخدم جميع مميزات بلس فوراً.' : 'The user will immediately lose all Plus benefits.'),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context, false), child: Text(isAr ? 'تراجع' : 'Go Back')),
+                                    TextButton(onPressed: () => Navigator.pop(context, true), child: Text(isAr ? 'إلغاء الاشتراك' : 'Cancel Sub', style: const TextStyle(color: Color(0xFFE61717)))),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                setState(() => _actionLoading['sub_$userId'] = true);
+                                try {
+                                  await ApiService.adminCancelSubscription(userId.toString(), _adminId);
+                                  await _loadSubscriptions();
+                                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(isAr ? 'تم إلغاء اشتراك $name' : 'Cancelled $name\'s subscription'), backgroundColor: const Color(0xFF10B981)),
+                                  );
+                                } catch (e) {
+                                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: const Color(0xFFE61717)));
+                                } finally {
+                                  if (mounted) setState(() => _actionLoading['sub_$userId'] = false);
+                                }
+                              }
+                            },
+                          ),
+                  ],
+                ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
 }
+
 
 class _AreaStatusCard extends StatelessWidget {
   final String title;

@@ -346,3 +346,79 @@ class AnalyzeTextRequestSerializer(serializers.Serializer):
     incident_id = serializers.UUIDField()
     description = serializers.CharField(min_length=5)
     location    = serializers.CharField(required=False, allow_blank=True)
+
+
+from .models import TrainingCourse, TrainingLesson, CourseQuizQuestion, VolunteerCourseProgress
+
+class TrainingLessonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrainingLesson
+        fields = ["lesson_id", "order_index", "title_en", "title_ar", "content_en", "content_ar", "reading_time_minutes"]
+
+
+class CourseQuizQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseQuizQuestion
+        fields = ["question_id", "question_text_en", "question_text_ar", "options_en", "options_ar", "correct_option_index"]
+
+
+class VolunteerCourseProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VolunteerCourseProgress
+        fields = ["is_completed", "enrolled_at", "completed_at"]
+
+
+class TrainingCourseSerializer(serializers.ModelSerializer):
+    lessons = TrainingLessonSerializer(many=True, read_only=True)
+    quiz_questions = CourseQuizQuestionSerializer(many=True, read_only=True)
+    is_enrolled = serializers.SerializerMethodField()
+    is_completed = serializers.SerializerMethodField()
+    completed_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TrainingCourse
+        fields = [
+            "course_id",
+            "title_en",
+            "title_ar",
+            "description_en",
+            "description_ar",
+            "category_en",
+            "category_ar",
+            "difficulty",
+            "duration_minutes",
+            "badge_name_en",
+            "badge_name_ar",
+            "created_at",
+            "price",
+            "is_irl",
+            "location_info_en",
+            "location_info_ar",
+            "schedule_info_en",
+            "schedule_info_ar",
+            "lessons",
+            "quiz_questions",
+            "is_enrolled",
+            "is_completed",
+            "completed_at",
+        ]
+
+    def get_is_enrolled(self, obj):
+        user_id = self.context.get("user_id")
+        if not user_id:
+            return False
+        return VolunteerCourseProgress.objects.filter(user=user_id, course=obj).exists()
+
+    def get_is_completed(self, obj):
+        user_id = self.context.get("user_id")
+        if not user_id:
+            return False
+        progress = VolunteerCourseProgress.objects.filter(user=user_id, course=obj).first()
+        return progress.is_completed if progress else False
+
+    def get_completed_at(self, obj):
+        user_id = self.context.get("user_id")
+        if not user_id:
+            return None
+        progress = VolunteerCourseProgress.objects.filter(user=user_id, course=obj).first()
+        return progress.completed_at if progress else None

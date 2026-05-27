@@ -86,21 +86,7 @@ class _SponsorsPageState extends State<SponsorsPage> {
                   ],
                 ),
               ),
-              actions: [
-                if (SessionService().isAdmin)
-                  IconButton(
-                    icon: const Icon(Icons.add_business_rounded, color: Colors.blue),
-                    onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddSponsorPage()));
-                    },
-                  ),
-                IconButton(
-                  icon: Icon(Icons.handshake_rounded, color: theme.primaryColor),
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BecomePartnerPage()));
-                  },
-                ),
-              ],
+              actions: const [],
             ),
             SliverToBoxAdapter(
               child: Padding(

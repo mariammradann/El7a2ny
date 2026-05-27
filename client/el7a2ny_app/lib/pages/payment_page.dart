@@ -29,10 +29,14 @@ const _kOrange = Color(0xFFF18F34);
 class PaymentPage extends StatefulWidget {
   final double amount;
   final bool isYearly;
+  final String? courseId;
+  final String? courseTitle;
   const PaymentPage({
     super.key,
     this.amount = 299,
     this.isYearly = false,
+    this.courseId,
+    this.courseTitle,
   });
 
   @override
@@ -163,10 +167,11 @@ class _PaymentPageState extends State<PaymentPage> {
                           text: '${widget.amount.toInt()} ${context.loc.egp}',
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
-                        TextSpan(
-                          text: widget.isYearly ? context.loc.perYear : context.loc.perMonth,
-                          style: const TextStyle(fontWeight: FontWeight.w400),
-                        ),
+                        if (widget.courseId == null)
+                          TextSpan(
+                            text: widget.isYearly ? context.loc.perYear : context.loc.perMonth,
+                            style: const TextStyle(fontWeight: FontWeight.w400),
+                          ),
                       ],
                     ),
                   ),
@@ -353,6 +358,8 @@ class _PaymentPageState extends State<PaymentPage> {
                           amount: widget.amount,
                           method: _selected!,
                           methodTitle: 'Credit/Debit Card',
+                          courseId: widget.courseId,
+                          courseTitle: widget.courseTitle,
                         ),
                       ),
                     );
@@ -364,6 +371,8 @@ class _PaymentPageState extends State<PaymentPage> {
                           method: _selected!,
                           amount: widget.amount,
                           isYearly: widget.isYearly,
+                          courseId: widget.courseId,
+                          courseTitle: widget.courseTitle,
                         ),
                       ),
                     );

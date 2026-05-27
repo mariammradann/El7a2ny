@@ -106,6 +106,19 @@ class _SensorsPageState extends State<SensorsPage> with TickerProviderStateMixin
     );
   }
 
+  void _showAddSensorDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AddSensorBottomSheet(
+        onSaved: () {
+          _loadSensors();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -122,7 +135,10 @@ class _SensorsPageState extends State<SensorsPage> with TickerProviderStateMixin
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            _SensorSliverAppBar(isDanger: isDanger),
+            _SensorSliverAppBar(
+              isDanger: isDanger,
+              onAdd: _showAddSensorDialog,
+            ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
               sliver: SliverList(
@@ -162,7 +178,8 @@ class _SensorsPageState extends State<SensorsPage> with TickerProviderStateMixin
 
 class _SensorSliverAppBar extends StatelessWidget {
   final bool isDanger;
-  const _SensorSliverAppBar({required this.isDanger});
+  final VoidCallback onAdd;
+  const _SensorSliverAppBar({required this.isDanger, required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
@@ -177,6 +194,13 @@ class _SensorSliverAppBar extends StatelessWidget {
         icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDanger ? Colors.white : Theme.of(context).colorScheme.onSurface),
         onPressed: () => Navigator.of(context).pop(),
       ),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.add_rounded, color: isDanger ? Colors.white : Theme.of(context).colorScheme.onSurface, size: 28),
+          onPressed: onAdd,
+        ),
+        const SizedBox(width: 8),
+      ],
       centerTitle: true,
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: true,
@@ -737,6 +761,172 @@ class _TestPanel extends StatelessWidget {
           const Divider(),
           TextButton(onPressed: onReset, child: const Text('RESET SYSTEM')),
         ],
+      ),
+    );
+  }
+}
+
+class _AddSensorBottomSheet extends StatefulWidget {
+  final VoidCallback onSaved;
+  const _AddSensorBottomSheet({required this.onSaved});
+
+  @override
+  State<_AddSensorBottomSheet> createState() => _AddSensorBottomSheetState();
+}
+
+class _AddSensorBottomSheetState extends State<_AddSensorBottomSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _valueCtrl = TextEditingController(text: '28');
+  
+  String _type = 'heat'; // 'heat' (Temperature) or 'gas' (Gas Leak)
+  String _status = 'normal';
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _valueCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    
+    final loc = context.loc;
+    final name = _nameCtrl.text.trim();
+    final val = _valueCtrl.text.trim();
+    
+    final newSensor = SensorModel(
+      id: 0,
+      type: _type,
+      value: val,
+      unit: _type == 'gas' ? 'ppm' : '°C',
+      status: _status,
+      lat: 30.0444,
+      lng: 31.2357,
+      alertLevel: _status == 'danger' ? 'ALERT' : (_status == 'warning' ? 'WARNING' : 'NORMAL'),
+      alertLabel: _status == 'danger' 
+          ? (_type == 'gas' ? '💨 Dangerous Gas Leak 💨' : '🔥 Potential Fire 🔥') 
+          : (_status == 'warning' ? '⚠️ WARNING' : '🟢 NORMAL'),
+      isAlert: _status == 'danger',
+      userName: name.isNotEmpty ? name : (_type == 'gas' ? 'Gas Sensor' : 'Heat Sensor'),
+      updatedAt: DateTime.now(),
+    );
+
+    await ApiService.saveLocalSensor(newSensor);
+    widget.onSaved();
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final loc = context.loc;
+    final isAr = loc.isAr;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 20, spreadRadius: 5),
+        ],
+      ),
+      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 32),
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(10))),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                isAr ? 'إضافة حساس طوارئ جديد' : 'Add New Emergency Sensor',
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, fontFamily: 'NotoSansArabic'),
+              ),
+              const SizedBox(height: 20),
+              
+              DropdownButtonFormField<String>(
+                value: _type,
+                items: [
+                  DropdownMenuItem(value: 'heat', child: Text(isAr ? 'حساس حرارة (°C)' : 'Heat Sensor (°C)')),
+                  DropdownMenuItem(value: 'gas', child: Text(isAr ? 'حساس غاز (ppm)' : 'Gas Sensor (ppm)')),
+                ],
+                onChanged: (v) {
+                  setState(() {
+                    _type = v!;
+                    if (_type == 'gas' && _valueCtrl.text == '28') {
+                      _valueCtrl.text = '150';
+                    } else if (_type == 'heat' && _valueCtrl.text == '150') {
+                      _valueCtrl.text = '28';
+                    }
+                  });
+                },
+                decoration: InputDecoration(
+                  labelText: isAr ? 'نوع الحساس' : 'Sensor Type',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              TextFormField(
+                controller: _nameCtrl,
+                style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                decoration: InputDecoration(
+                  labelText: isAr ? 'اسم الجهاز / الموقع' : 'Sensor Name / Location',
+                  hintText: isAr ? 'مثال: حساس المطبخ' : 'e.g. Kitchen Sensor',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                validator: (v) => (v == null || v.isEmpty) ? loc.requiredField : null,
+              ),
+              const SizedBox(height: 16),
+
+              DropdownButtonFormField<String>(
+                value: _status,
+                items: [
+                  DropdownMenuItem(value: 'normal', child: Text(isAr ? 'آمن (طبيعي)' : 'Safe (Normal)')),
+                  DropdownMenuItem(value: 'warning', child: Text(isAr ? 'تحذير (خطر محتمل)' : 'Warning (Potential Danger)')),
+                  DropdownMenuItem(value: 'danger', child: Text(isAr ? 'تنبيه طوارئ (تسريب/حريق)' : 'Emergency Alert (Leak/Fire)')),
+                ],
+                onChanged: (v) => setState(() => _status = v!),
+                decoration: InputDecoration(
+                  labelText: isAr ? 'حالة الحساس الحالية' : 'Current Status',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: _valueCtrl,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: isAr ? 'القراءة الحالية' : 'Current Value',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                validator: (v) => (v == null || v.isEmpty) ? loc.requiredField : null,
+              ),
+              const SizedBox(height: 28),
+
+              SizedBox(
+                height: 56,
+                child: FilledButton(
+                  onPressed: _submit,
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: Text(
+                    isAr ? 'إضافة الحساس' : 'Add Sensor',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, fontFamily: 'NotoSansArabic'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

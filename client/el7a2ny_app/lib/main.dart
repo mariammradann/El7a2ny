@@ -55,8 +55,7 @@ class _MyAppState extends State<MyApp> {
             navigatorKey: GlobalFabController.navigatorKey,
             navigatorObservers: [GlobalFabRouteObserver()],
             theme: isPlus ? AppTheme.premiumTheme : AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: config.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode: ThemeMode.light,
             builder: (context, child) {
               return GlobalFabOverlay(
                 child: Directionality(

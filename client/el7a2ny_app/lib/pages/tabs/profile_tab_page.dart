@@ -17,6 +17,8 @@ import '../../services/session_service.dart';
 import '../subscription_details_page.dart';
 import '../premium_subscription_page.dart';
 import '../../app/main_shell_screen.dart';
+import '../../core/auth/auth_token_store.dart';
+import '../training_academy_page.dart';
 
 class ProfileTabPage extends StatefulWidget {
   const ProfileTabPage({super.key});
@@ -28,6 +30,7 @@ class ProfileTabPage extends StatefulWidget {
 class _ProfileTabPageState extends State<ProfileTabPage> {
   UserModel? _user;
   List<ActivityHistoryModel> _history = [];
+  List<Map<String, dynamic>> _badges = [];
   bool _loading = true;
   String? _error;
   bool? _lastIsAr;
@@ -51,12 +54,19 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
       final isAr = context.loc.isAr;
       final data = await ApiService.fetchUserProfile();
       final historyData = await ApiService.fetchActivityHistory(isArabic: isAr);
+      // Fetch training badges
+      List<Map<String, dynamic>> badgesData = [];
+      final userId = AuthTokenStore.userId;
+      if (userId != null) {
+        badgesData = await ApiService.getUserBadges(userId);
+      }
 
       if (mounted) {
         SessionService().initFromUser(data);
         setState(() {
           _user = data;
           _history = historyData;
+          _badges = badgesData;
           _loading = false;
           _lastIsAr = isAr;
           _retryCount = 0; // Reset retry count on success
@@ -157,8 +167,8 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                     gradient: LinearGradient(
                                       colors: isPlus
                                           ? [
-                                              const Color(0xFF0F172A),
-                                              const Color(0xFF1E293B),
+                                              const Color(0xFFFDC800),
+                                              const Color(0xFFF59E0B),
                                             ]
                                           : [
                                               Colors.white,
@@ -170,15 +180,15 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                       color: isPlus
-                                          ? const Color(
-                                              0xFFFDC800,
-                                            ).withOpacity(0.3)
-                                          : Colors.grey.withOpacity(0.2),
+                                          ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
+                                          : Colors.grey.withValues(alpha: 0.2),
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 10,
+                                        color: isPlus
+                                            ? const Color(0xFFFDC800).withValues(alpha: 0.25)
+                                            : Colors.black.withValues(alpha: 0.05),
+                                        blurRadius: 12,
                                         offset: const Offset(0, 4),
                                       ),
                                     ],
@@ -189,10 +199,8 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           color: isPlus
-                                              ? const Color(
-                                                  0xFFFDC800,
-                                                ).withOpacity(0.1)
-                                              : Colors.grey.withOpacity(0.1),
+                                              ? Colors.white.withValues(alpha: 0.3)
+                                              : Colors.grey.withValues(alpha: 0.1),
                                           shape: BoxShape.circle,
                                         ),
                                         child: Icon(
@@ -200,7 +208,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                               ? Icons.workspace_premium_rounded
                                               : Icons.person_outline_rounded,
                                           color: isPlus
-                                              ? const Color(0xFFFDC800)
+                                              ? const Color(0xFF1E293B)
                                               : Colors.grey,
                                           size: 28,
                                         ),
@@ -222,7 +230,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.w900,
                                                 color: isPlus
-                                                    ? const Color(0xFFFDC800)
+                                                    ? const Color(0xFF1E293B)
                                                     : const Color(0xFF0F172A),
                                               ),
                                             ),
@@ -236,9 +244,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                                 fontFamily: 'NotoSansArabic',
                                                 fontSize: 13,
                                                 color: isPlus
-                                                    ? Colors.white.withOpacity(
-                                                        0.7,
-                                                      )
+                                                    ? const Color(0xFF1E293B).withValues(alpha: 0.7)
                                                     : Colors.grey,
                                                 fontWeight: FontWeight.w600,
                                               ),
@@ -249,7 +255,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                       Icon(
                                         Icons.arrow_forward_ios_rounded,
                                         color: isPlus
-                                            ? const Color(0xFFFDC800)
+                                            ? const Color(0xFF1E293B).withValues(alpha: 0.6)
                                             : Colors.grey,
                                         size: 16,
                                       ),
@@ -353,7 +359,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                             value:
                                 _user?.smartWatchModel ??
                                 (isAr ? 'غير محدد' : 'Not Set'),
-                            icon: Icons.watch_outlined,
+                            icon: Icons.videocam_outlined,
                           ),
                           _InfoRow(
                             label: loc.sensorLabel,
@@ -387,7 +393,41 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         const SizedBox(height: 24),
                       ],
 
-                      // 6. Account & Preferences
+                      // 5. Training Badges Section
+                      if (_badges.isNotEmpty) ...[
+                        _SectionHeader(
+                          title: isAr ? 'شهادات التدريب' : 'Training Certificates',
+                          icon: Icons.military_tech_rounded,
+                        ),
+                        ...  _badges.map((badge) => _BadgeCard(
+                          badgeName: isAr
+                              ? (badge['badge_name_ar'] ?? badge['badge_name_en'] ?? '')
+                              : (badge['badge_name_en'] ?? ''),
+                          courseName: isAr
+                              ? (badge['course_title_ar'] ?? badge['course_title_en'] ?? '')
+                              : (badge['course_title_en'] ?? ''),
+                          completedAt: badge['completed_at'],
+                          isAr: isAr,
+                        )),
+                        const SizedBox(height: 8),
+                        Center(
+                          child: TextButton.icon(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const TrainingAcademyPage(),
+                              ),
+                            ),
+                            icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                            label: Text(
+                              isAr ? 'الحصول على المزيد من الشهادات' : 'Earn More Certificates',
+                              style: const TextStyle(fontFamily: 'NotoSansArabic'),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
                       _SectionHeader(
                         title: loc.appPreferences,
                         icon: Icons.settings_rounded,
@@ -951,6 +991,126 @@ class _ProfileMenuTile extends StatelessWidget {
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
               )
             : null,
+      ),
+    );
+  }
+}
+
+class _BadgeCard extends StatelessWidget {
+  final String badgeName;
+  final String courseName;
+  final String? completedAt;
+  final bool isAr;
+
+  const _BadgeCard({
+    required this.badgeName,
+    required this.courseName,
+    required this.isAr,
+    this.completedAt,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    String dateLabel = '';
+    if (completedAt != null) {
+      try {
+        final dt = DateTime.parse(completedAt!).toLocal();
+        dateLabel = '${dt.day}/${dt.month}/${dt.year}';
+      } catch (_) {}
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFFDC800).withValues(alpha: 0.08),
+            const Color(0xFFFDC800).withValues(alpha: 0.03),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFFDC800).withValues(alpha: 0.35),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFDC800).withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDC800).withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.military_tech_rounded,
+              color: Color(0xFFFDC800),
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  badgeName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface,
+                    fontFamily: 'NotoSansArabic',
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  courseName,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontFamily: 'NotoSansArabic',
+                  ),
+                ),
+                if (dateLabel.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.verified_rounded, size: 12, color: Color(0xFF10B981)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${isAr ? "مكتمل" : "Completed"} $dateLabel',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF10B981),
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'NotoSansArabic',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

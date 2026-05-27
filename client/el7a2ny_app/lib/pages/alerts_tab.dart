@@ -7,6 +7,7 @@ import 'alert_details_page.dart';
 import '../services/session_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'active_incident_tracking_screen.dart';
+import '../core/auth/auth_token_store.dart';
 
 
 class AlertsTab extends StatefulWidget {
@@ -18,7 +19,8 @@ class AlertsTab extends StatefulWidget {
 
 class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  List<AlertModel> _alerts = [];
+  List<AlertModel> _activeAlerts = [];
+  List<AlertModel> _myAlerts = [];
   bool _loading = true;
   String? _error;
   Position? _currentPosition;
@@ -42,7 +44,17 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
         _loading = true;
         _error = null;
       });
-      final alerts = await ApiService.fetchAlerts();
+      
+      // Fetch public active alerts (subject to backend 2-day cutoff)
+      final activeAlerts = (await ApiService.fetchAlerts()) ?? [];
+      
+      // Fetch logged-in user's alerts (entire history, no 2-day cutoff)
+      List<AlertModel> myAlerts = [];
+      final loggedInUserId = AuthTokenStore.userId;
+      if (loggedInUserId != null && loggedInUserId != 'guest') {
+        myAlerts = (await ApiService.fetchAlerts(userId: loggedInUserId)) ?? [];
+      }
+
       Position? pos;
       try {
         pos = await _determinePosition();
@@ -52,10 +64,11 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
       if (mounted) {
         setState(() {
           _currentPosition = pos;
-          _alerts = alerts;
+          _activeAlerts = activeAlerts;
+          _myAlerts = myAlerts;
           _loading = false;
         });
-        _checkForNearbyAlerts(alerts, pos);
+        _checkForNearbyAlerts(activeAlerts, pos);
       }
     } catch (e) {
       if (mounted) {
@@ -222,9 +235,10 @@ class _AlertsTabState extends State<AlertsTab> with SingleTickerProviderStateMix
         ),
       );
     }
-    final displayAlerts = _alerts.where((a) {
+    final sourceAlerts = (isMyAlerts ? _myAlerts : _activeAlerts) ?? [];
+    final displayAlerts = sourceAlerts.where((a) {
       if (isMyAlerts) return a.isMyAlert;
-      final s = a.status.toLowerCase();
+      final s = a.status?.toLowerCase() ?? '';
       return s != 'resolved' && s != 'completed' && s != 'solved';
     }).where((a) {
       // Admins should see all incidents (no proximity filter)
