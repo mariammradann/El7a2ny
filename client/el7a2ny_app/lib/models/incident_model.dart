@@ -22,7 +22,7 @@ class IncidentModel {
   // ✅ Add this
   factory IncidentModel.fromJson(Map<String, dynamic> json) {
     return IncidentModel(
-      id: json['id']?.toString(),
+      id: (json['incident_id'] ?? json['id'])?.toString(),
       userId: json['user_id']?.toString() ?? '',
       latitude: (json['latitude'] ?? 0).toDouble(),
       longitude: (json['longitude'] ?? 0).toDouble(),

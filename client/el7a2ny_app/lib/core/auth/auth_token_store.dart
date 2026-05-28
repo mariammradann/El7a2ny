@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/session_service.dart';
 
 class AuthTokenStore {
   static String? _userId;
@@ -11,13 +12,27 @@ class AuthTokenStore {
   static String? get accessToken => _accessToken;
   static String? get userType => _userType;
 
-  // دالة لتحميل البيانات من الذاكرة عند بداية تشغيل التطبيق (مهمة جداً)
   static Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _userId = prefs.getString('user_id');
     _accessToken = prefs.getString('access_token');
     _userType = prefs.getString('user_type');
     debugPrint("📥 AuthTokenStore Initialized: ID=$_userId, Type=$_userType");
+    
+    if (_userId != null) {
+      SessionService().setUserId(_userId);
+    }
+    
+    if (_userType != null) {
+      final userTypeStr = _userType!.toLowerCase();
+      if (userTypeStr.contains("admin")) {
+        SessionService().setRole(UserRole.admin);
+      } else if (userTypeStr.contains("volunteer")) {
+        SessionService().setRole(UserRole.volunteer);
+      } else {
+        SessionService().setRole(UserRole.citizen);
+      }
+    }
   }
 
   // حفظ بيانات اليوزر بشكل دائم
@@ -29,6 +44,7 @@ class AuthTokenStore {
   }) async {
     _userId = id;
     _userType = userType;
+    SessionService().setUserId(id);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_id', id);
     if (name != null) await prefs.setString('user_name', name);

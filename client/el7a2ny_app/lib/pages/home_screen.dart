@@ -58,6 +58,122 @@ class _HomeScreenState extends State<HomeScreen>
     _tabController.addListener(() {
       setState(() => _activeTab = _tabController.index);
     });
+    SensorMonitorService().onCameraAlert = (alertData) {
+      debugPrint('🏠 HomeScreen received camera alert! mounted=$mounted');
+      debugPrint('🏠 Alert data: $alertData');
+      if (mounted) {
+        _showCameraAlertDialog(alertData);
+      } else {
+        debugPrint('🏠 NOT MOUNTED — dialog skipped!');
+      }
+    };
+  }
+
+  void _showCameraAlertDialog(Map<String, dynamic> alertData) {
+    final isAr = context.loc.isAr;
+    final String alertId = alertData['alert_id'];
+    final String? imageUrl = alertData['image_url'];
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          elevation: 16,
+          backgroundColor: Theme.of(context).cardColor,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: const Color(0xFFE61717).withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFE61717), size: 40),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isAr ? 'تنبيه: الكاميرا اكتشفت شخصاً غريباً!' : 'Alert: Camera Detected a Stranger!',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, fontFamily: 'NotoSansArabic', color: Color(0xFFE61717)),
+                ),
+                const SizedBox(height: 12),
+                
+                if (imageUrl != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      imageUrl,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 200,
+                        color: Colors.grey[800],
+                        child: const Center(child: Icon(Icons.broken_image, color: Colors.white, size: 50)),
+                      ),
+                    ),
+                  ),
+                  
+                const SizedBox(height: 20),
+                Text(
+                  isAr ? 'هل هذا الشخص آمن ومألوف بالنسبة لك؟' : 'Is this person safe and familiar to you?',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'NotoSansArabic'),
+                ),
+                const SizedBox(height: 24),
+                
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await ApiService.respondToCameraAlert(alertId, 'reject');
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(isAr ? 'تم الحفظ كآمن. لم يتم الإبلاغ عن أي شيء.' : 'Marked as safe. No action taken.'),
+                              backgroundColor: Colors.green,
+                            ));
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text(isAr ? 'آمن / مألوف' : 'Safe / Known', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await ApiService.respondToCameraAlert(alertId, 'accept');
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(isAr ? 'تم إنشاء بلاغ تلقائياً!' : 'Incident created automatically!'),
+                              backgroundColor: const Color(0xFFE61717),
+                            ));
+                          }
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFFE61717),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text(isAr ? 'غير آمن - إبلاغ!' : 'Intruder - Report!', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'NotoSansArabic')),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override

@@ -57,6 +57,11 @@ class SessionService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setUserId(String? id) {
+    _userId = id;
+    notifyListeners();
+  }
+
   void setPlus(bool value, {bool isYearly = false, DateTime? date}) {
     _isPlus = value;
     _isYearlyPlan = isYearly;

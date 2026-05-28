@@ -67,6 +67,12 @@ from .views import (
     admin_edit_course,
     admin_subscriptions,
     admin_cancel_subscription,
+    start_security_camera,
+    stop_security_camera,
+    get_security_camera_status,
+    stranger_detected_api,
+    pending_alert_api,
+    respond_alert_api,
 )
 
 # 1. إعداد الـ Router
@@ -215,6 +221,14 @@ urlpatterns = [
     path("api/training/courses/<uuid:course_id>/enroll/", enroll_course, name="enroll-course"),
     path("api/training/courses/<uuid:course_id>/complete/", complete_course, name="complete-course"),
     path("api/training/badges/<uuid:user_id>/", get_user_badges, name="user-badges"),
+
+    # ── Security Camera / Face Recognition Endpoints ──────────────────────────
+    path("api/security/camera/start/", start_security_camera, name="start-camera"),
+    path("api/security/camera/stop/", stop_security_camera, name="stop-camera"),
+    path("api/security/camera/status/", get_security_camera_status, name="camera-status"),
+    path("api/security/camera/stranger-detected/", stranger_detected_api, name="stranger-detected"),
+    path("api/security/camera/pending-alert/", pending_alert_api, name="pending-alert"),
+    path("api/security/camera/respond-alert/", respond_alert_api, name="respond-alert"),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير

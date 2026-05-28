@@ -1118,7 +1118,9 @@ def admin_stats(request):
 
         avg_response_time = "3:45"
 
-        success_rate = 0.87
+        total_incidents = Incident.objects.count()
+        resolved_incidents = Incident.objects.filter(status='resolved').count()
+        success_rate = round(resolved_incidents / total_incidents, 2) if total_incidents > 0 else 0.87
 
         weekly_efficiency = []
         for i in range(6, -1, -1):
@@ -1128,6 +1130,14 @@ def admin_stats(request):
             count = Incident.objects.filter(created_at__range=[start, end]).count()
             weekly_efficiency.append(float(count))
 
+        # Dynamic regional insights
+        region_counts = Incident.objects.values('location__region').annotate(count=Count('incident_id')).order_by('-count')
+        all_regions = [r['location__region'] for r in region_counts if r['location__region'] and r['location__region'] != 'Unknown']
+        
+        active_areas = all_regions[:3] if len(all_regions) >= 3 else (all_regions + ['Cairo', 'Giza', 'Alexandria'])[:3]
+        low_volunteering = all_regions[3:5] if len(all_regions) >= 5 else ['Suez', 'Fayoum']
+        inactive_areas = all_regions[-3:] if len(all_regions) >= 8 else ['Aswan', 'Luxor', 'Minya']
+
         return Response(
             {
                 "total_users": total_users,
@@ -1135,6 +1145,11 @@ def admin_stats(request):
                 "avg_response_time": avg_response_time,
                 "success_rate": success_rate,
                 "weekly_efficiency": weekly_efficiency,
+                "regional_insights": {
+                    "inactive_areas": inactive_areas,
+                    "low_volunteering_areas": low_volunteering,
+                    "active_volunteering_areas": active_areas
+                }
             }
         )
     except Exception as e:
@@ -3242,4 +3257,283 @@ def admin_cancel_subscription(request, user_id):
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
     except Exception as e:
+        return Response({"error": str(e)}, status=500)# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════ FACE RECOGNITION CAMERA ENDPOINTS ═════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def start_security_camera(request):
+    """
+    Start the face recognition security camera service.
+    
+    POST /api/security/camera/start/
+    Request data: {
+        "user_id": "uuid",
+        "enable_notifications": true (optional)
+    }
+    
+    Returns: {
+        "success": bool,
+        "message": str,
+        "status": str,
+        "pid": int (if started)
+    }
+    """
+    from .camera_service import start_face_recognition
+    
+    user_id = request.data.get("user_id")
+    enable_notifications = request.data.get("enable_notifications", True)
+    
+    if not user_id:
+        return Response(
+            {"error": "user_id is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        user = User.objects.get(user_id=user_id)
+        # Enable camera permission for this user
+        user.camera = True
+        user.save()
+        
+        result = start_face_recognition()
+        return Response(result, status=status.HTTP_200_OK)
+    
+    except User.DoesNotExist:
+        return Response(
+            {"error": "User not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error starting security camera: {e}")
+        return Response(
+            {"error": f"Failed to start camera: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def stop_security_camera(request):
+    """
+    Stop the face recognition security camera service.
+    
+    POST /api/security/camera/stop/
+    Request data: {
+        "user_id": "uuid"
+    }
+    
+    Returns: {
+        "success": bool,
+        "message": str,
+        "status": str
+    }
+    """
+    from .camera_service import stop_face_recognition
+    
+    user_id = request.data.get("user_id")
+    
+    if not user_id:
+        return Response(
+            {"error": "user_id is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        user = User.objects.get(user_id=user_id)
+        # Disable camera permission for this user
+        user.camera = False
+        user.save()
+        
+        result = stop_face_recognition()
+        return Response(result, status=status.HTTP_200_OK)
+    
+    except User.DoesNotExist:
+        return Response(
+            {"error": "User not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error stopping security camera: {e}")
+        return Response(
+            {"error": f"Failed to stop camera: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def get_security_camera_status(request):
+    """
+    Get the current status of the face recognition security camera.
+    
+    GET /api/security/camera/status/?user_id=uuid
+    
+    Returns: {
+        "running": bool,
+        "message": str,
+        "status": str ("active" or "inactive")
+    }
+    """
+    from .camera_service import get_camera_status
+    
+    user_id = request.query_params.get("user_id")
+    
+    if not user_id:
+        return Response(
+            {"error": "user_id is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        user = User.objects.get(user_id=user_id)
+        
+        result = get_camera_status()
+        result["user_id"] = str(user.user_id)
+        result["user_name"] = user.name
+        result["camera_enabled"] = user.camera
+        
+        return Response(result, status=status.HTTP_200_OK)
+    
+    except User.DoesNotExist:
+        return Response(
+            {"error": "User not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error getting camera status: {e}")
+        return Response(
+            {"error": f"Failed to get status: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+import threading
+from .models import PendingCameraAlert
+
+def auto_create_incident(alert_id):
+    try:
+        alert = PendingCameraAlert.objects.get(alert_id=alert_id)
+        if alert.status == 'pending':
+            # Create incident automatically
+            from .models import Location, Incident
+            location, _ = Location.objects.get_or_create(
+                latitude=29.964988,  # Default or read from sensor
+                longitude=31.259293,
+                defaults={'city': 'Unknown', 'region': 'Unknown', 'address': 'Home Camera'}
+            )
+            incident = Incident.objects.create(
+                user=alert.user,
+                location=location,
+                category="Theft",
+                description="Stranger detected by home camera - AUTO REPORT (No response in 2 mins)",
+                status="reported",
+                total_volunteers=10,
+                media_files=[alert.image.url] if alert.image else []
+            )
+            alert.status = 'auto_reported'
+            alert.save()
+            print(f"[DJANGO] Auto-created incident {incident.incident_id} for alert {alert_id}")
+    except Exception as e:
+        print(f"[DJANGO] Error auto-creating incident for alert {alert_id}: {e}")
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def stranger_detected_api(request):
+    try:
+        user_id = request.data.get("user_id")
+        image_file = request.FILES.get("media_files")
+        if not user_id or not image_file:
+            return Response({"error": "user_id and media_files are required"}, status=400)
+            
+        user = User.objects.get(user_id=user_id)
+        
+        # Check if there's already a pending alert for this user
+        existing_alert = PendingCameraAlert.objects.filter(user=user, status='pending').first()
+        if existing_alert:
+            return Response({"message": "Alert already pending", "alert_id": str(existing_alert.alert_id)}, status=200)
+
+        alert = PendingCameraAlert.objects.create(
+            user=user,
+            image=image_file,
+            status='pending'
+        )
+        
+        # Start 2-minute timer
+        t = threading.Timer(120.0, auto_create_incident, args=[alert.alert_id])
+        t.daemon = True
+        t.start()
+        
+        return Response({"message": "Stranger alert registered", "alert_id": str(alert.alert_id)}, status=201)
+    except Exception as e:
+        logger.error(f"Error in stranger_detected_api: {e}")
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def pending_alert_api(request):
+    try:
+        user_id = request.query_params.get("user_id")
+        if not user_id:
+            return Response({"error": "user_id is required"}, status=400)
+            
+        alert = PendingCameraAlert.objects.filter(user__user_id=user_id, status='pending').first()
+        if alert:
+            return Response({
+                "has_alert": True,
+                "alert_id": str(alert.alert_id),
+                "image_url": request.build_absolute_uri(alert.image.url) if alert.image else None,
+                "created_at": alert.created_at.isoformat()
+            }, status=200)
+        return Response({"has_alert": False}, status=200)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def respond_alert_api(request):
+    try:
+        alert_id = request.data.get("alert_id")
+        action = request.data.get("action")  # 'accept' or 'reject'
+        if not alert_id or not action:
+            return Response({"error": "alert_id and action are required"}, status=400)
+            
+        alert = PendingCameraAlert.objects.get(alert_id=alert_id)
+        
+        if alert.status != 'pending':
+            return Response({"message": "Alert already handled", "status": alert.status}, status=200)
+            
+        if action == 'accept':
+            from .models import Location, Incident
+            location, _ = Location.objects.get_or_create(
+                latitude=29.964988,
+                longitude=31.259293,
+                defaults={'city': 'Unknown', 'region': 'Unknown', 'address': 'Home Camera'}
+            )
+            incident = Incident.objects.create(
+                user=alert.user,
+                location=location,
+                category="Theft",
+                description="Stranger detected by home camera - USER CONFIRMED",
+                status="reported",
+                total_volunteers=10,
+                media_files=[alert.image.url] if alert.image else []
+            )
+            alert.status = 'resolved'
+            alert.save()
+            return Response({"message": "Incident created", "incident_id": str(incident.incident_id)}, status=200)
+            
+        elif action == 'reject':
+            alert.status = 'resolved'
+            alert.save()
+            return Response({"message": "Alert canceled"}, status=200)
+            
+        return Response({"error": "Invalid action"}, status=400)
+    except PendingCameraAlert.DoesNotExist:
+        return Response({"error": "Alert not found"}, status=404)
+    except Exception as e:
+        logger.error(f"Error in respond_alert_api: {e}")
         return Response({"error": str(e)}, status=500)

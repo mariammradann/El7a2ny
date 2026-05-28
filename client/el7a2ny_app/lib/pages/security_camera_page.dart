@@ -23,10 +23,8 @@ class _SecurityCameraPageState extends State<SecurityCameraPage> with TickerProv
   List<SensorModel> _cameras = [];
   bool _loading = true;
   String? _error;
-  Timer? _detectionTimer;
   bool _monitoringEnabled = true;
   AppLifecycleState _lifecycleState = AppLifecycleState.resumed;
-  SensorModel? _pendingCameraAlert;
 
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
@@ -46,7 +44,6 @@ class _SecurityCameraPageState extends State<SecurityCameraPage> with TickerProv
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _detectionTimer?.cancel();
     _pulseCtrl.dispose();
     super.dispose();
   }
@@ -56,16 +53,6 @@ class _SecurityCameraPageState extends State<SecurityCameraPage> with TickerProv
     setState(() {
       _lifecycleState = state;
     });
-
-    if (state == AppLifecycleState.resumed && _pendingCameraAlert != null) {
-      final camera = _pendingCameraAlert!;
-      _pendingCameraAlert = null;
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted && _monitoringEnabled) {
-          _simulateStrangerDetection(camera);
-        }
-      });
-    }
   }
 
   Future<void> _loadCameras() async {
@@ -76,225 +63,9 @@ class _SecurityCameraPageState extends State<SecurityCameraPage> with TickerProv
       final cameras = all.where((s) => s.type == 'smartwatch').toList();
       if (mounted) {
         setState(() { _cameras = cameras; _loading = false; });
-        if (cameras.isNotEmpty && _monitoringEnabled) {
-          _detectionTimer?.cancel();
-          _detectionTimer = Timer(const Duration(seconds: 8), () {
-            if (mounted && _monitoringEnabled && _cameras.isNotEmpty) {
-              _onStrangerDetected(_cameras.first);
-            }
-          });
-        }
       }
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
-    }
-  }
-
-  void _onStrangerDetected(SensorModel camera) {
-    if (!mounted) return;
-    if (_lifecycleState == AppLifecycleState.resumed) {
-      _simulateStrangerDetection(camera);
-    } else {
-      _pendingCameraAlert = camera;
-      _triggerBackgroundNotification(camera);
-    }
-  }
-
-  void _triggerBackgroundNotification(SensorModel camera) {
-    if (kIsWeb) {
-      final isAr = context.loc.isAr;
-      final title = isAr ? 'تم رصد شخص غريب! 🚨' : 'Stranger Detected! 🚨';
-      final body = isAr
-          ? 'رصدت الكاميرا #${camera.id} (${camera.userName}) حركة لشخص غير معروف.'
-          : 'Camera #${camera.id} (${camera.userName}) detected an unrecognized person.';
-      js.context.callMethod('showWebNotification', [title, body]);
-    }
-  }
-
-  void _simulateStrangerDetection(SensorModel camera) {
-    if (!mounted) return;
-    
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        final loc = context.loc;
-        final isAr = loc.isAr;
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-          elevation: 16,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.emergency_share_rounded, color: Color(0xFFE61717), size: 28),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        isAr ? 'تم رصد شخص غريب! 🚨' : 'Stranger Detected! 🚨',
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFFE61717), fontFamily: 'NotoSansArabic'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  isAr 
-                      ? 'رصدت الكاميرا #${camera.id} (${camera.userName}) حركة لشخص غير معروف بموقع الكاميرا:'
-                      : 'Camera #${camera.id} (${camera.userName}) detected an unrecognized person at:',
-                  style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8), fontFamily: 'NotoSansArabic'),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Lat: ${camera.lat.toStringAsFixed(4)}, Lng: ${camera.lng.toStringAsFixed(4)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.blue),
-                ),
-                const SizedBox(height: 20),
-                
-                Stack(
-                  alignment: Alignment.topLeft,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.network(
-                        'https://images.unsplash.com/photo-1530124560072-a0c9717d3d45?q=80&w=600',
-                        height: 220,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(6)),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle)),
-                            const SizedBox(width: 6),
-                            const Text('REC LIVE', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 12,
-                      right: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(6)),
-                        child: const Text('CAM_03_DETECTION', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                
-                Text(
-                  isAr ? 'هل هذا الشخص آمن ومألوف بالنسبة لك؟' : 'Is this person safe and familiar to you?',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'NotoSansArabic'),
-                ),
-                const SizedBox(height: 24),
-                
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
-                            content: Text(isAr ? 'تم الحفظ كآمن. لم يتم الإبلاغ عن أي شيء.' : 'Marked as safe. No action taken.'),
-                            backgroundColor: Colors.green,
-                          ));
-                        },
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: Text(isAr ? 'آمن / مألوف' : 'Safe / Known', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () async {
-                          Navigator.pop(context);
-                          await _reportIntrusion(camera);
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFE61717),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: Text(isAr ? 'غير آمن - إبلاغ!' : 'Intruder - Report!', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontFamily: 'NotoSansArabic')),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _reportIntrusion(SensorModel camera) async {
-    final loc = context.loc;
-    final isAr = loc.isAr;
-    
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('user_id');
-      if (userId == null) {
-        throw Exception(isAr ? 'يجب تسجيل الدخول للإبلاغ' : 'User must be logged in to report');
-      }
-      
-      await ApiService.sendEmergencyAlert(
-        userId: userId,
-        type: 'security',
-        lat: camera.lat,
-        lng: camera.lng,
-        description: isAr 
-            ? 'تم رصد اقتحام أو سرقة من الكاميرا الأمنية #${camera.id} (${camera.userName}). شخص غريب رصد في إحداثيات الكاميرا.'
-            : '[AUTOMATED CAMERA REPORT] Intrusion detected by Security Camera #${camera.id} (${camera.userName}). An unrecognized person was flagged as an active threat.',
-      );
-      
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(isAr ? 'تم الإبلاغ بنجاح! 🚨' : 'Reported Successfully! 🚨', style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
-            content: Text(
-              isAr 
-                  ? 'تم تسجيل بلاغ سرقة وإرساله فوراً للجهات المختصة وتنبيه المتطوعين من حولك.'
-                  : 'A theft emergency report has been created. Authorities and nearby citizens have been notified.',
-              style: const TextStyle(fontFamily: 'NotoSansArabic'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(loc.okBtn),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(isAr ? 'فشل الإرسال: $e' : 'Failed to send report: $e'),
-          backgroundColor: Colors.red,
-        ));
-      }
     }
   }
 
@@ -398,22 +169,23 @@ class _SecurityCameraPageState extends State<SecurityCameraPage> with TickerProv
                     ),
                     child: SwitchListTile.adaptive(
                       value: _monitoringEnabled,
-                      onChanged: (bool value) {
+                      onChanged: (bool value) async {
                         setState(() {
                           _monitoringEnabled = value;
-                          if (!_monitoringEnabled) {
-                            _detectionTimer?.cancel();
-                          } else {
-                            if (_cameras.isNotEmpty) {
-                              _detectionTimer?.cancel();
-                              _detectionTimer = Timer(const Duration(seconds: 8), () {
-                                if (mounted && _monitoringEnabled && _cameras.isNotEmpty) {
-                                  _onStrangerDetected(_cameras.first);
-                                }
-                              });
+                        });
+                        try {
+                          final prefs = await SharedPreferences.getInstance();
+                          final userId = prefs.getString('user_id');
+                          if (userId != null) {
+                            if (value) {
+                              await ApiService.startSecurityCamera(userId);
+                            } else {
+                              await ApiService.stopSecurityCamera(userId);
                             }
                           }
-                        });
+                        } catch (e) {
+                          debugPrint('Failed to toggle camera monitoring: $e');
+                        }
                       },
                       title: Text(
                         isAr ? 'مراقبة الكاميرات النشطة' : 'Active Camera Monitoring',

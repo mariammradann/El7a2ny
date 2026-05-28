@@ -605,6 +605,30 @@ class IncidentDispatch(models.Model):
         return f"Dispatch {self.dispatch_id} of {self.role_requested} to Incident {self.incident_id}"
 
 
+class PendingCameraAlert(models.Model):
+    alert_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="camera_alerts")
+    image = models.ImageField(upload_to='camera_alerts/')
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending"),
+            ("resolved", "Resolved"),
+            ("auto_reported", "Auto Reported"),
+        ],
+        default="pending",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ems_schema"."pending_camera_alerts'
+        managed = True
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Camera Alert {self.alert_id} for User {self.user.name} ({self.status})"
+
+
 class AdminLog(models.Model):
     log_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     action = models.CharField(max_length=500)

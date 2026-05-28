@@ -9,6 +9,7 @@ import 'user_detail_screen.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
 import '../models/admin_stats_model.dart';
+import 'dart:math' as math;
 
 class AdminScreen extends StatefulWidget {
   final bool isNested;
@@ -445,6 +446,20 @@ class _AdminScreenState extends State<AdminScreen>
 
   Widget _buildRegionalInsights(BuildContext context) {
     final loc = context.loc;
+    
+    // Default fallback values if backend doesn't provide them
+    final inactiveAreas = _stats?.regionalInsights?.inactiveAreas.isNotEmpty == true 
+        ? _stats!.regionalInsights!.inactiveAreas 
+        : const ['Suez', 'Fayoum', 'Beni Suef'];
+        
+    final lowVolunteering = _stats?.regionalInsights?.lowVolunteeringAreas.isNotEmpty == true 
+        ? _stats!.regionalInsights!.lowVolunteeringAreas 
+        : const ['Alexandria', 'Ismailia'];
+        
+    final activeAreas = _stats?.regionalInsights?.activeVolunteeringAreas.isNotEmpty == true 
+        ? _stats!.regionalInsights!.activeVolunteeringAreas 
+        : const ['Cairo', 'Giza', 'Mansoura'];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -452,21 +467,21 @@ class _AdminScreenState extends State<AdminScreen>
         const SizedBox(height: 16),
         _AreaStatusCard(
           title: loc.inactiveAreas,
-          areas: const ['Suez', 'Fayoum', 'Beni Suef'],
+          areas: inactiveAreas,
           color: const Color(0xFFE61717),
           icon: Icons.location_off_rounded,
         ),
         const SizedBox(height: 12),
         _AreaStatusCard(
           title: loc.lowVolunteeringAreas,
-          areas: const ['Alexandria (West)', 'Ismailia'],
+          areas: lowVolunteering,
           color: const Color(0xFFF18F34),
           icon: Icons.person_search_rounded,
         ),
         const SizedBox(height: 12),
         _AreaStatusCard(
           title: loc.activeVolunteeringAreas,
-          areas: const ['Cairo (Central)', 'Giza', 'Mansoura'],
+          areas: activeAreas,
           color: Colors.green,
           icon: Icons.volunteer_activism_rounded,
         ),
@@ -1111,7 +1126,7 @@ class _AdminScreenState extends State<AdminScreen>
           ))
         else
           ..._incidents.map((item) {
-            final id = item.incidentId ?? '';
+            final id = item.id ?? '';
             final category = item.category ?? '';
             final status = item.status ?? '';
             final isDeleting = _actionLoading['incident_$id'] ?? false;
@@ -1133,7 +1148,7 @@ class _AdminScreenState extends State<AdminScreen>
                   child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFE61717), size: 20),
                 ),
                 title: Text(category, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
-                subtitle: Text('${isAr ? 'الحالة' : 'Status'}: $status\nID: ${id.toString().substring(0, 8)}...',
+                subtitle: Text('${isAr ? 'الحالة' : 'Status'}: $status\nID: ${id.length >= 8 ? id.substring(0, 8) : id}...',
                     style: const TextStyle(fontSize: 12, fontFamily: 'NotoSansArabic')),
                 trailing: isDeleting
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
@@ -1816,6 +1831,9 @@ class _CustomBarChart extends StatelessWidget {
     final theme = Theme.of(context);
     final List<String> days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
+    final double maxVal = values.isNotEmpty ? values.reduce(math.max) : 1.0;
+    final double normalizedMax = maxVal == 0 ? 1.0 : maxVal;
+
     return Container(
       height: 200,
       padding: const EdgeInsets.all(16),
@@ -1828,13 +1846,14 @@ class _CustomBarChart extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: List.generate(values.length, (index) {
+          final double val = index < values.length ? values[index] : 0.0;
           return Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               AnimatedContainer(
                 duration: const Duration(seconds: 1),
                 width: 20,
-                height: 130 * (index < values.length ? values[index] : 0.0),
+                height: 130 * (val / normalizedMax),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],

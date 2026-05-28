@@ -11,6 +11,7 @@ import '../models/alert_model.dart';
 import '../models/incident_model.dart';
 import '../models/activity_history_model.dart';
 import '../models/course_model.dart';
+import '../models/admin_stats_model.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint; // Needed for kIsWeb
@@ -519,9 +520,11 @@ class ApiService {
   }
 
   // --- 4. إحصائيات الأدمن والمستخدمين ---
-  static Future<dynamic> fetchAdminStats() async {
-    final response = await http.get(Uri.parse("$baseUrl/api/admin/stats/"));
-    if (response.statusCode == 200) return jsonDecode(response.body);
+  static Future<AdminStats> fetchAdminStats() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    final response = await http.get(Uri.parse("$baseUrl/api/admin/stats/?user_id=$userId"));
+    if (response.statusCode == 200) return AdminStats.fromJson(jsonDecode(response.body));
     throw Exception("Failed to fetch admin stats");
   }
 
@@ -552,7 +555,9 @@ class ApiService {
   }
 
   static Future<List<UserModel>> fetchUserList() async {
-    final response = await http.get(Uri.parse("$baseUrl/api/admin/users/"));
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    final response = await http.get(Uri.parse("$baseUrl/api/admin/users/?user_id=$userId"));
     if (response.statusCode == 200) {
       List data = jsonDecode(response.body);
       return data.map((item) => UserModel.fromJson(item)).toList();
@@ -807,6 +812,7 @@ class ApiService {
         List data = jsonDecode(response.body);
         return data.map((item) => IncidentModel.fromJson(item)).toList();
       }
+      print("🚨 fetchAdminIncidents Error: ${response.statusCode} - ${response.body}");
       return [];
     } catch (e) {
       print("Error fetching incidents: $e");
@@ -1334,5 +1340,116 @@ static Future<void> adminDeleteIncident(String incidentId) async {
       throw Exception('Failed to cancel subscription: ${response.statusCode}');
     }
   }
-}
 
+  // ─────────────────────────────────────────────────────────
+  //  SECURITY CAMERA / FACE RECOGNITION ENDPOINTS
+  // ─────────────────────────────────────────────────────────
+
+  /// Start the face recognition security camera
+  static Future<Map<String, dynamic>> startSecurityCamera(String userId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/security/camera/start/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'enable_notifications': true,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint('✅ Security camera started: ${result['message']}');
+        return result;
+      } else {
+        final error = jsonDecode(response.body) as Map<String, dynamic>;
+        throw Exception(error['error'] ?? 'Failed to start camera');
+      }
+    } catch (e) {
+      debugPrint('❌ Error starting security camera: $e');
+      rethrow;
+    }
+  }
+
+  /// Stop the face recognition security camera
+  static Future<Map<String, dynamic>> stopSecurityCamera(String userId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/security/camera/stop/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'user_id': userId}),
+      );
+      
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint('✅ Security camera stopped: ${result['message']}');
+        return result;
+      } else {
+        final error = jsonDecode(response.body) as Map<String, dynamic>;
+        throw Exception(error['error'] ?? 'Failed to stop camera');
+      }
+    } catch (e) {
+      debugPrint('❌ Error stopping security camera: $e');
+      rethrow;
+    }
+  }
+
+  /// Get the status of the security camera
+  static Future<Map<String, dynamic>> getSecurityCameraStatus(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/security/camera/status/?user_id=$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint('📹 Camera status: ${result['status']}');
+        return result;
+      } else {
+        final error = jsonDecode(response.body) as Map<String, dynamic>;
+        throw Exception(error['error'] ?? 'Failed to get camera status');
+      }
+    } catch (e) {
+      debugPrint('❌ Error getting camera status: $e');
+      rethrow;
+    }
+  }
+
+
+  /// Get pending security camera alert (polling)
+  static Future<Map<String, dynamic>> getPendingCameraAlert(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/security/camera/pending-alert/?user_id=$userId'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get pending alert');
+      }
+    } catch (e) {
+      debugPrint('❌ Error getting pending camera alert: $e');
+      return {"has_alert": false};
+    }
+  }
+
+  /// Respond to a pending camera alert
+  static Future<void> respondToCameraAlert(String alertId, String action) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/security/camera/respond-alert/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'alert_id': alertId, 'action': action}),
+      );
+      if (response.statusCode != 200) {
+        final error = jsonDecode(response.body) as Map<String, dynamic>;
+        throw Exception(error['error'] ?? 'Failed to respond to alert');
+      }
+    } catch (e) {
+      debugPrint('❌ Error responding to camera alert: $e');
+      rethrow;
+    }
+  }
+}
