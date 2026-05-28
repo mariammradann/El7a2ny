@@ -14,6 +14,7 @@ from .models import (
     IncidentChat,
     ChatMessage,
     SponsorRequest,
+    Sponsor,
     VolunteerCourseProgress,
     TrainingCourse,
 )
@@ -25,6 +26,9 @@ from .serializers import (
     InitiativeSerializer,
     ChatMessageSerializer,
     IncidentChatSerializer,
+    SponsorSerializer,
+    SponsorDetailSerializer,
+    SponsorRequestSerializer,
 )
 import random
 import string
@@ -1829,28 +1833,34 @@ def get_incident_responders(request, incident_id):
     responders = Responder.objects.filter(incident_id=incident_id)
     data = []
     for r in responders:
+        name = "Unknown"
+        phone = ""
+        badges = []
         try:
             user = User.objects.get(user_id=r.user_id)
             name = user.name or ""
             phone = user.phone_number if hasattr(user, "phone_number") else ""
             # Fetch earned badges from completed training courses
-            completed = VolunteerCourseProgress.objects.filter(
-                user=user, is_completed=True
-            ).select_related("course")
-            badges = [
-                {
-                    "badge_name_en": cp.course.badge_name_en,
-                    "badge_name_ar": cp.course.badge_name_ar,
-                    "course_title_en": cp.course.title_en,
-                    "course_title_ar": cp.course.title_ar,
-                    "completed_at": str(cp.completed_at) if cp.completed_at else None,
-                }
-                for cp in completed
-            ]
+            # Wrapped separately so a missing table doesn't crash the whole endpoint
+            try:
+                completed = VolunteerCourseProgress.objects.filter(
+                    user=user, is_completed=True
+                ).select_related("course")
+                badges = [
+                    {
+                        "badge_name_en": cp.course.badge_name_en,
+                        "badge_name_ar": cp.course.badge_name_ar,
+                        "course_title_en": cp.course.title_en,
+                        "course_title_ar": cp.course.title_ar,
+                        "completed_at": str(cp.completed_at) if cp.completed_at else None,
+                    }
+                    for cp in completed
+                ]
+            except Exception as badge_err:
+                print(f"[WARNING] Could not fetch badges for user {r.user_id}: {badge_err}")
+                badges = []
         except User.DoesNotExist:
-            name = "Unknown"
-            phone = ""
-            badges = []
+            pass
 
         data.append(
             {
@@ -1864,7 +1874,11 @@ def get_incident_responders(request, incident_id):
                 "badges": badges,
             }
         )
-    return Response(data, status=status.HTTP_200_OK)
+    response = Response(data, status=status.HTTP_200_OK)
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    return response
 
 
 @api_view(["PATCH"])
@@ -2329,86 +2343,26 @@ class IncidentAIAnalysisDetailView(APIView):
 
 @api_view(["GET"])
 def get_sponsors(request):
-    lang = request.query_params.get("lang", "en")
-    is_ar = lang == "ar"
-    sponsors = [
-        {
-            "id": 1,
-            "category": "cars",
-            "title": "غبور أوتو (GB Auto)" if is_ar else "GB Auto (Ghabour)",
-            "rating": "4.8",
-            "badge_label": "شريك النخبة" if is_ar else "Elite Partner",
-            "description": (
-                "خدمات صيانة وإغاثة على الطريق على مدار الساعة."
-                if is_ar
-                else "24/7 roadside assistance and vehicle maintenance services."
-            ),
-            "services": (
-                [
-                    "إغاثة طريق / Roadside Assistance",
-                    "سحب سيارات / Towing",
-                    "صيانة متنقلة / Mobile Maintenance",
-                ]
-                if is_ar
-                else ["Roadside Assistance", "Towing", "Mobile Maintenance"]
-            ),
-            "phone": "19999",
-            "branch": "القاهرة" if is_ar else "Cairo",
-            "is_featured": True,
-        },
-        {
-            "id": 2,
-            "category": "insurance",
-            "title": "أكسا للتأمين" if is_ar else "AXA Insurance",
-            "rating": "4.7",
-            "badge_label": "تأمين معتمد" if is_ar else "Certified Insurer",
-            "description": (
-                "تغطية تأمينية شاملة للحوادث والرعاية الطبية."
-                if is_ar
-                else "Comprehensive insurance coverage for accidents and healthcare."
-            ),
-            "services": (
-                [
-                    "تأمين طبي / Medical Insurance",
-                    "تأمين حوادث / Accident Insurance",
-                    "دعم مالي / Financial Support",
-                ]
-                if is_ar
-                else ["Medical Insurance", "Accident Insurance", "Financial Support"]
-            ),
-            "phone": "16111",
-            "branch": "الجيزة" if is_ar else "Giza",
-            "is_featured": True,
-        },
-        {
-            "id": 3,
-            "category": "medical",
-            "title": "مستشفى دار الفؤاد" if is_ar else "Dar Al Fouad Hospital",
-            "rating": "4.9",
-            "badge_label": "شريك طبي" if is_ar else "Medical Partner",
-            "description": (
-                "رعاية طبية طارئة وغرف عناية مركزة مجهزة بالكامل."
-                if is_ar
-                else "Emergency medical care and fully equipped intensive care units."
-            ),
-            "services": (
-                [
-                    "طوارئ 24 ساعة / 24/7 ER",
-                    "عناية مركزة / ICU",
-                    "إرسال إسعاف / Ambulance Dispatch",
-                ]
-                if is_ar
-                else ["24/7 ER", "ICU", "Ambulance Dispatch"]
-            ),
-            "phone": "16370",
-            "branch": "السادس من أكتوبر" if is_ar else "6th of October",
-            "is_featured": True,
-        },
-    ]
-    return Response(sponsors, status=status.HTTP_200_OK)
+    """Fetch active sponsors from the database"""
+    try:
+        category = request.query_params.get("category", None)
+        
+        # Fetch active sponsors
+        queryset = Sponsor.objects.filter(status="active").order_by("-created_at")
+        
+        # Filter by category if provided
+        if category:
+            queryset = queryset.filter(company_type=category)
+        
+        serializer = SponsorSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error fetching sponsors: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["POST"])
+@permission_classes([permissions.AllowAny])
 def apply_sponsor(request):
     try:
         user_id = request.data.get("user_id")
@@ -2451,6 +2405,7 @@ def apply_sponsor(request):
 
 
 @api_view(["GET"])
+@permission_classes([permissions.AllowAny])
 def admin_sponsor_requests(request):
     try:
         requests = SponsorRequest.objects.all().order_by("-created_at")
@@ -2505,6 +2460,289 @@ def admin_respond_sponsor_request(request, request_id):
         )
     except Exception as e:
         logger.error(f"Error responding to sponsor request: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════ ADMIN SPONSOR MANAGEMENT ENDPOINTS ═══════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def admin_sponsors_list(request):
+    """List all sponsors with optional filtering"""
+    try:
+        # Get all sponsors
+        queryset = Sponsor.objects.all().order_by("-created_at")
+        
+        # Optional filters
+        status_filter = request.query_params.get("status", None)
+        category_filter = request.query_params.get("category", None)
+        
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if category_filter:
+            queryset = queryset.filter(company_type=category_filter)
+        
+        serializer = SponsorDetailSerializer(queryset, many=True)
+        return Response(
+            {
+                "count": queryset.count(),
+                "sponsors": serializer.data
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        logger.error(f"Error fetching sponsors list: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def admin_sponsors_create(request):
+    """Create a new sponsor"""
+    try:
+        serializer = SponsorDetailSerializer(data=request.data)
+        if serializer.is_valid():
+            sponsor = serializer.save()
+            return Response(
+                {
+                    "message": "Sponsor created successfully",
+                    "sponsor": SponsorDetailSerializer(sponsor).data
+                },
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            {"error": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error creating sponsor: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET", "PUT", "DELETE"])
+@permission_classes([permissions.AllowAny])
+def admin_sponsors_detail(request, sponsor_id):
+    """Retrieve, update, or delete a sponsor"""
+    try:
+        sponsor = Sponsor.objects.get(sponsor_id=sponsor_id)
+    except Sponsor.DoesNotExist:
+        return Response(
+            {"error": "Sponsor not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    if request.method == "GET":
+        serializer = SponsorDetailSerializer(sponsor)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    elif request.method == "PUT":
+        serializer = SponsorDetailSerializer(sponsor, data=request.data, partial=True)
+        if serializer.is_valid():
+            sponsor = serializer.save()
+            return Response(
+                {
+                    "message": "Sponsor updated successfully",
+                    "sponsor": SponsorDetailSerializer(sponsor).data
+                },
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            {"error": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    elif request.method == "DELETE":
+        sponsor.delete()
+        return Response(
+            {"message": "Sponsor deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def admin_sponsors_approve_request(request, request_id):
+    """Approve a sponsor request and convert it to a sponsor"""
+    try:
+        try:
+            sponsor_request = SponsorRequest.objects.get(request_id=request_id)
+        except SponsorRequest.DoesNotExist:
+            return Response(
+                {"error": "Sponsor request not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Update request status
+        sponsor_request.status = "approved"
+        sponsor_request.save()
+        
+        # Create a new Sponsor from the request
+        sponsor = Sponsor.objects.create(
+            name=sponsor_request.company_name,
+            company_type=request.data.get("company_type", "medical"),
+            status="active",
+            contact_email=request.data.get("contact_email", ""),
+            phone=sponsor_request.phone_number,
+            website=request.data.get("website", ""),
+            sponsorship_level=request.data.get("sponsorship_level", "silver"),
+            admin_id=request.data.get("admin_id", None),
+        )
+        
+        return Response(
+            {
+                "message": "Sponsor request approved and sponsor created",
+                "request_id": str(sponsor_request.request_id),
+                "sponsor": SponsorDetailSerializer(sponsor).data
+            },
+            status=status.HTTP_201_CREATED
+        )
+    except Exception as e:
+        logger.error(f"Error approving sponsor request: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def admin_sponsors_reject_request(request, request_id):
+    """Reject a sponsor request"""
+    try:
+        try:
+            sponsor_request = SponsorRequest.objects.get(request_id=request_id)
+        except SponsorRequest.DoesNotExist:
+            return Response(
+                {"error": "Sponsor request not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        sponsor_request.status = "rejected"
+        sponsor_request.save()
+        
+        return Response(
+            {
+                "message": "Sponsor request rejected",
+                "request_id": str(sponsor_request.request_id),
+                "status": sponsor_request.status
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        logger.error(f"Error rejecting sponsor request: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def admin_sponsors_change_status(request, sponsor_id):
+    """Change sponsor status (active/inactive)"""
+    try:
+        try:
+            sponsor = Sponsor.objects.get(sponsor_id=sponsor_id)
+        except Sponsor.DoesNotExist:
+            return Response(
+                {"error": "Sponsor not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        new_status = request.data.get("status")
+        if new_status not in ["active", "inactive", "pending"]:
+            return Response(
+                {"error": "Invalid status. Must be 'active', 'inactive', or 'pending'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        sponsor.status = new_status
+        sponsor.save()
+        
+        return Response(
+            {
+                "message": f"Sponsor status changed to {new_status}",
+                "sponsor": SponsorDetailSerializer(sponsor).data
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        logger.error(f"Error changing sponsor status: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def admin_sponsors_change_level(request, sponsor_id):
+    """Change sponsor sponsorship level"""
+    try:
+        try:
+            sponsor = Sponsor.objects.get(sponsor_id=sponsor_id)
+        except Sponsor.DoesNotExist:
+            return Response(
+                {"error": "Sponsor not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        new_level = request.data.get("sponsorship_level")
+        if new_level not in ["bronze", "silver", "gold", "platinum"]:
+            return Response(
+                {"error": "Invalid level. Must be 'bronze', 'silver', 'gold', or 'platinum'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        sponsor.sponsorship_level = new_level
+        sponsor.save()
+        
+        return Response(
+            {
+                "message": f"Sponsor level changed to {new_level}",
+                "sponsor": SponsorDetailSerializer(sponsor).data
+            },
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        logger.error(f"Error changing sponsor level: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def admin_sponsors_bulk_action(request):
+    """Perform bulk actions on sponsors"""
+    try:
+        action = request.data.get("action")  # approve, reject, activate, deactivate
+        request_ids = request.data.get("request_ids", [])
+        
+        if action == "approve":
+            # Approve sponsor requests and create sponsors
+            for request_id in request_ids:
+                try:
+                    sponsor_request = SponsorRequest.objects.get(request_id=request_id)
+                    sponsor_request.status = "approved"
+                    sponsor_request.save()
+                    
+                    Sponsor.objects.create(
+                        name=sponsor_request.company_name,
+                        company_type="medical",
+                        status="active",
+                        contact_email="",
+                        phone=sponsor_request.phone_number,
+                    )
+                except Exception as e:
+                    logger.error(f"Error approving request {request_id}: {e}")
+        
+        elif action == "reject":
+            for request_id in request_ids:
+                try:
+                    sponsor_request = SponsorRequest.objects.get(request_id=request_id)
+                    sponsor_request.status = "rejected"
+                    sponsor_request.save()
+                except Exception as e:
+                    logger.error(f"Error rejecting request {request_id}: {e}")
+        
+        return Response(
+            {"message": f"Bulk action '{action}' completed"},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        logger.error(f"Error in bulk action: {e}")
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

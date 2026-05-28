@@ -11,6 +11,8 @@ from .models import (
     IncidentChat,
     ChatMessage,
     IncidentAIAnalysis,
+    Sponsor,
+    SponsorRequest,
 )
 
 
@@ -340,6 +342,78 @@ class AnalyzeVideoRequestSerializer(serializers.Serializer):
 class AnalyzeVoiceRequestSerializer(serializers.Serializer):
     incident_id = serializers.UUIDField()
     audio       = serializers.FileField()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════ SPONSOR SERIALIZERS ═══════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class SponsorSerializer(serializers.ModelSerializer):
+    """Serializer for Sponsor model - used for displaying and managing sponsors"""
+    
+    class Meta:
+        model = Sponsor
+        fields = [
+            "sponsor_id",
+            "name",
+            "company_type",
+            "status",
+            "contract_date",
+            "contact_email",
+            "phone",
+            "website",
+            "sponsorship_level",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["sponsor_id", "created_at", "updated_at"]
+
+
+class SponsorDetailSerializer(serializers.ModelSerializer):
+    """Detailed serializer for Sponsor model including admin fields"""
+    
+    class Meta:
+        model = Sponsor
+        fields = [
+            "sponsor_id",
+            "name",
+            "company_type",
+            "status",
+            "contract_date",
+            "contact_email",
+            "phone",
+            "website",
+            "sponsorship_level",
+            "admin_id",
+            "incident_id",
+            "training_id",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["sponsor_id", "created_at", "updated_at"]
+
+
+class SponsorRequestSerializer(serializers.ModelSerializer):
+    """Serializer for SponsorRequest model"""
+    user_name = serializers.ReadOnlyField(source="user.name", allow_null=True)
+    user_email = serializers.ReadOnlyField(source="user.email", allow_null=True)
+    
+    class Meta:
+        model = SponsorRequest
+        fields = [
+            "request_id",
+            "company_name",
+            "contact_person",
+            "phone_number",
+            "message",
+            "status",
+            "created_at",
+            "updated_at",
+            "user",
+            "user_name",
+            "user_email",
+        ]
+        read_only_fields = ["request_id", "created_at", "updated_at"]
 
 
 class AnalyzeTextRequestSerializer(serializers.Serializer):

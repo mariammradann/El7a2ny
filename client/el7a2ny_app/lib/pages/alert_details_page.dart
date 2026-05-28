@@ -29,15 +29,7 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
   late int _progress;
   bool _joined = false;
   bool _isJoining = false;
-  Timer? _locationTimer;
-    late DateTime _pageOpenedAt; // ← ADD THIS
-
-
-  @override
-  void dispose() {
-    _locationTimer?.cancel();
-    super.dispose();
-  }
+  late DateTime _pageOpenedAt; // ← ADD THIS
 
   @override
   void initState() {
@@ -133,21 +125,6 @@ await ApiService.respondToAlert(
         role: IncidentRole.volunteer,
       );
 
-      _locationTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
-        try {
-          final pos = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-          );
-          await ApiService.updateResponderLocation(
-            widget.alert.id,
-            pos.latitude,
-            pos.longitude,
-          );
-        } catch (e) {
-          debugPrint('Location update failed: $e');
-        }
-      });
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -168,6 +145,7 @@ await ApiService.respondToAlert(
             incidentId: widget.alert.id,
             initialLat: widget.alert.lat,
             initialLng: widget.alert.lng,
+            isCreatorOverride: false, // This user is a volunteer, not the creator
           ),
           settings: const RouteSettings(name: '/active-incident'),
         ),
@@ -968,6 +946,7 @@ await ApiService.respondToAlert(
                                       incidentId: widget.alert.id,
                                       initialLat: widget.alert.latitude,
                                       initialLng: widget.alert.longitude,
+                                      isCreatorOverride: false, // Volunteer returning to tracking
                                     ),
                                   ),
                                 );

@@ -223,7 +223,12 @@ class ApiService {
   static Future<AlertModel?> fetchAlertDetails(String alertId) async {
     try {
       final response = await http.get(
-        Uri.parse("$baseUrl/api/incidents/$alertId/"),
+        Uri.parse("$baseUrl/api/incidents/$alertId/?_t=${DateTime.now().millisecondsSinceEpoch}"),
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+        },
       );
       if (response.statusCode == 200) {
         return AlertModel.fromJson(jsonDecode(response.body));
@@ -380,18 +385,14 @@ class ApiService {
   static Future<List<SponsorModel>> fetchSponsors({
     bool isArabic = false,
   }) async {
-    try {
-      final response = await http.get(
-        Uri.parse("$baseUrl/api/sponsors/?lang=${isArabic ? 'ar' : 'en'}"),
-      );
-      if (response.statusCode == 200) {
-        List data = jsonDecode(response.body);
-        return data.map((item) => SponsorModel.fromJson(item)).toList();
-      }
-    } catch (e) {
-      print("🚨 Error fetching sponsors: $e");
+    final response = await http.get(
+      Uri.parse("$baseUrl/api/sponsors/?lang=${isArabic ? 'ar' : 'en'}"),
+    );
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((item) => SponsorModel.fromJson(item)).toList();
     }
-    return [];
+    throw Exception("Failed to load sponsors: ${response.statusCode}");
   }
 
   static Future<bool> submitSponsorRequest({
@@ -448,6 +449,37 @@ class ApiService {
       return response.statusCode == 200;
     } catch (e) {
       print("🚨 Error responding to sponsor request: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> adminCreateSponsor({
+    required String name,
+    required String companyType,
+    required String phone,
+    required String contactEmail,
+    String website = '',
+    String sponsorshipLevel = 'silver',
+    String status = 'active',
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/api/admin/sponsors/create/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "name": name,
+          "company_type": companyType,
+          "phone": phone,
+          "contact_email": contactEmail,
+          "website": website,
+          "sponsorship_level": sponsorshipLevel,
+          "status": status,
+        }),
+      );
+      print("📤 Create Sponsor Response: ${response.statusCode} - ${response.body}");
+      return response.statusCode == 201;
+    } catch (e) {
+      print("🚨 Error creating sponsor: $e");
       return false;
     }
   }
@@ -751,11 +783,12 @@ class ApiService {
 
   /// Fetch all incidents for admin
   static Future<List<IncidentModel>> fetchAdminIncidents({
+    required String adminUserId,
     String? status,
     String? userId,
   }) async {
     try {
-      String url = "$baseUrl/api/admin/incidents/";
+      String url = "$baseUrl/api/admin/incidents/?admin_user_id=$adminUserId";
       final params = <String>[];
 
       if (status != null && status.isNotEmpty) {
@@ -766,7 +799,7 @@ class ApiService {
       }
 
       if (params.isNotEmpty) {
-        url += "?${params.join('&')}";
+        url += "&${params.join('&')}";
       }
 
       final response = await http.get(Uri.parse(url));
@@ -1000,8 +1033,12 @@ static Future<void> adminDeleteIncident(String incidentId) async {
     String incidentId,
   ) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/alerts/$incidentId/responders/'),
-      headers: {"Content-Type": "application/json"},
+      Uri.parse('$baseUrl/alerts/$incidentId/responders/?_t=${DateTime.now().millisecondsSinceEpoch}'),
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+      },
     );
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);

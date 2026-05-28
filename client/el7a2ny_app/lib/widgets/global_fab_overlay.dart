@@ -131,6 +131,11 @@ class GlobalFabOverlay extends StatelessWidget {
                                         incidentId: activeId,
                                         initialLat: SessionService().activeIncidentLat ?? 0.0,
                                         initialLng: SessionService().activeIncidentLng ?? 0.0,
+                                        isCreatorOverride: SessionService().incidentRole == IncidentRole.reporter
+                                            ? true
+                                            : SessionService().incidentRole == IncidentRole.volunteer
+                                                ? false
+                                                : null,
                                       ),
                                       settings: const RouteSettings(name: '/active-incident'),
                                     ),
@@ -245,6 +250,7 @@ class GlobalFabOverlay extends StatelessWidget {
                                     incidentId: activeId,
                                     initialLat: SessionService().activeIncidentLat ?? 0.0,
                                     initialLng: SessionService().activeIncidentLng ?? 0.0,
+                                    isCreatorOverride: false, // This is only shown for volunteers
                                   ),
                                   settings: const RouteSettings(name: '/active-incident'),
                                 ),

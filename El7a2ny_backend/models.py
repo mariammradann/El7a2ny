@@ -514,6 +514,56 @@ class SponsorRequest(models.Model):
         return f"SponsorRequest {self.request_id} - {self.company_name} ({self.status})"
 
 
+class Sponsor(models.Model):
+    CATEGORY_CHOICES = [
+        ("cars", "Cars & Roadside"),
+        ("insurance", "Insurance"),
+        ("medical", "Medical"),
+    ]
+    
+    SPONSORSHIP_LEVEL_CHOICES = [
+        ("bronze", "Bronze"),
+        ("silver", "Silver"),
+        ("gold", "Gold"),
+        ("platinum", "Platinum"),
+    ]
+
+    sponsor_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    company_type = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("active", "Active"),
+            ("inactive", "Inactive"),
+            ("pending", "Pending"),
+        ],
+        default="active",
+    )
+    contract_date = models.DateField(null=True, blank=True)
+    contact_email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    website = models.URLField(null=True, blank=True)
+    sponsorship_level = models.CharField(
+        max_length=20,
+        choices=SPONSORSHIP_LEVEL_CHOICES,
+        default="silver",
+    )
+    admin_id = models.UUIDField(null=True, blank=True)  # Admin who created/manages this
+    incident_id = models.UUIDField(null=True, blank=True)  # Link to incident if applicable
+    training_id = models.UUIDField(null=True, blank=True)  # Link to training if applicable
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'ems_schema"."sponsors'
+        ordering = ["-created_at"]
+        managed = True
+
+    def __str__(self):
+        return f"Sponsor: {self.name} ({self.company_type})"
+
+
 class VolunteerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="volunteer_profile")
     is_online = models.BooleanField(default=False)

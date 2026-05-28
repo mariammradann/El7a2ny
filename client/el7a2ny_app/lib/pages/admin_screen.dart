@@ -209,7 +209,7 @@ class _AdminScreenState extends State<AdminScreen>
   Future<void> _loadIncidents() async {
     try {
       setState(() { _loadingIncidents = true; _incidentsError = null; });
-      final data = await ApiService.fetchAdminIncidents();
+      final data = await ApiService.fetchAdminIncidents(adminUserId: _adminId);
       if (mounted) setState(() { _incidents = data; _loadingIncidents = false; });
     } catch (e) {
       if (mounted) setState(() { _incidentsError = e.toString(); _loadingIncidents = false; });

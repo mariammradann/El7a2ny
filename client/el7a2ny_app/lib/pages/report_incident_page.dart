@@ -252,6 +252,7 @@ class _ReportIncidentPageState extends State<ReportIncidentPage> {
               incidentId: incidentId,
               initialLat: widget.latitude,
               initialLng: widget.longitude,
+              isCreatorOverride: true, // This user just created the incident
             ),
             settings: const RouteSettings(name: '/active-incident'),
           ),

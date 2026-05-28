@@ -172,6 +172,7 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
             incidentId: incidentId,
             initialLat: _currentPosition?.latitude,
             initialLng: _currentPosition?.longitude,
+            isCreatorOverride: true, // This user just created the incident
           ),
           settings: const RouteSettings(name: '/active-incident'),
         ),

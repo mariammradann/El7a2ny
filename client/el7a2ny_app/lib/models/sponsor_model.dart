@@ -1,68 +1,63 @@
 enum SponsorCategory { cars, insurance, medical }
 
 class SponsorModel {
-  final int id;
+  final String sponsorId;
   final SponsorCategory category;
-  final String title;
-  final String rating;
-  final String badgeLabel;
-  final String description;
-  final List<String> services;
+  final String name;
   final String phone;
-  final String branch;
-  final bool isFeatured;
+  final String contactEmail;
+  final String sponsorshipLevel;
+  final String status;
+  final String? website;
 
   const SponsorModel({
-    required this.id,
+    required this.sponsorId,
     required this.category,
-    required this.title,
-    required this.rating,
-    required this.badgeLabel,
-    required this.description,
-    required this.services,
+    required this.name,
     required this.phone,
-    required this.branch,
-    this.isFeatured = false,
+    required this.contactEmail,
+    required this.sponsorshipLevel,
+    required this.status,
+    this.website,
   });
 
   factory SponsorModel.fromJson(Map<String, dynamic> json) {
-    final rawCategory = (json['category'] ?? '').toString().toLowerCase();
-    final category = switch (rawCategory) {
-      'car' || 'cars' => SponsorCategory.cars,
+    // Map company_type from backend to SponsorCategory enum
+    final rawType = (json['company_type'] ?? '').toString().toLowerCase();
+    final category = switch (rawType) {
+      'cars' || 'car' => SponsorCategory.cars,
       'insurance' => SponsorCategory.insurance,
       'medical' || 'health' => SponsorCategory.medical,
       _ => SponsorCategory.cars,
     };
+
     return SponsorModel(
-      id: json['id'] as int,
+      sponsorId: json['sponsor_id']?.toString() ?? '',
       category: category,
-      title: json['title'] as String,
-      rating: json['rating']?.toString() ?? '0.0',
-      badgeLabel: json['badge_label'] as String,
-      description: json['description'] as String,
-      services: List<String>.from(json['services'] ?? []),
-      phone: json['phone'] as String,
-      branch: json['branch'] as String,
-      isFeatured: json['is_featured'] as bool? ?? false,
+      name: json['name']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      contactEmail: json['contact_email']?.toString() ?? '',
+      sponsorshipLevel: json['sponsorship_level']?.toString() ?? 'silver',
+      status: json['status']?.toString() ?? 'active',
+      website: json['website']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'category': switch (category) {
+      'sponsor_id': sponsorId,
+      'company_type': switch (category) {
         SponsorCategory.cars => 'cars',
         SponsorCategory.insurance => 'insurance',
         SponsorCategory.medical => 'medical',
       },
-      'title': title,
-      'rating': rating,
-      'badge_label': badgeLabel,
-      'description': description,
-      'services': services,
+      'name': name,
       'phone': phone,
-      'branch': branch,
-      'is_featured': isFeatured,
+      'contact_email': contactEmail,
+      'sponsorship_level': sponsorshipLevel,
+      'status': status,
+      'website': website,
     };
   }
 }
+

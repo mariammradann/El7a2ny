@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:math' as math;
+import 'package:geolocator/geolocator.dart';
 import '../core/localization/app_strings.dart';
 import '../models/alert_model.dart';
 import '../services/api_service.dart';
@@ -22,12 +23,17 @@ class ActiveIncidentTrackingScreen extends StatefulWidget {
   final String incidentId;
   final double? initialLat;
   final double? initialLng;
+  /// Pass `true` if the current user is the one who created the report.
+  /// Pass `false` if the current user is a volunteer responding to it.
+  /// If null, falls back to session/API detection.
+  final bool? isCreatorOverride;
 
   const ActiveIncidentTrackingScreen({
     super.key,
     required this.incidentId,
     this.initialLat,
     this.initialLng,
+    this.isCreatorOverride,
   });
 
   @override
@@ -41,19 +47,23 @@ class _ActiveIncidentTrackingScreenState
   late LatLng _incidentLocation;
   List<Map<String, dynamic>> _volunteers = [];
   Timer? _pollingTimer;
+  Timer? _volunteerLocationTimer;
+  int _previousVolunteerCount = 0;
   AlertModel? _alertDetails;
-  bool _loadingDetails = true;
   bool _hasShownCompletionPopup = false;
   bool _canceling = false;
   bool _dangerEnding = false;
 
   bool get _isCreator {
-    // Check local session state first for immediate UI rendering
+    // Highest priority: explicit override passed when navigating to this screen
+    if (widget.isCreatorOverride != null) return widget.isCreatorOverride!;
+
+    // Second: check session role set right before navigation
     if (SessionService().incidentRole == IncidentRole.volunteer) return false;
     if (SessionService().incidentRole == IncidentRole.reporter) return true;
 
-    // Fallback to API data if session role is not set
-    if (_alertDetails == null) return true;
+    // Only use API data once loaded — do NOT default to creator during loading
+    if (_alertDetails == null) return false; // neutral: show loading skeleton
     if (_alertDetails!.isMyAlert) return true;
     // Guests are always creators because volunteers must be logged in
     if (AuthTokenStore.userId == null || AuthTokenStore.userId == 'guest')
@@ -74,12 +84,68 @@ class _ActiveIncidentTrackingScreenState
       _fetchIncidentDetails();
       _fetchResponders();
     });
+    if (!_isCreator) {
+      _startVolunteerLocationUpdates();
+    }
   }
 
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    _volunteerLocationTimer?.cancel();
     super.dispose();
+  }
+
+  void _startVolunteerLocationUpdates() {
+    if (_volunteerLocationTimer != null) return;
+    _sendVolunteerLocation();
+    _volunteerLocationTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      _sendVolunteerLocation();
+    });
+  }
+
+  Future<void> _sendVolunteerLocation() async {
+    if (!mounted) return;
+    if (_isCreator) {
+      _volunteerLocationTimer?.cancel();
+      _volunteerLocationTimer = null;
+      return;
+    }
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      await ApiService.updateResponderLocation(
+        widget.incidentId,
+        pos.latitude,
+        pos.longitude,
+      );
+      debugPrint('Volunteer live location updated: ${pos.latitude}, ${pos.longitude}');
+    } catch (e) {
+      debugPrint('Error updating volunteer live location: $e');
+    }
+  }
+
+  void _fitMapCamera() {
+    if (!mounted || _volunteers.isEmpty) return;
+    try {
+      final validVolunteers = _volunteers.where((v) => v['lat'] != null && v['lng'] != null);
+      final points = [
+        _incidentLocation,
+        ...validVolunteers.map((v) => LatLng(v['lat'] as double, v['lng'] as double)),
+      ];
+      final bounds = LatLngBounds.fromPoints(points);
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(50.0),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error fitting map camera: $e');
+    }
   }
 
   Future<void> _fetchResponders() async {
@@ -88,23 +154,36 @@ class _ActiveIncidentTrackingScreenState
         widget.incidentId,
       );
       if (!mounted) return;
+      
+      final updatedVolunteers = responders
+          .map(
+            (r) => {
+              'id': r['id'],
+              'name': r['name'] ?? 'Volunteer',
+              'phone': r['phone'] ?? '',
+              'lat': r['lat'] != null ? (r['lat'] as num).toDouble() : null,
+              'lng': r['lng'] != null ? (r['lng'] as num).toDouble() : null,
+              'eta': (r['lat'] != null && r['lng'] != null)
+                  ? _calculateEta(r['lat'], r['lng'])
+                  : null,
+              'status': 'en_route',
+              'badges': r['badges'] ?? [],
+            },
+          )
+          .toList();
+
       setState(() {
-        _volunteers = responders
-            .where((r) => r['lat'] != null && r['lng'] != null)
-            .map(
-              (r) => {
-                'id': r['id'],
-                'name': r['name'] ?? 'Volunteer',
-                'phone': r['phone'] ?? '',
-                'lat': (r['lat'] as num).toDouble(),
-                'lng': (r['lng'] as num).toDouble(),
-                'eta': _calculateEta(r['lat'], r['lng']),
-                'status': 'en_route',
-                'badges': r['badges'] ?? [],
-              },
-            )
-            .toList();
+        _volunteers = updatedVolunteers;
       });
+
+      if (_volunteers.length > _previousVolunteerCount) {
+        _previousVolunteerCount = _volunteers.length;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _fitMapCamera();
+        });
+      } else {
+        _previousVolunteerCount = _volunteers.length;
+      }
     } catch (e) {
       debugPrint('Error fetching responders: $e');
     }
@@ -136,8 +215,11 @@ class _ActiveIncidentTrackingScreenState
       if (mounted && details != null) {
         setState(() {
           _alertDetails = details;
-          _loadingDetails = false;
         });
+
+        if (!_isCreator) {
+          _startVolunteerLocationUpdates();
+        }
 
         // If the incident is resolved or finished, clear it from session
         if (details.status.toLowerCase() == 'resolved' ||
@@ -660,62 +742,78 @@ class _ActiveIncidentTrackingScreenState
                     ),
                   ),
                   // Responder pins
-                  ..._volunteers.map(
-                    (v) => Marker(
-                      point: LatLng(v['lat'], v['lng']),
-                      width: 60,
-                      height: 60,
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade700,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (v['badges'] != null && (v['badges'] as List).isNotEmpty) ...[
-                                  const Icon(
-                                    Icons.military_tech_rounded,
-                                    color: Color(0xFFFFD700),
-                                    size: 11,
-                                  ),
-                                  const SizedBox(width: 2),
-                                ],
-                                Text(
-                                  v['name'].toString().split(' ').first,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                  ..._volunteers
+                      .where((v) => v['lat'] != null && v['lng'] != null)
+                      .map(
+                        (v) => Marker(
+                          point: LatLng(v['lat'] as double, v['lng'] as double),
+                          width: 60,
+                          height: 60,
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
                                 ),
-                              ],
-                            ),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade700,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (v['badges'] != null && (v['badges'] as List).isNotEmpty) ...[
+                                      const Icon(
+                                        Icons.military_tech_rounded,
+                                        color: Color(0xFFFFD700),
+                                        size: 11,
+                                      ),
+                                      const SizedBox(width: 2),
+                                    ],
+                                    Text(
+                                      v['name'].toString().split(' ').first,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.blue.withValues(alpha: 0.2),
+                                ),
+                                child: const Icon(
+                                  Icons.person_pin_circle_rounded,
+                                  color: Colors.blue,
+                                  size: 34,
+                                ),
+                              ),
+                            ],
                           ),
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.blue.withValues(alpha: 0.2),
-                            ),
-                            child: const Icon(
-                              Icons.person_pin_circle_rounded,
-                              color: Colors.blue,
-                              size: 34,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
                 ],
               ),
             ],
+          ),
+
+          // ── Recenter Map Button ──
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 80,
+            right: isAr ? null : 16,
+            left: isAr ? 16 : null,
+            child: FloatingActionButton.small(
+              heroTag: 'recenter_map',
+              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+              foregroundColor: Theme.of(context).primaryColor,
+              onPressed: _fitMapCamera,
+              child: const Icon(Icons.my_location_rounded),
+            ),
           ),
 
           // ── Top bar ──
@@ -811,9 +909,17 @@ class _ActiveIncidentTrackingScreenState
 
 
 
-                      if (_alertDetails != null && !_isCreator) ...[
+                      if (!_isCreator) ...[ 
                         // ── Volunteer View ──
-                        // Incident Details
+                        // Show loading placeholder if incident details not loaded yet
+                        if (_alertDetails == null) ...[
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                        ] else ...[
                         Row(
                           children: [
                             Container(
@@ -1293,6 +1399,7 @@ class _ActiveIncidentTrackingScreenState
                             ),
                           ],
                         ),
+                        ], // end of else (alertDetails != null) inner block
                       ] else ...[
                           // ── Creator View ──
                           // Volunteers Header
@@ -1449,9 +1556,13 @@ class _ActiveIncidentTrackingScreenState
                                       ],
                                     ),
                                     subtitle: Text(
-                                      isAr
-                                          ? 'يصل خلال ${v['eta']}'
-                                          : 'ETA: ${v['eta']}',
+                                      v['eta'] != null
+                                          ? (isAr
+                                              ? 'يصل خلال ${v['eta']}'
+                                              : 'ETA: ${v['eta']}')
+                                          : (isAr
+                                              ? 'جاري تحديد الموقع...'
+                                              : 'Locating...'),
                                     ),
                                     trailing:
                                         v['phone'] != null &&

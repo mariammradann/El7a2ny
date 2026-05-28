@@ -26,7 +26,9 @@ class _SponsorsPageState extends State<SponsorsPage> {
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _load();
+    });
   }
 
   Future<void> _load() async {
@@ -96,8 +98,9 @@ class _SponsorsPageState extends State<SponsorsPage> {
                     if (SessionService().isAdmin) ...[
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddSponsorPage()));
+                          onPressed: () async {
+                            final added = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const AddSponsorPage()));
+                            if (added == true) _load();
                           },
                           icon: const Icon(Icons.add_business_rounded, size: 18),
                           label: Text(loc.addSponsor, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, fontFamily: 'NotoSansArabic')),
@@ -174,11 +177,12 @@ class _SponsorsPageState extends State<SponsorsPage> {
                     }).map((s) => Padding(
                       padding: const EdgeInsets.only(bottom: 20),
                       child: _SponsorCard(
-                        title: s.title,
-                        badge: s.badgeLabel,
-                        imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=128&h=128&auto=format&fit=crop', // fallback image
-                        services: s.services,
+                        title: s.name,
+                        badge: _levelLabel(s.sponsorshipLevel),
+                        imageUrl: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=128&h=128&auto=format&fit=crop',
                         phone: s.phone,
+                        contactEmail: s.contactEmail,
+                        website: s.website,
                       ),
                     )),
                   ],
@@ -189,6 +193,16 @@ class _SponsorsPageState extends State<SponsorsPage> {
         ),
       ),
     );
+  }
+
+  String _levelLabel(String level) {
+    return switch (level.toLowerCase()) {
+      'bronze' => '🥉 Bronze',
+      'silver' => '🥈 Silver',
+      'gold' => '🥇 Gold',
+      'platinum' => '💎 Platinum',
+      _ => level,
+    };
   }
 }
 
@@ -226,10 +240,10 @@ class _CategoryChip extends StatelessWidget {
 }
 
 class _SponsorCard extends StatelessWidget {
-  final String title, badge, imageUrl, phone;
-  final List<String> services;
+  final String title, badge, imageUrl, phone, contactEmail;
+  final String? website;
 
-  const _SponsorCard({required this.title, required this.badge, required this.imageUrl, required this.phone, required this.services});
+  const _SponsorCard({required this.title, required this.badge, required this.imageUrl, required this.phone, required this.contactEmail, this.website});
 
   @override
   Widget build(BuildContext context) {
@@ -292,10 +306,7 @@ class _SponsorCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(loc.servicesProvided, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, fontFamily: 'NotoSansArabic')),
-                const SizedBox(height: 12),
-                Wrap(spacing: 8, runSpacing: 8, children: services.map((s) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: theme.colorScheme.onSurface.withValues(alpha: 0.04), borderRadius: BorderRadius.circular(12)), child: Text(s, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.7), fontWeight: FontWeight.bold)))).toList()),
-                const SizedBox(height: 20),
+                // Phone
                 GestureDetector(
                   onTap: () {},
                   child: Container(
@@ -305,13 +316,41 @@ class _SponsorCard extends StatelessWidget {
                       children: [
                         Icon(Icons.phone_rounded, color: theme.primaryColor, size: 20),
                         const SizedBox(width: 12),
-                        Text(phone, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                        Text(phone.isNotEmpty ? phone : loc.isAr ? 'غير متاح' : 'N/A', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
                         const Spacer(),
                         Text(loc.callNowBtn, style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w900, fontSize: 13, fontFamily: 'NotoSansArabic')),
                       ],
                     ),
                   ),
                 ),
+                if (contactEmail.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(18), border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1))),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        Icon(Icons.email_rounded, color: theme.primaryColor, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(contactEmail, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis)),
+                      ],
+                    ),
+                  ),
+                ],
+                if (website != null && website!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(18), border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1))),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        Icon(Icons.language_rounded, color: theme.primaryColor, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(website!, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis)),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

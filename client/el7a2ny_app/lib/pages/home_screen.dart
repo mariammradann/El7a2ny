@@ -276,6 +276,11 @@ class _HomeScreenState extends State<HomeScreen>
                       incidentId: session.activeIncidentId!,
                       initialLat: session.activeIncidentLat,
                       initialLng: session.activeIncidentLng,
+                      isCreatorOverride: session.incidentRole == IncidentRole.reporter
+                          ? true
+                          : session.incidentRole == IncidentRole.volunteer
+                              ? false
+                              : null,
                     ),
                   ),
                 );
