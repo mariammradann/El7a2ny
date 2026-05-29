@@ -1675,11 +1675,24 @@ def get_latest_sensor_reading(request):
             }
         )
 
+    active_incident_id = None
+    if reading.is_alert:
+        from .models import Incident
+        incident = Incident.objects.filter(
+            user__user_id=user_id,
+            status__in=["active", "critical"],
+            category="fire"
+        ).order_by("-created_at").first()
+        if incident:
+            active_incident_id = str(incident.incident_id)
+
     return Response(
         {
             "temperature": reading.temperature,
             "humidity": reading.humidity,
             "is_alert": reading.is_alert,
+            "alert_level": reading.alert_level,
+            "incident_id": active_incident_id,
             "timestamp": reading.created_at.isoformat(),
         }
     )
@@ -1743,27 +1756,6 @@ def fetch_sensors(request):
         }
         sensors.append(sensor_data)
         sensor_id += 1
-
-    # If no real sensors, return mock data for testing
-    if not sensors:
-        sensors = [
-            {
-                "id": 1,
-                "type": "heat",
-                "value": "28.5",
-                "unit": "°C",
-                "status": "normal",
-                "alert_level": "NORMAL",
-                "alert_label": "🟢 NORMAL",
-                "is_alert": False,
-                "humidity": 0,
-                "user_id": "test-user-id",
-                "user_name": "Test Sensor",
-                "lat": 30.0444,
-                "lng": 31.2357,
-                "updated_at": timezone.now().isoformat(),
-            }
-        ]
 
     return Response(sensors)
 
@@ -2814,33 +2806,57 @@ def report_fake_incident(request, incident_id):
         incident.status = "cancelled"
         incident.save()
         
-        # 2. Ban the reporter
+        reported_by = request.data.get("reported_by")
         reporter = incident.user
-        reporter.status = "banned"
-        reporter.banned_until = timezone.now() + timedelta(days=3)
-        reporter.save()
+        is_self_cancel = str(reported_by) == str(reporter.user_id) if reported_by else False
         
-        # 3. Log notification for the admin
-        action_msg = f"البلاغ #{str(incident.incident_id)[:8]} (حريق/طوارئ) تم حظره وإلغاؤه، وتم حظر المستخدم {reporter.name} (الهاتف: {reporter.phone_number}) للإبلاغ الكاذب."
-        AdminLog.objects.create(action=action_msg)
-        
-        # 4. Create chat notification
-        chat = IncidentChat.objects.filter(incident_id=incident.incident_id).first()
-        if chat:
-            ChatMessage.objects.create(
-                chat=chat,
-                sender_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
-                sender_name="System",
-                sender_type="system",
-                text=f"تم إلغاء البلاغ وحظر صاحب البلاغ ({reporter.name}) بسبب الإبلاغ عن بلاغ كاذب من قبل متطوع.",
-            )
+        if is_self_cancel:
+            # User is cancelling their own false alarm (e.g. from a sensor)
+            action_msg = f"المستخدم {reporter.name} قام بإلغاء الإنذار التلقائي (إنذار كاذب) للبلاغ #{str(incident.incident_id)[:8]}."
+            AdminLog.objects.create(action=action_msg)
             
-        print(f"[ADMIN ALERT] {action_msg}")
-        
-        return Response({
-            "message": "Incident cancelled, reporter banned, and admin notified.",
-            "status": "success"
-        }, status=status.HTTP_200_OK)
+            chat = IncidentChat.objects.filter(incident_id=incident.incident_id).first()
+            if chat:
+                ChatMessage.objects.create(
+                    chat=chat,
+                    sender_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                    sender_name="System",
+                    sender_type="system",
+                    text="تم إلغاء البلاغ بواسطة المستخدم (إنذار كاذب).",
+                )
+            
+            return Response({
+                "message": "Incident cancelled by user.",
+                "status": "success"
+            }, status=status.HTTP_200_OK)
+            
+        else:
+            # 2. Ban the reporter (Reported by someone else)
+            reporter.status = "banned"
+            reporter.banned_until = timezone.now() + timedelta(days=3)
+            reporter.save()
+            
+            # 3. Log notification for the admin
+            action_msg = f"البلاغ #{str(incident.incident_id)[:8]} (حريق/طوارئ) تم حظره وإلغاؤه، وتم حظر المستخدم {reporter.name} (الهاتف: {reporter.phone_number}) للإبلاغ الكاذب."
+            AdminLog.objects.create(action=action_msg)
+            
+            # 4. Create chat notification
+            chat = IncidentChat.objects.filter(incident_id=incident.incident_id).first()
+            if chat:
+                ChatMessage.objects.create(
+                    chat=chat,
+                    sender_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
+                    sender_name="System",
+                    sender_type="system",
+                    text=f"تم إلغاء البلاغ وحظر صاحب البلاغ ({reporter.name}) بسبب الإبلاغ عن بلاغ كاذب من قبل متطوع.",
+                )
+                
+            print(f"[ADMIN ALERT] {action_msg}")
+            
+            return Response({
+                "message": "Incident cancelled, reporter banned, and admin notified.",
+                "status": "success"
+            }, status=status.HTTP_200_OK)
         
     except Exception as e:
         logger.error(f"Error in report_fake_incident: {e}")

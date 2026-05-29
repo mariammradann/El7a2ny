@@ -39,8 +39,10 @@ def is_process_running(process_name="python", script_name="Face_recognition_insi
     try:
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
-                cmdline = ' '.join(proc.info.get('cmdline', []))
-                if process_name in proc.info.get('name', '').lower() and script_name in cmdline:
+                cmdline_list = proc.info.get('cmdline') or []
+                cmdline = ' '.join(cmdline_list)
+                name = proc.info.get('name') or ''
+                if process_name in name.lower() and script_name in cmdline:
                     return True
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
@@ -124,8 +126,10 @@ def stop_face_recognition():
         
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             try:
-                cmdline = ' '.join(proc.info.get('cmdline', []))
-                if 'python' in proc.info.get('name', '').lower() and 'Face_recognition_insightface' in cmdline:
+                cmdline_list = proc.info.get('cmdline') or []
+                cmdline = ' '.join(cmdline_list)
+                name = proc.info.get('name') or ''
+                if 'python' in name.lower() and 'Face_recognition_insightface' in cmdline:
                     proc.kill()
                     killed_any = True
                     logger.info(f"Killed face recognition process with PID: {proc.pid}")

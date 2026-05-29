@@ -11,6 +11,7 @@ from .views import (
     get_incident_responders,
     get_latest_sensor_reading,
     receive_temperature,
+    fetch_sensors,
     register_user_api,
     get_device_status,
     respond_to_alert,
@@ -165,6 +166,7 @@ urlpatterns = [
     path("api/auth/password/change/", change_password_api),
     path("api/sensor/temperature/", receive_temperature, name="receive_temperature"),
     path("api/sensor/latest/", get_latest_sensor_reading, name="latest_sensor"),
+    path("api/sensors/", fetch_sensors, name="fetch_sensors"),
     path("api/ratings/user/", submit_user_rating, name="submit_user_rating"),
     path(
         "api/ratings/volunteer/",

@@ -487,9 +487,13 @@ class ApiService {
 
   static Future<bool> reportFakeIncident(String incidentId) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
       final response = await http.post(
         Uri.parse("$baseUrl/api/incidents/$incidentId/report-fake/"),
         headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"reported_by": userId}),
       );
       return response.statusCode == 200;
     } catch (e) {

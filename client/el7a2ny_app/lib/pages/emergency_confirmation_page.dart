@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import '../core/localization/app_strings.dart';
 
 class EmergencyConfirmationPage extends StatefulWidget {
-  const EmergencyConfirmationPage({super.key});
+  final String incidentId;
+  final String category;
+
+  const EmergencyConfirmationPage({
+    super.key,
+    this.incidentId = '',
+    this.category = 'fire',
+  });
 
   @override
   State<EmergencyConfirmationPage> createState() => _EmergencyConfirmationPageState();
@@ -26,9 +33,25 @@ class _EmergencyConfirmationPageState extends State<EmergencyConfirmationPage> w
     super.dispose();
   }
 
+  String _getResponseType(AppStrings loc) {
+    switch (widget.category) {
+      case 'fire':
+        return loc.isAr ? 'سيارة إطفاء' : 'Fire Truck';
+      case 'gas_leak':
+        return loc.isAr ? 'فريق طوارئ الغاز' : 'Gas Emergency Team';
+      case 'medical':
+        return loc.isAr ? 'سيارة إسعاف' : 'Ambulance';
+      default:
+        return loc.isAr ? 'فريق طوارئ' : 'Emergency Team';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = context.loc;
+    final shortId = widget.incidentId.isNotEmpty
+        ? 'EMS-${widget.incidentId.substring(0, 8).toUpperCase()}'
+        : 'EMS-PENDING';
 
     return Scaffold(
       backgroundColor: const Color(0xFFE61717), // Emergency red
@@ -91,7 +114,7 @@ class _EmergencyConfirmationPageState extends State<EmergencyConfirmationPage> w
                 children: [
                    _buildInfoRow(
                     label: loc.isAr ? 'تفاصيل الاستجابة :' : 'Response Details:',
-                    value: loc.isAr ? 'سيارة إسعاف' : 'Ambulance',
+                    value: _getResponseType(loc),
                     isTitle: true,
                   ),
                   const SizedBox(height: 16),
@@ -106,7 +129,7 @@ class _EmergencyConfirmationPageState extends State<EmergencyConfirmationPage> w
                   ),
                    _buildInfoRow(
                     label: loc.isAr ? 'رقم البلاغ :' : 'Incident ID:',
-                    value: 'EMS-23492',
+                    value: shortId,
                   ),
                 ],
               ),

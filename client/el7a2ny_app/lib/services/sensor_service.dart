@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/global_fab_overlay.dart';
+import '../pages/emergency_confirmation_page.dart';
 import 'api_service.dart';
 
 class SensorMonitorService extends ChangeNotifier {
@@ -61,7 +62,10 @@ class SensorMonitorService extends ChangeNotifier {
 
       notifyListeners();
       onUpdate?.call();
-      if (lastIsAlert && !wasAlert) onAlert?.call();
+      if (lastIsAlert && !wasAlert) {
+        onAlert?.call();
+        _showGlobalSensorDialog(data);
+      }
     } catch (e) {
       debugPrint('Sensor poll error: $e');
       _isSensorConnected = false;
@@ -84,6 +88,106 @@ class SensorMonitorService extends ChangeNotifier {
     } catch (e) {
       debugPrint('Camera alert poll error: $e');
     }
+  }
+
+  void _showGlobalSensorDialog(Map<String, dynamic> alertData) {
+    final context = GlobalFabController.navigatorKey.currentContext;
+    if (context == null) return;
+
+    final String incidentId = alertData['incident_id'] ?? '';
+    final double temp = (alertData['temperature'] as num).toDouble();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          elevation: 16,
+          backgroundColor: Theme.of(context).cardColor,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: const Color(0xFFE61717).withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: const Icon(Icons.local_fire_department_rounded, color: Color(0xFFE61717), size: 40),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'تنبيه: ارتفاع درجة الحرارة!', // Alert: High Temperature!
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFFE61717), fontFamily: 'NotoSansArabic'),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '${temp.toStringAsFixed(1)} °C',
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32, color: Colors.white),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'هل هذا إنذار حقيقي أم كاذب؟', // Is this a real or false alarm?
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, fontFamily: 'NotoSansArabic'),
+                ),
+                const SizedBox(height: 24),
+                
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          if (incidentId.isNotEmpty) {
+                            await ApiService.reportFakeIncident(incidentId);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green,
+                          side: const BorderSide(color: Colors.green, width: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text('إنذار كاذب', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          if (incidentId.isNotEmpty) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => EmergencyConfirmationPage(
+                                  incidentId: incidentId,
+                                  category: 'fire',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE61717),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                        child: const Text('أكد الطوارئ', style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showGlobalCameraDialog(Map<String, dynamic> alertData) {

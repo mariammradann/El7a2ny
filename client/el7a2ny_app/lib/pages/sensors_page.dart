@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sensor_model.dart';
 import '../services/api_service.dart';
 import '../core/localization/app_strings.dart';
@@ -415,6 +416,8 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
   late Animation<double> _pulseAnim;
   int _secondsLeft = 135; // 2:15
   Timer? _timer;
+  bool _submitting = false;
+  String _activeIncidentId = '';
 
   @override
   void initState() {
@@ -424,16 +427,55 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
       ..repeat(reverse: true);
     _pulseAnim = Tween(begin: 1.0, end: 1.1).animate(
         CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
-    _startTimer();
+    
+    _syncWithBackend();
+  }
+
+  Future<void> _syncWithBackend() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      if (userId == null) return;
+
+      final data = await ApiService.getLatestSensorReading(userId);
+      if (data['is_alert'] == true && data['incident_id'] != null) {
+        _activeIncidentId = data['incident_id'];
+        
+        final timestampStr = data['timestamp'];
+        if (timestampStr != null) {
+          final createdAt = DateTime.parse(timestampStr);
+          final diff = DateTime.now().difference(createdAt).inSeconds;
+          final remaining = 135 - diff;
+          
+          if (mounted) {
+            setState(() {
+              _secondsLeft = remaining > 0 ? remaining : 0;
+            });
+            if (_secondsLeft <= 0) {
+              _confirmEmergency(context.loc);
+            } else {
+              _startTimer();
+            }
+          }
+        }
+      } else {
+        _startTimer();
+      }
+    } catch (e) {
+      _startTimer();
+    }
   }
 
   void _startTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_secondsLeft > 0) {
         if (mounted) setState(() => _secondsLeft--);
       } else {
         _timer?.cancel();
-        // Trigger automated dispatch here in the future
+        if (mounted) {
+          _confirmEmergency(context.loc);
+        }
       }
     });
   }
@@ -449,6 +491,69 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
     final mins = seconds ~/ 60;
     final secs = seconds % 60;
     return '$mins:${secs.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _confirmEmergency(AppStrings loc) async {
+    setState(() => _submitting = true);
+    _timer?.cancel();
+
+    try {
+      final category = widget.sensor.type == 'gas' ? 'gas_leak' : 'fire';
+      String incidentIdToUse = _activeIncidentId;
+
+      if (incidentIdToUse.isEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        final userId = prefs.getString('user_id');
+        if (userId == null) throw Exception('User not logged in');
+
+        final description = widget.sensor.type == 'gas'
+            ? '${loc.isAr ? "تسريب غاز مؤكد" : "Confirmed gas leak"} - ${widget.sensor.value} ${widget.sensor.unit}'
+            : '${loc.isAr ? "حريق مؤكد" : "Confirmed fire"} - ${widget.sensor.value} ${widget.sensor.unit}';
+
+        final result = await ApiService.sendEmergencyAlertWithMedia(
+          userId: userId,
+          type: category,
+          lat: widget.sensor.lat,
+          lng: widget.sensor.lng,
+          description: description,
+          totalVolunteers: 0,
+          evidenceItems: [],
+          isForMe: true,
+        );
+        incidentIdToUse = result['incident_id']?.toString() ?? '';
+      }
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EmergencyConfirmationPage(
+            incidentId: incidentIdToUse,
+            category: category,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.isAr ? 'فشل إرسال البلاغ: $e' : 'Failed to send report: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _falseAlarm() async {
+    _timer?.cancel();
+    if (_activeIncidentId.isNotEmpty) {
+      setState(() => _submitting = true);
+      await ApiService.reportFakeIncident(_activeIncidentId);
+      if (!mounted) return;
+    }
+    widget.onReset();
   }
 
   @override
@@ -587,7 +692,7 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
                 width: double.infinity,
                 height: 60,
                 child: FilledButton(
-                  onPressed: widget.onReset,
+                  onPressed: _submitting ? null : _falseAlarm,
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
@@ -606,20 +711,20 @@ class _SensorEmergencyPageState extends State<SensorEmergencyPage>
                 width: double.infinity,
                 height: 60,
                 child: FilledButton(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const EmergencyConfirmationPage()));
-                  },
+                  onPressed: _submitting ? null : () => _confirmEmergency(loc),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFFDC800), // Yellow
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20)),
                   ),
-                  child: Text(loc.isAr ? 'أكد الطوارئ - بلغ دلوقتى !' : "Confirm Emergency - Dispatch!",
-                      style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          fontFamily: 'NotoSansArabic')),
+                  child: _submitting
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.black))
+                      : Text(loc.isAr ? 'أكد الطوارئ - بلغ دلوقتى !' : "Confirm Emergency - Dispatch!",
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'NotoSansArabic')),
                 ),
               ),
               const SizedBox(height: 30),
