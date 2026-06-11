@@ -496,3 +496,89 @@ class TrainingCourseSerializer(serializers.ModelSerializer):
             return None
         progress = VolunteerCourseProgress.objects.filter(user=user_id, course=obj).first()
         return progress.completed_at if progress else None
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════ HEALTH MONITORING SERIALIZERS ═════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+
+from .models import HealthMetric, HealthBaseline, HealthRiskScore, HealthAnomaly, HealthEmergencyReport
+
+
+class HealthMetricSerializer(serializers.ModelSerializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source="user", required=True
+    )
+
+    class Meta:
+        model = HealthMetric
+        fields = [
+            "metric_id", "user_id", "metric_type", "value", "unit",
+            "source", "recorded_at", "synced_at", "metadata",
+        ]
+        read_only_fields = ["metric_id", "synced_at"]
+
+
+class HealthMetricBatchSerializer(serializers.Serializer):
+    """Accepts a batch of health metrics from the app"""
+    user_id = serializers.UUIDField()
+    metrics = serializers.ListField(child=serializers.DictField(), min_length=1)
+
+
+class HealthBaselineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HealthBaseline
+        fields = [
+            "baseline_id", "metric_type", "mean_value", "std_value",
+            "min_value", "max_value", "sample_count", "is_mature", "last_updated",
+        ]
+        read_only_fields = ["baseline_id", "last_updated"]
+
+
+class HealthRiskScoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HealthRiskScore
+        fields = [
+            "score_id", "score", "risk_level", "factors",
+            "explanation", "computed_at",
+        ]
+        read_only_fields = ["score_id", "computed_at"]
+
+
+class HealthAnomalySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HealthAnomaly
+        fields = [
+            "anomaly_id", "risk_score", "current_metrics",
+            "baseline_comparison", "factors", "explanation",
+            "status", "user_response", "responded_at", "created_at",
+        ]
+        read_only_fields = ["anomaly_id", "created_at"]
+
+
+class HealthEmergencyReportSerializer(serializers.ModelSerializer):
+    anomaly_id = serializers.PrimaryKeyRelatedField(
+        queryset=HealthAnomaly.objects.all(), source="anomaly",
+        required=False, allow_null=True
+    )
+
+    class Meta:
+        model = HealthEmergencyReport
+        fields = [
+            "report_id", "anomaly_id", "risk_score", "metrics_snapshot",
+            "location_lat", "location_lng", "emergency_contacts_notified",
+            "status", "created_at",
+        ]
+        read_only_fields = ["report_id", "created_at"]
+
+
+class HealthDashboardSerializer(serializers.Serializer):
+    """Composite serializer aggregating all dashboard data"""
+    latest_metrics = serializers.DictField()
+    baselines = HealthBaselineSerializer(many=True)
+    current_risk_score = HealthRiskScoreSerializer(allow_null=True)
+    risk_score_history = HealthRiskScoreSerializer(many=True)
+    recent_anomalies = HealthAnomalySerializer(many=True)
+    recent_emergency_reports = HealthEmergencyReportSerializer(many=True)
+    profile_maturity = serializers.DictField()  # days_collected, is_mature, progress_pct
+

@@ -74,6 +74,13 @@ from .views import (
     stranger_detected_api,
     pending_alert_api,
     respond_alert_api,
+    health_sync_metrics,
+    health_dashboard,
+    health_risk_score,
+    health_anomalies,
+    health_anomaly_respond,
+    health_emergency_reports,
+    health_baselines,
 )
 
 # 1. إعداد الـ Router
@@ -231,6 +238,15 @@ urlpatterns = [
     path("api/security/camera/stranger-detected/", stranger_detected_api, name="stranger-detected"),
     path("api/security/camera/pending-alert/", pending_alert_api, name="pending-alert"),
     path("api/security/camera/respond-alert/", respond_alert_api, name="respond-alert"),
+
+    # ── Health Monitoring Endpoints ───────────────────────────────────────────
+    path("api/health/metrics/sync/", health_sync_metrics, name="health-sync-metrics"),
+    path("api/health/dashboard/<uuid:user_id>/", health_dashboard, name="health-dashboard"),
+    path("api/health/risk-score/<uuid:user_id>/", health_risk_score, name="health-risk-score"),
+    path("api/health/anomalies/<uuid:user_id>/", health_anomalies, name="health-anomalies"),
+    path("api/health/anomaly/<uuid:anomaly_id>/respond/", health_anomaly_respond, name="health-anomaly-respond"),
+    path("api/health/emergency-reports/<uuid:user_id>/", health_emergency_reports, name="health-emergency-reports"),
+    path("api/health/baselines/<uuid:user_id>/", health_baselines, name="health-baselines"),
 ]
 
 # خدمة ملفات الـ Media في بيئة التطوير

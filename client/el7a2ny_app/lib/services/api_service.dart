@@ -1456,4 +1456,160 @@ static Future<void> adminDeleteIncident(String incidentId) async {
       rethrow;
     }
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════ HEALTH MONITORING METHODS ═════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Sync batch health metrics to backend. Returns risk score & anomaly info.
+  static Future<Map<String, dynamic>?> syncHealthMetrics(
+    List metrics,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      if (userId == null) return null;
+
+      final metricsJson = metrics.map((m) {
+        if (m is Map) return m;
+        return m.toJson();
+      }).toList();
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/health/metrics/sync/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'metrics': metricsJson,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      debugPrint('❌ Health sync error: ${response.statusCode} ${response.body}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ Error syncing health metrics: $e');
+      return null;
+    }
+  }
+
+  /// Fetch full health dashboard data for a user.
+  static Future<Map<String, dynamic>?> fetchHealthDashboard([String? userId]) async {
+    try {
+      String? idToUse = userId;
+      if (idToUse == null) {
+        final prefs = await SharedPreferences.getInstance();
+        idToUse = prefs.getString('user_id');
+      }
+      if (idToUse == null) return null;
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/health/dashboard/$idToUse/'),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ Error fetching health dashboard: $e');
+      return null;
+    }
+  }
+
+  /// Fetch current risk score with history.
+  static Future<Map<String, dynamic>?> fetchHealthRiskScore([String? userId]) async {
+    try {
+      String? idToUse = userId;
+      if (idToUse == null) {
+        final prefs = await SharedPreferences.getInstance();
+        idToUse = prefs.getString('user_id');
+      }
+      if (idToUse == null) return null;
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/health/risk-score/$idToUse/'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ Error fetching health risk score: $e');
+      return null;
+    }
+  }
+
+  /// Fetch health anomalies for a user.
+  static Future<List<dynamic>> fetchHealthAnomalies({String? userId, String? status}) async {
+    try {
+      String? idToUse = userId;
+      if (idToUse == null) {
+        final prefs = await SharedPreferences.getInstance();
+        idToUse = prefs.getString('user_id');
+      }
+      if (idToUse == null) return [];
+
+      String url = '$baseUrl/api/health/anomalies/$idToUse/';
+      if (status != null) url += '?status=$status';
+
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ Error fetching health anomalies: $e');
+      return [];
+    }
+  }
+
+  /// Respond to a health anomaly alert.
+  static Future<Map<String, dynamic>?> respondToHealthAnomaly(
+    String anomalyId, String response, {double? lat, double? lng}
+  ) async {
+    try {
+      final body = <String, dynamic>{'response': response};
+      if (lat != null) body['location_lat'] = lat;
+      if (lng != null) body['location_lng'] = lng;
+
+      final resp = await http.post(
+        Uri.parse('$baseUrl/api/health/anomaly/$anomalyId/respond/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+      if (resp.statusCode == 200) {
+        return jsonDecode(resp.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('❌ Error responding to health anomaly: $e');
+      return null;
+    }
+  }
+
+  /// Fetch health emergency reports for a user.
+  static Future<List<dynamic>> fetchHealthEmergencyReports([String? userId]) async {
+    try {
+      String? idToUse = userId;
+      if (idToUse == null) {
+        final prefs = await SharedPreferences.getInstance();
+        idToUse = prefs.getString('user_id');
+      }
+      if (idToUse == null) return [];
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/health/emergency-reports/$idToUse/'),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ Error fetching health emergency reports: $e');
+      return [];
+    }
+  }
 }

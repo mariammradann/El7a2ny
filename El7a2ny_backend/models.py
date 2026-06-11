@@ -722,3 +722,167 @@ class VolunteerCourseProgress(models.Model):
 
     def __str__(self):
         return f"{self.user.name} - {self.course.title_en} ({'Completed' if self.is_completed else 'In Progress'})"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════ HEALTH MONITORING MODELS ══════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class HealthMetric(models.Model):
+    """Raw health data synced from Health Connect (heart rate, SpO2, steps, etc.)"""
+
+    METRIC_TYPES = [
+        ("heart_rate", "Heart Rate"),
+        ("spo2", "SpO₂"),
+        ("steps", "Steps"),
+        ("calories", "Calories"),
+        ("sleep_duration", "Sleep Duration"),
+        ("exercise", "Exercise"),
+    ]
+
+    metric_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="health_metrics")
+    metric_type = models.CharField(max_length=50, choices=METRIC_TYPES)
+    value = models.FloatField()
+    unit = models.CharField(max_length=20)  # bpm, %, steps, kcal, minutes
+    source = models.CharField(max_length=100, default="health_connect")
+    recorded_at = models.DateTimeField()  # when originally recorded on wearable
+    synced_at = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(default=dict, blank=True)  # extra data (sleep stages, exercise type)
+
+    class Meta:
+        db_table = 'ems_schema"."health_metrics'
+        managed = True
+        ordering = ["-recorded_at"]
+        indexes = [
+            models.Index(fields=["user", "metric_type"]),
+            models.Index(fields=["user", "-recorded_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.name} - {self.metric_type}: {self.value} {self.unit}"
+
+
+class HealthBaseline(models.Model):
+    """Per-user adaptive baselines computed from historical data (EWMA)"""
+
+    baseline_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="health_baselines")
+    metric_type = models.CharField(max_length=50)
+    mean_value = models.FloatField()
+    std_value = models.FloatField(default=0)
+    min_value = models.FloatField(null=True, blank=True)
+    max_value = models.FloatField(null=True, blank=True)
+    sample_count = models.IntegerField(default=0)
+    is_mature = models.BooleanField(default=False)  # True when sample_count >= 14 days
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'ems_schema"."health_baselines'
+        managed = True
+        unique_together = ("user", "metric_type")
+
+    def __str__(self):
+        status = "mature" if self.is_mature else "building"
+        return f"{self.user.name} - {self.metric_type} baseline ({status}): {self.mean_value:.1f} ± {self.std_value:.1f}"
+
+
+class HealthRiskScore(models.Model):
+    """Computed health risk scores over time (0-100)"""
+
+    RISK_LEVELS = [
+        ("normal", "Normal (0-20)"),
+        ("low", "Low Risk (21-50)"),
+        ("medium", "Medium Risk (51-75)"),
+        ("high", "High Risk (76-100)"),
+    ]
+
+    score_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="health_risk_scores")
+    score = models.IntegerField()  # 0-100
+    risk_level = models.CharField(max_length=20, choices=RISK_LEVELS)
+    factors = models.JSONField(default=list, blank=True)  # contributing factors with weights
+    explanation = models.TextField(null=True, blank=True)
+    computed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ems_schema"."health_risk_scores'
+        managed = True
+        ordering = ["-computed_at"]
+        indexes = [
+            models.Index(fields=["user", "-computed_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.name} - Risk Score: {self.score} ({self.risk_level})"
+
+
+class HealthAnomaly(models.Model):
+    """Detected anomaly events with full context"""
+
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("acknowledged", "Acknowledged"),
+        ("resolved", "Resolved"),
+        ("false_alarm", "False Alarm"),
+    ]
+    RESPONSE_CHOICES = [
+        ("ok", "I'm OK"),
+        ("help", "Need Help"),
+        ("no_response", "No Response"),
+    ]
+
+    anomaly_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="health_anomalies")
+    risk_score = models.IntegerField()
+    current_metrics = models.JSONField()  # snapshot of current values
+    baseline_comparison = models.JSONField()  # baseline vs current
+    factors = models.JSONField()  # what triggered the anomaly
+    explanation = models.TextField()  # safe-language explanation
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    user_response = models.CharField(max_length=20, choices=RESPONSE_CHOICES, null=True, blank=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ems_schema"."health_anomalies'
+        managed = True
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.name} - Anomaly (score={self.risk_score}, status={self.status})"
+
+
+class HealthEmergencyReport(models.Model):
+    """Auto-generated emergency reports when user doesn't respond to anomalies"""
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("notified", "Notified"),
+        ("resolved", "Resolved"),
+    ]
+
+    report_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="health_emergency_reports")
+    anomaly = models.ForeignKey(
+        HealthAnomaly, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="emergency_reports", db_column="anomaly_id"
+    )
+    risk_score = models.IntegerField()
+    metrics_snapshot = models.JSONField()
+    location_lat = models.FloatField(null=True, blank=True)
+    location_lng = models.FloatField(null=True, blank=True)
+    emergency_contacts_notified = models.JSONField(default=list, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'ems_schema"."health_emergency_reports'
+        managed = True
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.name} - Health Emergency Report (score={self.risk_score}, status={self.status})"

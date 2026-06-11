@@ -5,6 +5,7 @@ import 'emergency_tab.dart';
 import 'safety_tab.dart';
 import 'alerts_tab.dart';
 import 'sensors_page.dart';
+import 'health_dashboard_page.dart';
 import 'landing_screen.dart';
 import '../services/session_service.dart';
 import '../services/sensor_service.dart';
@@ -44,13 +45,17 @@ class _HomeScreenState extends State<HomeScreen>
       'label': context.loc.sensorsTab,
       'activeGradient': const [Color(0xFF16A34A), Color(0xFF15803D)],
     },
+    {
+      'label': context.loc.isAr ? 'الصحة' : 'Health',
+      'activeGradient': const [Color(0xFFE11D48), Color(0xFFF43F5E)],
+    },
   ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 5,
+      length: 6,
       vsync: this,
       initialIndex: widget.initialTabIndex,
     );
@@ -210,6 +215,7 @@ class _HomeScreenState extends State<HomeScreen>
                   SafetyTab(),
                   AlertsTab(),
                   SensorsPage(),
+                  HealthDashboardPage(),
                 ],
               ),
             ),
@@ -463,7 +469,8 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         child: TabBar(
           controller: _tabController,
-          isScrollable: false,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           indicator: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             gradient: LinearGradient(

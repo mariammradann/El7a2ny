@@ -3553,3 +3553,284 @@ def respond_alert_api(request):
     except Exception as e:
         logger.error(f"Error in respond_alert_api: {e}")
         return Response({"error": str(e)}, status=500)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════ HEALTH MONITORING ENDPOINTS ═══════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+
+from .models import HealthMetric, HealthBaseline, HealthRiskScore, HealthAnomaly, HealthEmergencyReport
+from .serializers import (
+    HealthMetricSerializer, HealthBaselineSerializer, HealthRiskScoreSerializer,
+    HealthAnomalySerializer, HealthEmergencyReportSerializer, HealthDashboardSerializer,
+)
+from .health_engine import (
+    process_health_sync, BaselineComputer, RiskScoreCalculator, AnomalyDetector,
+)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def health_sync_metrics(request):
+    """
+    POST /api/health/metrics/sync/
+    Receive batch health metrics from the app (after Health Connect sync).
+
+    Request body:
+    {
+        "user_id": "uuid",
+        "metrics": [
+            {
+                "metric_type": "heart_rate",
+                "value": 78.0,
+                "unit": "bpm",
+                "recorded_at": "2026-06-11T20:00:00Z",
+                "source": "health_connect",
+                "metadata": {}
+            },
+            ...
+        ]
+    }
+    """
+    try:
+        user_id = request.data.get("user_id")
+        metrics_data = request.data.get("metrics", [])
+
+        if not user_id:
+            return Response({"error": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not metrics_data:
+            return Response({"error": "metrics list is required and cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Parse recorded_at strings to datetime
+        from dateutil.parser import parse as parse_datetime
+        for m in metrics_data:
+            if isinstance(m.get("recorded_at"), str):
+                m["recorded_at"] = parse_datetime(m["recorded_at"])
+
+        # Run the full health sync pipeline
+        result = process_health_sync(user, metrics_data)
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in health_sync_metrics: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def health_dashboard(request, user_id):
+    """
+    GET /api/health/dashboard/<user_id>/
+    Full dashboard data: latest metrics, baselines, risk score, anomalies.
+    """
+    try:
+        user = User.objects.get(user_id=user_id)
+
+        # 1. Latest metrics (one per type)
+        latest_metrics = {}
+        for metric_type, label in HealthMetric.METRIC_TYPES:
+            latest = HealthMetric.objects.filter(
+                user=user, metric_type=metric_type
+            ).order_by("-recorded_at").first()
+            if latest:
+                latest_metrics[metric_type] = {
+                    "value": latest.value,
+                    "unit": latest.unit,
+                    "recorded_at": latest.recorded_at.isoformat(),
+                }
+
+        # 2. Baselines
+        baselines = HealthBaseline.objects.filter(user=user)
+        baselines_data = HealthBaselineSerializer(baselines, many=True).data
+
+        # 3. Current risk score
+        current_risk = HealthRiskScore.objects.filter(user=user).order_by("-computed_at").first()
+        current_risk_data = HealthRiskScoreSerializer(current_risk).data if current_risk else None
+
+        # 4. Risk score history (last 30)
+        risk_history = HealthRiskScore.objects.filter(user=user).order_by("-computed_at")[:30]
+        risk_history_data = HealthRiskScoreSerializer(risk_history, many=True).data
+
+        # 5. Recent anomalies (last 20)
+        anomalies = HealthAnomaly.objects.filter(user=user).order_by("-created_at")[:20]
+        anomalies_data = HealthAnomalySerializer(anomalies, many=True).data
+
+        # 6. Recent emergency reports (last 10)
+        reports = HealthEmergencyReport.objects.filter(user=user).order_by("-created_at")[:10]
+        reports_data = HealthEmergencyReportSerializer(reports, many=True).data
+
+        # 7. Profile maturity
+        maturity = BaselineComputer.get_profile_maturity(user)
+
+        dashboard_data = {
+            "latest_metrics": latest_metrics,
+            "baselines": baselines_data,
+            "current_risk_score": current_risk_data,
+            "risk_score_history": risk_history_data,
+            "recent_anomalies": anomalies_data,
+            "recent_emergency_reports": reports_data,
+            "profile_maturity": maturity,
+        }
+
+        return Response(dashboard_data, status=status.HTTP_200_OK)
+
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in health_dashboard: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def health_risk_score(request, user_id):
+    """
+    GET /api/health/risk-score/<user_id>/
+    Current risk score with recent history.
+    """
+    try:
+        user = User.objects.get(user_id=user_id)
+
+        current = HealthRiskScore.objects.filter(user=user).order_by("-computed_at").first()
+        history = HealthRiskScore.objects.filter(user=user).order_by("-computed_at")[:50]
+
+        return Response({
+            "current": HealthRiskScoreSerializer(current).data if current else None,
+            "history": HealthRiskScoreSerializer(history, many=True).data,
+        }, status=status.HTTP_200_OK)
+
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in health_risk_score: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def health_anomalies(request, user_id):
+    """
+    GET /api/health/anomalies/<user_id>/
+    List of health anomalies with optional status filter.
+    """
+    try:
+        user = User.objects.get(user_id=user_id)
+
+        anomalies = HealthAnomaly.objects.filter(user=user)
+
+        # Optional filter by status
+        anomaly_status = request.query_params.get("status")
+        if anomaly_status:
+            anomalies = anomalies.filter(status=anomaly_status)
+
+        anomalies = anomalies.order_by("-created_at")[:50]
+
+        return Response(
+            HealthAnomalySerializer(anomalies, many=True).data,
+            status=status.HTTP_200_OK
+        )
+
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in health_anomalies: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def health_anomaly_respond(request, anomaly_id):
+    """
+    POST /api/health/anomaly/<anomaly_id>/respond/
+    User responds to a health anomaly alert.
+
+    Request body:
+    {
+        "response": "ok" | "help",
+        "location_lat": 30.0444,   // optional
+        "location_lng": 31.2357    // optional
+    }
+    """
+    try:
+        response_val = request.data.get("response")
+        if response_val not in ("ok", "help"):
+            return Response(
+                {"error": "response must be 'ok' or 'help'"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        anomaly = AnomalyDetector.handle_user_response(anomaly_id, response_val)
+
+        if anomaly is None:
+            return Response({"error": "Anomaly not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        result = HealthAnomalySerializer(anomaly).data
+
+        # If user asked for help and we have location, update the emergency report
+        if response_val == "help":
+            lat = request.data.get("location_lat")
+            lng = request.data.get("location_lng")
+            if lat and lng:
+                report = HealthEmergencyReport.objects.filter(anomaly=anomaly).first()
+                if report:
+                    report.location_lat = lat
+                    report.location_lng = lng
+                    report.save()
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error in health_anomaly_respond: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def health_emergency_reports(request, user_id):
+    """
+    GET /api/health/emergency-reports/<user_id>/
+    Emergency report history.
+    """
+    try:
+        user = User.objects.get(user_id=user_id)
+        reports = HealthEmergencyReport.objects.filter(user=user).order_by("-created_at")[:20]
+        return Response(
+            HealthEmergencyReportSerializer(reports, many=True).data,
+            status=status.HTTP_200_OK
+        )
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in health_emergency_reports: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.AllowAny])
+def health_baselines(request, user_id):
+    """
+    GET /api/health/baselines/<user_id>/
+    Current baseline profile for a user.
+    """
+    try:
+        user = User.objects.get(user_id=user_id)
+        baselines = HealthBaseline.objects.filter(user=user)
+        maturity = BaselineComputer.get_profile_maturity(user)
+
+        return Response({
+            "baselines": HealthBaselineSerializer(baselines, many=True).data,
+            "profile_maturity": maturity,
+        }, status=status.HTTP_200_OK)
+
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in health_baselines: {e}")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

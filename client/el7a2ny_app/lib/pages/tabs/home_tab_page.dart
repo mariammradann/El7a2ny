@@ -13,6 +13,7 @@ import '../sponsors_page.dart';
 import '../premium_subscription_page.dart';
 import '../sensors_page.dart';
 import '../security_camera_page.dart';
+import '../health_dashboard_page.dart';
 import '../../core/localization/app_strings.dart';
 import '../../services/session_service.dart';
 import '../user_rating_screen.dart';
@@ -392,6 +393,13 @@ class _HomeTabPageState extends State<HomeTabPage> {
                           ),
                           const SizedBox(height: 10),
                           _buildPlusWideButton(
+                            icon: Icons.health_and_safety_rounded,
+                            label: isAr ? 'الصحة' : 'Health',
+                            gradient: const LinearGradient(colors: [Color(0xFFBE123C), Color(0xFFE11D48)]),
+                            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HealthDashboardPage())),
+                          ),
+                          const SizedBox(height: 10),
+                          _buildPlusWideButton(
                             icon: Icons.handshake_rounded,
                             label: context.loc.sponsors,
                             gradient: const LinearGradient(colors: [Color(0xFFD97706), Color(0xFFFDC800)]),
@@ -665,6 +673,18 @@ class _HomeTabPageState extends State<HomeTabPage> {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (context) => const SecurityCameraPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    EmergencySolidButton(
+                      label: isAr ? 'الصحة' : 'Health',
+                      backgroundColor: const Color(0xFFE11D48),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => const HealthDashboardPage(),
                           ),
                         );
                       },

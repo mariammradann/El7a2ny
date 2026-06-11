@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:js' as js;
+// import 'dart:js' as js;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -34,7 +34,7 @@ class _SecurityCameraPageState extends State<SecurityCameraPage> with TickerProv
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     if (kIsWeb) {
-      js.context.callMethod('requestNotificationPermission');
+      // js.context.callMethod('requestNotificationPermission');
     }
     _pulseCtrl = AnimationController(duration: const Duration(milliseconds: 900), vsync: this)..repeat(reverse: true);
     _pulseAnim = Tween(begin: 0.96, end: 1.04).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));

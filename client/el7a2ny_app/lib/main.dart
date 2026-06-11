@@ -9,10 +9,12 @@ import 'package:el7a2ny_app/pages/sign_up_screen.dart';
 import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
 import 'package:el7a2ny_app/widgets/global_fab_overlay.dart';
 import 'package:el7a2ny_app/services/session_service.dart';
+import 'package:el7a2ny_app/services/health_monitor_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AuthTokenStore.init();
+  await HealthMonitorService().initialize();
   runApp(const MyApp());
 }
 
