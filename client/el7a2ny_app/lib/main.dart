@@ -10,6 +10,7 @@ import 'package:el7a2ny_app/pages/emergency_report_screen.dart';
 import 'package:el7a2ny_app/widgets/global_fab_overlay.dart';
 import 'package:el7a2ny_app/services/session_service.dart';
 import 'package:el7a2ny_app/services/health_monitor_service.dart';
+import 'package:el7a2ny_app/pages/admin_profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,11 +69,25 @@ class _MyAppState extends State<MyApp> {
             },
             home: const WelcomeScreen(),
             routes: {
-              '/landing': (context) => const LandingScreen(),
-              '/login': (context) => const LoginScreen(),
-              '/signup': (context) => SignUpScreen(),
-              '/emergency-report': (context) => const EmergencyReportScreen(),
-            },
+                '/landing': (context) => const LandingScreen(),
+                '/login': (context) => const LoginScreen(),
+                '/signup': (context) => SignUpScreen(),
+                '/emergency-report': (context) => const EmergencyReportScreen(),
+                '/admin/profile': (context) => Builder(
+                  builder: (ctx) {
+                    final session = SessionService();
+                    if (session.isAdmin) {
+                      return AdminProfilePage(
+                        adminId: session.userId ?? '',
+                      );
+                    }
+                    return Scaffold(
+                      appBar: AppBar(title: const Text('Access Denied')),
+                      body: const Center(child: Text('You do not have permission to view this page.')),
+                    );
+                  },
+                ),
+              }
           );
         },
           );

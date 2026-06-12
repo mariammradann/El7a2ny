@@ -97,6 +97,96 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
     if (_joined || _isJoining) return;
     setState(() => _isJoining = true);
     try {
+      bool showDisclaimer = false;
+      final typeLower = widget.alert.type.toLowerCase();
+      if (typeLower.contains('medical') || typeLower.contains('طبي')) {
+        try {
+          final userProfile = await ApiService.fetchUserProfile();
+          bool hasMedicalExp = false;
+          
+          final medicalKeywords = ['medical', 'first aid', 'paramedic', 'doctor', 'nurse', 'علاج', 'طبي', 'إسعاف', 'طبيب', 'ممرض'];
+          
+          if (userProfile.skills != null) {
+            final skillsLower = userProfile.skills!.toLowerCase();
+            if (medicalKeywords.any((keyword) => skillsLower.contains(keyword))) {
+              hasMedicalExp = true;
+            }
+          }
+          
+          if (userProfile.certifications != null && userProfile.certifications!.isNotEmpty) {
+            for (var cert in userProfile.certifications!) {
+              final certLower = cert.toLowerCase();
+              if (medicalKeywords.any((keyword) => certLower.contains(keyword))) {
+                hasMedicalExp = true;
+              }
+            }
+          }
+          
+          if (!hasMedicalExp) {
+            showDisclaimer = true;
+          }
+        } catch (e) {
+          debugPrint("Failed to check user certificates: $e");
+          showDisclaimer = true;
+        }
+      }
+
+      if (showDisclaimer) {
+        if (!mounted) return;
+        final agreed = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+                const SizedBox(width: 8),
+                Text(
+                  context.loc.isAr ? 'إقرار وإخلاء مسؤولية' : 'Liability & Disclaimer',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
+                ),
+              ],
+            ),
+            content: Text(
+              context.loc.isAr
+                  ? 'بما أنك لا تملك شهادات معتمدة أو خبرة مسجلة في الإسعافات الأولية أو الحوادث الطبية، يجب عليك الالتزام بالآتي:\n\n'
+                      '1. عدم القيام بأي إجراء طبي أو جسدي قد يضر بالمصابين في الحادث.\n'
+                      '2. اتباع إرشادات وتعليمات الطوارئ بدقة.\n'
+                      '3. في حال تسببك بأي أذى أو ضرر لأي مصاب، ستكون المسؤول قانونياً وجنائياً عن ذلك بشكل كامل.'
+                  : 'Since you do not have certified medical training or experience registered, you must adhere to the following:\n\n'
+                      '1. Do not perform any medical action or physical intervention that might harm the injured individuals.\n'
+                      '2. Follow the emergency safety instructions strictly.\n'
+                      '3. If you cause any harm or injury to anyone at the scene, you will be fully and solely responsible.',
+              style: const TextStyle(fontFamily: 'NotoSansArabic', height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(
+                  context.loc.isAr ? 'رفض' : 'Decline',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                ),
+                child: Text(
+                  context.loc.isAr ? 'أوافق' : 'I Agree',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        );
+        
+        if (agreed != true) {
+          setState(() => _isJoining = false);
+          return;
+        }
+      }
+
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );

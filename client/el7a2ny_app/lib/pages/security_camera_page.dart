@@ -1,7 +1,9 @@
 import 'dart:async';
-// import 'dart:js' as js;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+// Conditional import: dart:js is only available on Web.
+// On non-web platforms (VM / tests) we use the stub.
+import 'js_stub.dart' if (dart.library.js) 'dart:js' as js;
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sensor_model.dart';

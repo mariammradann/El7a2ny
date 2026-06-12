@@ -5,7 +5,8 @@ import '../app/main_shell_screen.dart';
 import '../services/api_service.dart';
 import 'report_account_screen.dart';
 class UserRatingScreen extends StatefulWidget {
-  const UserRatingScreen({super.key});
+  final bool isReporter;
+  const UserRatingScreen({super.key, this.isReporter = true});
 
   @override
   State<UserRatingScreen> createState() => _UserRatingScreenState();
@@ -25,11 +26,11 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
     
     final success = await ApiService.submitUserRating({
       "app_rating": _appRating,
-      "police_rating": _policeRating,
-      "ambulance_rating": _ambulanceRating,
-      "fire_dept_rating": _fireDeptRating,
-      "el7a2ny_plus_rating": _el7a2nyPlusRating,
-      "volunteers_helpful": _volunteersHelpful,
+      "police_rating": widget.isReporter ? _policeRating : 0,
+      "ambulance_rating": widget.isReporter ? _ambulanceRating : 0,
+      "fire_dept_rating": widget.isReporter ? _fireDeptRating : 0,
+      "el7a2ny_plus_rating": widget.isReporter ? _el7a2nyPlusRating : 0,
+      "volunteers_helpful": widget.isReporter ? _volunteersHelpful : null,
     });
 
     if (!mounted) return;
@@ -80,51 +81,53 @@ class _UserRatingScreenState extends State<UserRatingScreen> {
                     ),
                     const SizedBox(height: 32),
                     _buildRatingSection(loc.rateApp, (v) => setState(() => _appRating = v), isDark),
-                    const Divider(height: 40),
                     
-                    Text(
-                      loc.authoritiesRating,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildRatingSection(loc.policeRating, (v) => setState(() => _policeRating = v), isDark),
-                    const SizedBox(height: 16),
-                    _buildRatingSection(loc.ambulanceRating, (v) => setState(() => _ambulanceRating = v), isDark),
-                    const SizedBox(height: 16),
-                    _buildRatingSection(loc.fireDeptRating, (v) => setState(() => _fireDeptRating = v), isDark),
-                    const Divider(height: 40),
-                    
-                    _buildRatingSection(loc.el7a2nyPlusRating, (v) => setState(() => _el7a2nyPlusRating = v), isDark),
-                    const Divider(height: 40),
-                    
-                    Text(
-                      loc.volunteerHelpful,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildHelpfulButton(
-                            title: loc.isAr ? 'نعم' : 'Yes',
-                            icon: Icons.check_circle_rounded,
-                            isSelected: _volunteersHelpful == true,
-                            activeColor: Colors.green,
-                            onTap: () => setState(() => _volunteersHelpful = true),
+                    if (widget.isReporter) ...[
+                      const Divider(height: 40),
+                      Text(
+                        loc.authoritiesRating,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 20),
+                      _buildRatingSection(loc.policeRating, (v) => setState(() => _policeRating = v), isDark),
+                      const SizedBox(height: 16),
+                      _buildRatingSection(loc.ambulanceRating, (v) => setState(() => _ambulanceRating = v), isDark),
+                      const SizedBox(height: 16),
+                      _buildRatingSection(loc.fireDeptRating, (v) => setState(() => _fireDeptRating = v), isDark),
+                      const Divider(height: 40),
+                      
+                      _buildRatingSection(loc.el7a2nyPlusRating, (v) => setState(() => _el7a2nyPlusRating = v), isDark),
+                      const Divider(height: 40),
+                      
+                      Text(
+                        loc.volunteerHelpful,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildHelpfulButton(
+                              title: loc.isAr ? 'نعم' : 'Yes',
+                              icon: Icons.check_circle_rounded,
+                              isSelected: _volunteersHelpful == true,
+                              activeColor: Colors.green,
+                              onTap: () => setState(() => _volunteersHelpful = true),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildHelpfulButton(
-                            title: loc.isAr ? 'لا' : 'No',
-                            icon: Icons.cancel_rounded,
-                            isSelected: _volunteersHelpful == false,
-                            activeColor: const Color(0xFFE61717),
-                            onTap: () => setState(() => _volunteersHelpful = false),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildHelpfulButton(
+                              title: loc.isAr ? 'لا' : 'No',
+                              icon: Icons.cancel_rounded,
+                              isSelected: _volunteersHelpful == false,
+                              activeColor: const Color(0xFFE61717),
+                              onTap: () => setState(() => _volunteersHelpful = false),
+                            ),
                           ),
-                        ),
+                        ],
+                      ),
                     ],
-                  ),
                     const SizedBox(height: 40),
                     
                     ElevatedButton(

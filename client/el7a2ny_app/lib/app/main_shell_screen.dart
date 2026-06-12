@@ -76,73 +76,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
     }
   }
 
-  Widget _buildRoleToggle(BuildContext context) {
-    final theme = Theme.of(context);
-    final loc = context.loc;
-    final isAr = loc.isAr;
-    final isVolunteer = SessionService().currentRole == UserRole.volunteer;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          isVolunteer 
-              ? (isAr ? 'متطوع' : 'Volunteer') 
-              : (isAr ? 'مستخدم' : 'User'),
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'NotoSansArabic',
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(width: 6),
-        GestureDetector(
-          onTap: () {
-            SessionService().setRole(isVolunteer ? UserRole.citizen : UserRole.volunteer);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            width: 36,
-            height: 20,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: isVolunteer 
-                  ? theme.primaryColor 
-                  : theme.colorScheme.onSurface.withOpacity(0.2),
-            ),
-            child: Stack(
-              children: [
-                AnimatedAlign(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  alignment: isVolunteer ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    width: 14,
-                    height: 14,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 1,
-                          offset: Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Future<void> _onMenu(String value) async {
     switch (value) {
       case 'settings':
@@ -218,7 +151,6 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
         // Ensure index doesn't overflow if isAdmin state changes
         final safeIndex = _index.clamp(0, destinations.length - 1);
-        final isAr = loc.isAr;
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (isAdmin && safeIndex == 4) {
@@ -243,39 +175,16 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   ? const ArtboardLogo(size: 80)
                   : null),
             centerTitle: true,
-            leadingWidth: isAr ? (safeIndex != 0 ? 135 : 110) : (safeIndex != 0 ? 40 : null),
-            leading: isAr
-                ? (safeIndex != 0
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                            icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface, size: 20),
-                            onPressed: () => setState(() => _index = 0),
-                          ),
-                          const SizedBox(width: 4),
-                          _buildRoleToggle(context),
-                        ],
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Center(child: _buildRoleToggle(context)),
-                      ))
-                : (safeIndex != 0
-                    ? IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                        icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface, size: 20),
-                        onPressed: () => setState(() => _index = 0),
-                      )
-                    : null),
+            leadingWidth: safeIndex != 0 ? 40 : null,
+            leading: safeIndex != 0
+                ? IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.colorScheme.onSurface, size: 20),
+                    onPressed: () => setState(() => _index = 0),
+                  )
+                : null,
             actions: [
-              if (!isAr) ...[
-                _buildRoleToggle(context),
-                const SizedBox(width: 8),
-              ],
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 36, minHeight: 36),

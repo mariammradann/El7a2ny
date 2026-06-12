@@ -14,7 +14,6 @@ import 'report_fake_incident_screen.dart';
 import 'report_volunteer_screen.dart';
 import 'user_rating_screen.dart';
 import 'sign_up_screen.dart';
-import 'volunteer_rating_screen.dart';
 import 'banned_screen.dart';
 import '../core/auth/auth_token_store.dart';
 import '../widgets/global_fab_overlay.dart';
@@ -265,7 +264,7 @@ class _ActiveIncidentTrackingScreenState
 
   Future<void> _showCompletionPopup() async {
     final isAr = context.loc.isAr;
-    final isFake = await showDialog<bool>(
+    await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => Directionality(
@@ -288,28 +287,16 @@ class _ActiveIncidentTrackingScreenState
           ),
           content: Text(
             isAr
-                ? 'تم إنهاء هذا البلاغ.\nهل كان البلاغ كاذباً؟'
-                : 'This incident has ended.\nWas it a false alarm?',
+                ? 'تم إنهاء هذا البلاغ بنجاح. شكراً لمساعدتك!'
+                : 'This incident has ended successfully. Thank you for your help!',
             style: const TextStyle(fontSize: 16),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(
-                isAr ? 'لا، بلاغ حقيقي' : 'No, Real',
-                style: const TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
             ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE61717),
-              ),
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
               child: Text(
-                isAr ? 'نعم، كاذب' : 'Yes, Fake',
+                isAr ? 'تقييم التطبيق' : 'Rate App',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -322,24 +309,12 @@ class _ActiveIncidentTrackingScreenState
     );
 
     if (mounted) {
-      if (isFake == true) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => ReportFakeIncidentScreen(
-              incidentId: widget.incidentId,
-              incidentDetails: _alertDetails,
-            ),
-            settings: const RouteSettings(name: '/report_fake_incident'),
-          ),
-        );
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => const VolunteerRatingScreen(),
-            settings: const RouteSettings(name: '/volunteer_rating'),
-          ),
-        );
-      }
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => const UserRatingScreen(isReporter: false),
+          settings: const RouteSettings(name: '/user_rating'),
+        ),
+      );
     }
   }
 
@@ -1307,9 +1282,9 @@ class _ActiveIncidentTrackingScreenState
                               Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      const VolunteerRatingScreen(),
+                                      const UserRatingScreen(isReporter: false),
                                   settings: const RouteSettings(
-                                    name: '/volunteer-rating',
+                                    name: '/user_rating',
                                   ),
                                 ),
                               );

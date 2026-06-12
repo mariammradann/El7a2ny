@@ -440,7 +440,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
                       onTap: () {
                         final isVolunteer = SessionService().currentRole == UserRole.volunteer;
                         Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => isVolunteer ? const VolunteerRatingScreen() : const UserRatingScreen(),
+                          builder: (_) => UserRatingScreen(isReporter: !isVolunteer),
                         ));
                       },
                       child: Container(
@@ -828,15 +828,9 @@ class _HomeTabPageState extends State<HomeTabPage> {
                       backgroundColor: const Color(0xFFFDC800),
                       onPressed: () {
                         final isVolunteer = SessionService().currentRole == UserRole.volunteer;
-                        if (isVolunteer) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const VolunteerRatingScreen()),
-                          );
-                        } else {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const UserRatingScreen()),
-                          );
-                        }
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => UserRatingScreen(isReporter: !isVolunteer)),
+                        );
                       },
                     ),
                   ],

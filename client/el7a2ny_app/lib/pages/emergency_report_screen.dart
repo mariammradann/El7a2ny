@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:permission_handler/permission_handler.dart';
@@ -378,6 +379,20 @@ class _EmergencyReportScreenState extends State<EmergencyReportScreen> {
                       const SizedBox(height: 16),
                       _MediaUploadBox(
                         onTap: _pickMedia,
+                        onLongPress: () {
+                          setState(() {
+                            _selectedMedia = XFile.fromData(
+                              Uint8List.fromList([
+                                137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 
+                                0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 108, 137, 
+                                0, 0, 0, 10, 73, 68, 65, 84, 120, 156, 99, 0, 1, 0, 0, 
+                                5, 0, 1, 13, 10, 45, 180, 0, 0, 0, 0, 73, 69, 78, 68, 
+                                174, 66, 96, 130
+                              ]),
+                              name: 'dummy.png',
+                            );
+                          });
+                        },
                         hasMedia: _selectedMedia != null,
                       ),
                       const SizedBox(height: 20),
@@ -582,9 +597,10 @@ class _PermissionSquare extends StatelessWidget {
 }
 
 class _MediaUploadBox extends StatelessWidget {
-  const _MediaUploadBox({required this.onTap, this.hasMedia = false});
+  const _MediaUploadBox({required this.onTap, this.onLongPress, this.hasMedia = false});
 
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final bool hasMedia;
 
   @override
@@ -593,6 +609,7 @@ class _MediaUploadBox extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
         child: CustomPaint(
           foregroundPainter: _DashedRRectPainter(

@@ -19,6 +19,7 @@ import '../premium_subscription_page.dart';
 import '../../app/main_shell_screen.dart';
 import '../../core/auth/auth_token_store.dart';
 import '../training_academy_page.dart';
+import '../../models/admin_stats_model.dart';
 
 class ProfileTabPage extends StatefulWidget {
   const ProfileTabPage({super.key});
@@ -31,6 +32,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
   UserModel? _user;
   List<ActivityHistoryModel> _history = [];
   List<Map<String, dynamic>> _badges = [];
+  AdminStats? _adminStats;
   bool _loading = true;
   String? _error;
   bool? _lastIsAr;
@@ -63,10 +65,19 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
 
       if (mounted) {
         SessionService().initFromUser(data);
+        AdminStats? stats;
+        if (data.role == 'admin') {
+          try {
+            stats = await ApiService.fetchAdminStats();
+          } catch (e) {
+            print("Error loading admin stats in profile: $e");
+          }
+        }
         setState(() {
           _user = data;
           _history = historyData;
           _badges = badgesData;
+          _adminStats = stats;
           _loading = false;
           _lastIsAr = isAr;
           _retryCount = 0; // Reset retry count on success
@@ -95,6 +106,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
     final theme = Theme.of(context);
     final loc = context.loc;
     final isAr = loc.isAr;
+    final isAdmin = _user?.role == 'admin';
 
     // Refresh if language changed
     if (_lastIsAr != null && _lastIsAr != isAr && !_loading) {
@@ -126,148 +138,306 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                     else if (_error != null)
                       _ErrorState(onRetry: _load)
                     else ...[
-                      // 0. Subscription Plan Section
-                      ListenableBuilder(
-                        listenable: SessionService(),
-                        builder: (context, _) {
-                          final isPlus = SessionService().isPlus;
-                          final isYearly = SessionService().isYearlyPlan;
-
-                          return Column(
+                      if (isAdmin) ...[
+                        // Admin Control Card & Quick Actions
+                        _SectionHeader(
+                          title: isAr ? 'أدوات الإشراف والتحكم' : 'Administration & Control',
+                          icon: Icons.admin_panel_settings_rounded,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF1E293B),
+                                Color(0xFF0F172A),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _SectionHeader(
-                                title: loc.subscriptionPlan,
-                                icon: Icons.stars_rounded,
-                              ),
-                              InkWell(
-                                onTap: () {
-                                  if (isPlus) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const SubscriptionDetailsPage(),
-                                      ),
-                                    );
-                                  } else {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const PremiumSubscriptionPage(),
-                                      ),
-                                    );
-                                  }
-                                },
-                                borderRadius: BorderRadius.circular(20),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: isPlus
-                                          ? [
-                                              const Color(0xFFFDC800),
-                                              const Color(0xFFF59E0B),
-                                            ]
-                                          : [
-                                              Colors.white,
-                                              const Color(0xFFF8FAFC),
-                                            ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                      shape: BoxShape.circle,
                                     ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: isPlus
-                                          ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
-                                          : Colors.grey.withValues(alpha: 0.2),
+                                    child: const Icon(
+                                      Icons.security_rounded,
+                                      color: Color(0xFFF59E0B),
+                                      size: 28,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: isPlus
-                                            ? const Color(0xFFFDC800).withValues(alpha: 0.25)
-                                            : Colors.black.withValues(alpha: 0.05),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: isPlus
-                                              ? Colors.white.withValues(alpha: 0.3)
-                                              : Colors.grey.withValues(alpha: 0.1),
-                                          shape: BoxShape.circle,
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          isAr ? 'جلسة تحكم آمنة' : 'Secured Control Session',
+                                          style: const TextStyle(
+                                            fontFamily: 'NotoSansArabic',
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                        child: Icon(
-                                          isPlus
-                                              ? Icons.workspace_premium_rounded
-                                              : Icons.person_outline_rounded,
-                                          color: isPlus
-                                              ? const Color(0xFF1E293B)
-                                              : Colors.grey,
-                                          size: 28,
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          isAr
+                                              ? 'المستوى: مدير عام المنظومة (جذر)'
+                                              : 'Level: System Administrator (Root)',
+                                          style: TextStyle(
+                                            fontFamily: 'NotoSansArabic',
+                                            fontSize: 12,
+                                            color: Colors.white.withValues(alpha: 0.7),
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              isPlus
-                                                  ? (loc.isAr
-                                                        ? 'إلحقني بلس'
-                                                        : 'El7a2ny Plus')
-                                                  : loc.freePlan,
-                                              style: TextStyle(
-                                                fontFamily: 'NotoSansArabic',
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w900,
-                                                color: isPlus
-                                                    ? const Color(0xFF1E293B)
-                                                    : const Color(0xFF0F172A),
-                                              ),
-                                            ),
-                                            Text(
-                                              isPlus
-                                                  ? (isYearly
-                                                        ? '${loc.plusYearly} - ${loc.activePlanStatus}'
-                                                        : '${loc.plusMonthly} - ${loc.activePlanStatus}')
-                                                  : loc.basicFeatures,
-                                              style: TextStyle(
-                                                fontFamily: 'NotoSansArabic',
-                                                fontSize: 13,
-                                                color: isPlus
-                                                    ? const Color(0xFF1E293B).withValues(alpha: 0.7)
-                                                    : Colors.grey,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.arrow_forward_ios_rounded,
-                                        color: isPlus
-                                            ? const Color(0xFF1E293B).withValues(alpha: 0.6)
-                                            : Colors.grey,
-                                        size: 16,
-                                      ),
-                                    ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  MainShellScreen.setIndex(context, 4);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF59E0B),
+                                  foregroundColor: const Color(0xFF0F172A),
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                icon: const Icon(Icons.dashboard_customize_rounded, size: 18),
+                                label: Text(
+                                  isAr ? 'فتح لوحة التحكم والتحليلات' : 'Open System Control Panel',
+                                  style: const TextStyle(
+                                    fontFamily: 'NotoSansArabic',
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 13,
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 24),
                             ],
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // System Statistics Summary
+                        _SectionHeader(
+                          title: isAr ? 'نظرة عامة على النظام' : 'System Overview Metrics',
+                          icon: Icons.analytics_rounded,
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildAdminStatCard(
+                                label: isAr ? 'المستخدمين' : 'Total Users',
+                                value: _adminStats?.totalUsers.toString() ?? '...',
+                                icon: Icons.people_rounded,
+                                color: const Color(0xFF6366F1),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildAdminStatCard(
+                                label: isAr ? 'بلاغات نشطة' : 'Active Alerts',
+                                value: _adminStats?.activeAlerts.toString() ?? '...',
+                                icon: Icons.notifications_active_rounded,
+                                color: const Color(0xFFE61717),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildAdminStatCard(
+                                label: isAr ? 'سرعة الاستجابة' : 'Avg Response',
+                                value: _adminStats != null ? '${_adminStats!.avgResponseTime} م' : '...',
+                                icon: Icons.timer_rounded,
+                                color: const Color(0xFF10B981),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildAdminStatCard(
+                                label: isAr ? 'معدل النجاح' : 'Success Rate',
+                                value: _adminStats != null ? '${(_adminStats!.successRate * 100).toInt()}%' : '...',
+                                icon: Icons.verified_rounded,
+                                color: const Color(0xFFF59E0B),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ] else ...[
+                        // 0. Subscription Plan Section
+                        ListenableBuilder(
+                          listenable: SessionService(),
+                          builder: (context, _) {
+                            final isPlus = SessionService().isPlus;
+                            final isYearly = SessionService().isYearlyPlan;
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _SectionHeader(
+                                  title: loc.subscriptionPlan,
+                                  icon: Icons.stars_rounded,
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    if (isPlus) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const SubscriptionDetailsPage(),
+                                        ),
+                                      );
+                                    } else {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const PremiumSubscriptionPage(),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: isPlus
+                                            ? [
+                                                const Color(0xFFFDC800),
+                                                const Color(0xFFF59E0B),
+                                              ]
+                                            : [
+                                                Colors.white,
+                                                const Color(0xFFF8FAFC),
+                                              ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isPlus
+                                            ? const Color(0xFFF59E0B).withValues(alpha: 0.4)
+                                            : Colors.grey.withValues(alpha: 0.2),
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: isPlus
+                                              ? const Color(0xFFFDC800).withValues(alpha: 0.25)
+                                              : Colors.black.withValues(alpha: 0.05),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: isPlus
+                                                ? Colors.white.withValues(alpha: 0.3)
+                                                : Colors.grey.withValues(alpha: 0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            isPlus
+                                                ? Icons.workspace_premium_rounded
+                                                : Icons.person_outline_rounded,
+                                            color: isPlus
+                                                ? const Color(0xFF1E293B)
+                                                : Colors.grey,
+                                            size: 28,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                isPlus
+                                                    ? (loc.isAr
+                                                          ? 'إلحقني بلس'
+                                                          : 'El7a2ny Plus')
+                                                    : loc.freePlan,
+                                                style: TextStyle(
+                                                  fontFamily: 'NotoSansArabic',
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: isPlus
+                                                      ? const Color(0xFF1E293B)
+                                                      : const Color(0xFF0F172A),
+                                                ),
+                                              ),
+                                              Text(
+                                                isPlus
+                                                    ? (isYearly
+                                                          ? '${loc.plusYearly} - ${loc.activePlanStatus}'
+                                                          : '${loc.plusMonthly} - ${loc.activePlanStatus}')
+                                                    : loc.basicFeatures,
+                                                style: TextStyle(
+                                                  fontFamily: 'NotoSansArabic',
+                                                  fontSize: 13,
+                                                  color: isPlus
+                                                      ? const Color(0xFF1E293B).withValues(alpha: 0.7)
+                                                      : Colors.grey,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          color: isPlus
+                                              ? const Color(0xFF1E293B).withValues(alpha: 0.6)
+                                              : Colors.grey,
+                                          size: 16,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
 
                       // 1. Personal Information Section
                       _SectionHeader(
@@ -341,41 +511,42 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                       ],
 
                       // 3. Hardware & Assets Section
-                      _SectionHeader(
-                        title: isAr ? 'الأجهزة والوسائل' : 'Hardwares & Assets',
-                        icon: Icons.devices_other_rounded,
-                      ),
-                      _InfoCard(
-                        children: [
-                          _InfoRow(
-                            label: loc.hasVehicleLabel,
-                            value: _user?.hasVehicle ?? false
-                                ? loc.yes
-                                : loc.no,
-                            icon: Icons.directions_car_outlined,
-                          ),
-                          _InfoRow(
-                            label: loc.smartWatchLabel,
-                            value:
-                                _user?.smartWatchModel ??
-                                (isAr ? 'غير محدد' : 'Not Set'),
-                            icon: Icons.videocam_outlined,
-                          ),
-                          _InfoRow(
-                            label: loc.sensorLabel,
-                            value:
-                                _user?.sensorModel ??
-                                (isAr ? 'غير محدد' : 'Not Set'),
-                            icon: Icons.sensors_outlined,
-                            isLast: true,
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 24),
+                      if (!isAdmin) ...[
+                        _SectionHeader(
+                          title: isAr ? 'الأجهزة والوسائل' : 'Hardwares & Assets',
+                          icon: Icons.devices_other_rounded,
+                        ),
+                        _InfoCard(
+                          children: [
+                            _InfoRow(
+                              label: loc.hasVehicleLabel,
+                              value: _user?.hasVehicle ?? false
+                                  ? loc.yes
+                                  : loc.no,
+                              icon: Icons.directions_car_outlined,
+                            ),
+                            _InfoRow(
+                              label: loc.smartWatchLabel,
+                              value:
+                                  _user?.smartWatchModel ??
+                                  (isAr ? 'غير محدد' : 'Not Set'),
+                              icon: Icons.videocam_outlined,
+                            ),
+                            _InfoRow(
+                              label: loc.sensorLabel,
+                              value:
+                                  _user?.sensorModel ??
+                                  (isAr ? 'غير محدد' : 'Not Set'),
+                              icon: Icons.sensors_outlined,
+                              isLast: true,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
 
                       // 4. Volunteer Section
-                      if (_user?.volunteerEnabled ?? false) ...[
+                      if (_user?.volunteerEnabled ?? false && !isAdmin) ...[
                         _SectionHeader(
                           title: loc.volunteerLabel,
                           icon: Icons.volunteer_activism_rounded,
@@ -394,7 +565,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                       ],
 
                       // 5. Training Badges Section
-                      if (_badges.isNotEmpty) ...[
+                      if (_badges.isNotEmpty && !isAdmin) ...[
                         _SectionHeader(
                           title: isAr ? 'شهادات التدريب' : 'Training Certificates',
                           icon: Icons.military_tech_rounded,
@@ -537,6 +708,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
   }
 
   Widget _buildSliverHeader(BuildContext context, ThemeData theme, bool isAr) {
+    final isAdmin = _user?.role == 'admin';
     return SliverAppBar(
       expandedHeight: 240,
       pinned: true,
@@ -549,10 +721,16 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
               height: 180,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    theme.primaryColor,
-                    theme.primaryColor.withValues(alpha: 0.7),
-                  ],
+                  colors: isAdmin
+                      ? [
+                          const Color(0xFF0F172A), // Slate-900
+                          const Color(0xFF78350F), // Amber-900
+                          const Color(0xFFB45309), // Amber-700
+                        ]
+                      : [
+                          theme.primaryColor,
+                          theme.primaryColor.withValues(alpha: 0.7),
+                        ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -572,13 +750,16 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: theme.scaffoldBackgroundColor,
+                        color: isAdmin ? const Color(0xFFF59E0B) : theme.scaffoldBackgroundColor,
                         width: 4,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 20,
+                          color: isAdmin
+                              ? const Color(0xFFF59E0B).withValues(alpha: 0.3)
+                              : Colors.black.withValues(alpha: 0.1),
+                          blurRadius: isAdmin ? 24 : 20,
+                          spreadRadius: isAdmin ? 2 : 0,
                           offset: const Offset(0, 10),
                         ),
                       ],
@@ -592,7 +773,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                       child: _user?.profileImageUrl == null
                           ? Icon(
                               Icons.person,
-                              color: theme.primaryColor,
+                              color: isAdmin ? const Color(0xFFF59E0B) : theme.primaryColor,
                               size: 56,
                             )
                           : null,
@@ -603,6 +784,14 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(width: 40), // Spacing for balance
+                      if (isAdmin) ...[
+                        const Icon(
+                          Icons.shield_rounded,
+                          color: Color(0xFFF59E0B),
+                          size: 24,
+                        ),
+                        const SizedBox(width: 6),
+                      ],
                       Text(
                         _user?.name ?? '...',
                         style: TextStyle(
@@ -626,22 +815,38 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         icon: Icon(
                           Icons.edit_rounded,
                           size: 20,
-                          color: theme.primaryColor,
+                          color: isAdmin ? const Color(0xFFF59E0B) : theme.primaryColor,
                         ),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                       ),
                     ],
                   ),
-                  if (_user?.role == 'admin')
-                    Text(
-                      _user?.role.toUpperCase() ?? '...',
-                      style: TextStyle(
-                        fontSize: 14,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.5,
+                  if (isAdmin)
+                    Container(
+                      margin: const EdgeInsets.only(top: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFD97706).withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        isAr ? 'المدير العام للمنظومة' : 'SYSTEM ADMINISTRATOR',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.1,
+                          fontFamily: 'NotoSansArabic',
                         ),
                       ),
                     ),
@@ -650,6 +855,63 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAdminStatCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                  fontFamily: 'NotoSansArabic',
+                ),
+              ),
+              Icon(icon, size: 20, color: color),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: theme.colorScheme.onSurface,
+              fontFamily: 'NotoSansArabic',
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -727,18 +989,20 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isAdmin = SessionService().isAdmin;
+    final headerColor = isAdmin ? const Color(0xFFD97706) : theme.primaryColor;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, left: 4, right: 4),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: theme.primaryColor),
+          Icon(icon, size: 18, color: headerColor),
           const SizedBox(width: 8),
           Text(
             title,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: theme.primaryColor,
+              color: headerColor,
               letterSpacing: 0.5,
               fontFamily: 'NotoSansArabic',
             ),

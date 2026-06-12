@@ -9,6 +9,7 @@ import 'health_dashboard_page.dart';
 import 'landing_screen.dart';
 import '../services/session_service.dart';
 import '../services/sensor_service.dart';
+import '../services/api_service.dart';
 import 'active_incident_tracking_screen.dart';
 
 class HomeScreen extends StatefulWidget {
