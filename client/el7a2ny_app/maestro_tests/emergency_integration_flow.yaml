@@ -1,0 +1,28 @@
+appId: com.example.el7a2ny_app
+---
+- clearState
+- launchApp:
+    permissions:
+      camera: allow
+      location: allow
+      microphone: allow
+- extendedWaitUntil:
+    visible: "بلاغ لمرة واحدة"
+    timeout: 15000
+- tapOn: "بلاغ لمرة واحدة"
+- tapOn: "الكاميرا"
+- tapOn: "الموقع"
+- tapOn: "الميكروفون"
+- tapOn: "اكتب اسمك"
+- inputText: "محمد أحمد"
+- tapOn: "01xxxxxxxxx"
+- inputText: "01012345678"
+- tapOn: "اوصف الحالة باختصار"
+- inputText: "حادث سيارة على الطريق الدائري"
+- longPressOn: "إرفاق صورة أو فيديو"
+- assertVisible: "تم إرفاق ملف:"
+- tapOn: "إرسال البلاغ"
+- extendedWaitUntil:
+    visible: "تتبع البلاغ"
+    timeout: 15000
+- assertVisible: "تتبع البلاغ"

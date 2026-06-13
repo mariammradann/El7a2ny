@@ -394,7 +394,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
                           const SizedBox(height: 10),
                           _buildPlusWideButton(
                             icon: Icons.health_and_safety_rounded,
-                            label: isAr ? 'الصحة' : 'Health',
+                            label: isAr ? 'صحتك' : 'Health',
                             gradient: const LinearGradient(colors: [Color(0xFFBE123C), Color(0xFFE11D48)]),
                             onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HealthDashboardPage())),
                           ),
@@ -679,7 +679,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
                     ),
                     const SizedBox(height: 10),
                     EmergencySolidButton(
-                      label: isAr ? 'الصحة' : 'Health',
+                      label: isAr ? 'صحتك' : 'Health',
                       backgroundColor: const Color(0xFFE11D48),
                       onPressed: () {
                         Navigator.of(context).push(
@@ -897,7 +897,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              connected ? 'متصل' : 'غير متصل',
+              connected ? context.loc.statusConnected : context.loc.statusDisconnected,
               style: TextStyle(
                 fontFamily: 'NotoSansArabic',
                 fontSize: 10,

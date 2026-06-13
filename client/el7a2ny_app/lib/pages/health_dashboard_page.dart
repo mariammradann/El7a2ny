@@ -28,6 +28,15 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
+  // ── DESIGN SYSTEM GETTERS ──────────────────────────────────────────────────
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _pageBg => _isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+  Color get _cardBg => _isDark ? const Color(0xFF1E293B) : Colors.white;
+  Color get _borderColor => _isDark ? const Color(0xFF334155).withOpacity(0.6) : const Color(0xFFE2E8F0);
+  Color get _textMain => _isDark ? Colors.white : const Color(0xFF0F172A);
+  Color get _textSub => _isDark ? Colors.white.withOpacity(0.7) : const Color(0xFF475569);
+  Color get _textMuted => _isDark ? Colors.white.withOpacity(0.4) : const Color(0xFF94A3B8);
+
   @override
   bool get wantKeepAlive => true;
 
@@ -92,51 +101,60 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
     final isAr = context.loc.isAr;
 
     if (_isLoading && _dashboard == null) {
-      return _buildLoadingSkeleton();
+      return Material(
+        color: _pageBg,
+        child: _buildLoadingSkeleton(),
+      );
     }
 
     if (_error != null && _dashboard == null) {
-      return _buildErrorState(isAr);
+      return Material(
+        color: _pageBg,
+        child: _buildErrorState(isAr),
+      );
     }
 
-    return RefreshIndicator(
-      onRefresh: _triggerSync,
-      color: const Color(0xFFE11D48),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: 32),
-        children: [
-          // Header with sync status
-          _buildSyncHeader(isAr),
-          const SizedBox(height: 8),
+    return Material(
+      color: _pageBg,
+      child: RefreshIndicator(
+        onRefresh: _triggerSync,
+        color: const Color(0xFFE11D48),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 32),
+          children: [
+            // Header with sync status
+            _buildSyncHeader(isAr),
+            const SizedBox(height: 8),
 
-          // A. Health Risk Score (hero widget)
-          _buildRiskScoreWidget(isAr),
-          const SizedBox(height: 20),
+            // A. Health Risk Score (hero widget)
+            _buildRiskScoreWidget(isAr),
+            const SizedBox(height: 20),
 
-          // B. Live Metrics
-          _buildSectionTitle(isAr ? 'المؤشرات الحيوية' : 'Vital Signs', Icons.favorite_rounded),
-          const SizedBox(height: 12),
-          _buildLiveMetricsGrid(isAr),
-          const SizedBox(height: 24),
+            // B. Live Metrics
+            _buildSectionTitle(isAr ? 'المؤشرات الحيوية' : 'Vital Signs', Icons.favorite_rounded),
+            const SizedBox(height: 12),
+            _buildLiveMetricsGrid(isAr),
+            const SizedBox(height: 24),
 
-          // C. Baseline Profile
-          _buildSectionTitle(isAr ? 'الملف الشخصي الصحي' : 'Health Profile', Icons.person_pin_rounded),
-          const SizedBox(height: 12),
-          _buildBaselineSection(isAr),
-          const SizedBox(height: 24),
+            // C. Baseline Profile
+            _buildSectionTitle(isAr ? 'الملف الشخصي الصحي' : 'Health Profile', Icons.person_pin_rounded),
+            const SizedBox(height: 12),
+            _buildBaselineSection(isAr),
+            const SizedBox(height: 24),
 
-          // D. Risk Score History (trend)
-          _buildSectionTitle(isAr ? 'اتجاه المخاطر' : 'Risk Trend', Icons.trending_up_rounded),
-          const SizedBox(height: 12),
-          _buildRiskTrendChart(isAr),
-          const SizedBox(height: 24),
+            // D. Risk Score History (trend)
+            _buildSectionTitle(isAr ? 'اتجاه المخاطر' : 'Risk Trend', Icons.trending_up_rounded),
+            const SizedBox(height: 12),
+            _buildRiskTrendChart(isAr),
+            const SizedBox(height: 24),
 
-          // E. Alerts & Anomalies
-          _buildSectionTitle(isAr ? 'التنبيهات والحالات' : 'Alerts & Reports', Icons.notification_important_rounded),
-          const SizedBox(height: 12),
-          _buildAlertsSection(isAr),
-        ],
+            // E. Alerts & Anomalies
+            _buildSectionTitle(isAr ? 'التنبيهات والحالات' : 'Alerts & Reports', Icons.notification_important_rounded),
+            const SizedBox(height: 12),
+            _buildAlertsSection(isAr),
+          ],
+        ),
       ),
     );
   }
@@ -150,19 +168,24 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-        ),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF334155), width: 0.5),
+        border: Border.all(color: _borderColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(_isDark ? 0.2 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFE11D48).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFFE11D48).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.health_and_safety_rounded, color: Color(0xFFE11D48), size: 22),
           ),
@@ -173,30 +196,52 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
               children: [
                 Text(
                   isAr ? 'مراقبة الصحة الذكية' : 'Smart Health Monitoring',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15, fontFamily: 'NotoSansArabic'),
+                  style: TextStyle(color: _textMain, fontWeight: FontWeight.w800, fontSize: 14, fontFamily: 'NotoSansArabic'),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   isAr ? 'آخر تحديث: الآن' : 'Last update: Just now',
-                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: 'NotoSansArabic'),
+                  style: TextStyle(color: _textMuted, fontSize: 11, fontFamily: 'NotoSansArabic'),
                 ),
               ],
             ),
           ),
-          GestureDetector(
-            onTap: _triggerSync,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFE11D48), Color(0xFFF43F5E)]),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.sync_rounded, color: Colors.white, size: 16),
-                  const SizedBox(width: 4),
-                  Text(isAr ? 'مزامنة' : 'Sync', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-                ],
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _triggerSync,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFE11D48), Color(0xFFF43F5E)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFE11D48).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.sync_rounded, color: Colors.white, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      isAr ? 'مزامنة' : 'Sync',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'NotoSansArabic',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -221,19 +266,12 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF0F172A),
-            scoreColor.withOpacity(0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: scoreColor.withOpacity(0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: scoreColor.withOpacity(0.2),
+            color: scoreColor.withOpacity(_isDark ? 0.15 : 0.08),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -252,7 +290,11 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
                   width: 160,
                   height: 160,
                   child: CustomPaint(
-                    painter: _RiskGaugePainter(score: score, color: scoreColor),
+                    painter: _RiskGaugePainter(
+                      score: score, 
+                      color: scoreColor,
+                      trackColor: _isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                    ),
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -269,8 +311,9 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
                           Text(
                             isAr ? 'درجة الخطورة' : 'Risk Score',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
+                              color: _textMuted,
                               fontSize: 12,
+                              fontWeight: FontWeight.w600,
                               fontFamily: 'NotoSansArabic',
                             ),
                           ),
@@ -287,16 +330,16 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: scoreColor.withOpacity(0.15),
+              color: scoreColor.withOpacity(0.12),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: scoreColor.withOpacity(0.3)),
+              border: Border.all(color: scoreColor.withOpacity(0.25)),
             ),
             child: Text(
               _riskLabel(level, isAr),
               style: TextStyle(
                 color: scoreColor,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
                 fontFamily: 'NotoSansArabic',
               ),
             ),
@@ -307,7 +350,7 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
             explanation,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
+              color: _textSub,
               fontSize: 13,
               fontFamily: 'NotoSansArabic',
               height: 1.5,
@@ -399,13 +442,13 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: gradient[0].withOpacity(0.2)),
+        border: Border.all(color: _borderColor),
         boxShadow: [
           BoxShadow(
-            color: gradient[0].withOpacity(0.1),
-            blurRadius: 12,
+            color: Colors.black.withOpacity(_isDark ? 0.15 : 0.03),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -420,6 +463,13 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: gradient),
                   borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient[0].withOpacity(0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Icon(icon, color: Colors.white, size: 18),
               ),
@@ -432,7 +482,13 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
                     decoration: BoxDecoration(
                       color: gradient[0],
                       shape: BoxShape.circle,
-                      boxShadow: [BoxShadow(color: gradient[0].withOpacity(0.6), blurRadius: 6)],
+                      boxShadow: [
+                        BoxShadow(
+                          color: gradient[0].withOpacity(0.6),
+                          blurRadius: _pulseAnimation.value * 6,
+                          spreadRadius: _pulseAnimation.value * 2,
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -442,16 +498,39 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800, fontFamily: 'NotoSansArabic')),
+              Text(
+                value, 
+                style: TextStyle(
+                  color: _textMain, 
+                  fontSize: 28, 
+                  fontWeight: FontWeight.w800, 
+                  fontFamily: 'NotoSansArabic'
+                ),
+              ),
               const SizedBox(width: 4),
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text(unit, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13, fontFamily: 'NotoSansArabic')),
+                child: Text(
+                  unit, 
+                  style: TextStyle(
+                    color: _textMuted, 
+                    fontSize: 13, 
+                    fontFamily: 'NotoSansArabic'
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12, fontFamily: 'NotoSansArabic')),
+          Text(
+            label, 
+            style: TextStyle(
+              color: _textSub, 
+              fontSize: 12, 
+              fontFamily: 'NotoSansArabic',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -468,9 +547,16 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: gradient[0].withOpacity(0.2)),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(_isDark ? 0.15 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -479,6 +565,13 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
             decoration: BoxDecoration(
               gradient: LinearGradient(colors: gradient),
               borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: gradient[0].withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Icon(icon, color: Colors.white, size: 24),
           ),
@@ -487,20 +580,50 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13, fontFamily: 'NotoSansArabic')),
+                Text(
+                  label, 
+                  style: TextStyle(
+                    color: _textMain, 
+                    fontSize: 14, 
+                    fontWeight: FontWeight.w700, 
+                    fontFamily: 'NotoSansArabic'
+                  ),
+                ),
                 if (subtitle != null)
-                  Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11, fontFamily: 'NotoSansArabic')),
+                  Text(
+                    subtitle, 
+                    style: TextStyle(
+                      color: _textMuted, 
+                      fontSize: 11, 
+                      fontFamily: 'NotoSansArabic'
+                    ),
+                  ),
               ],
             ),
           ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800, fontFamily: 'NotoSansArabic')),
+              Text(
+                value, 
+                style: TextStyle(
+                  color: _textMain, 
+                  fontSize: 32, 
+                  fontWeight: FontWeight.w800, 
+                  fontFamily: 'NotoSansArabic'
+                ),
+              ),
               const SizedBox(width: 4),
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Text(unit, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14, fontFamily: 'NotoSansArabic')),
+                child: Text(
+                  unit, 
+                  style: TextStyle(
+                    color: _textMuted, 
+                    fontSize: 14, 
+                    fontFamily: 'NotoSansArabic'
+                  ),
+                ),
               ),
             ],
           ),
@@ -525,9 +648,16 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
+          color: _cardBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF334155).withOpacity(0.5)),
+          border: Border.all(color: _borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(_isDark ? 0.15 : 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,7 +677,7 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
                       : (isAr ? 'جاري بناء الملف الشخصي...' : 'Building your profile...'),
                   style: TextStyle(
                     color: isMature ? const Color(0xFF10B981) : const Color(0xFFFBBF24),
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     fontSize: 14,
                     fontFamily: 'NotoSansArabic',
                   ),
@@ -561,7 +691,7 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
               child: LinearProgressIndicator(
                 value: progressPct / 100,
                 minHeight: 6,
-                backgroundColor: const Color(0xFF334155),
+                backgroundColor: _isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
                 valueColor: AlwaysStoppedAnimation(
                   isMature ? const Color(0xFF10B981) : const Color(0xFFFBBF24),
                 ),
@@ -570,11 +700,11 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
             const SizedBox(height: 8),
             Text(
               isAr ? '$days / 14 يوم من البيانات' : '$days / 14 days of data',
-              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: 'NotoSansArabic'),
+              style: TextStyle(color: _textMuted, fontSize: 12, fontFamily: 'NotoSansArabic'),
             ),
             if (baselines.isNotEmpty) ...[
               const SizedBox(height: 16),
-              const Divider(color: Color(0xFF334155), height: 1),
+              Divider(color: _borderColor, height: 1),
               const SizedBox(height: 12),
               // Show key baselines
               ...baselines.take(4).map((b) => _buildBaselineRow(b, isAr)),
@@ -593,13 +723,26 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white.withOpacity(0.6), size: 18),
+          Icon(icon, color: _textSub, size: 18),
           const SizedBox(width: 10),
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, fontFamily: 'NotoSansArabic')),
+          Text(
+            label, 
+            style: TextStyle(
+              color: _textSub, 
+              fontSize: 13, 
+              fontFamily: 'NotoSansArabic',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const Spacer(),
           Text(
             '${baseline.meanValue.toStringAsFixed(1)} ± ${baseline.stdValue.toStringAsFixed(1)}',
-            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'NotoSansArabic'),
+            style: TextStyle(
+              color: _textMain, 
+              fontSize: 13, 
+              fontWeight: FontWeight.w700, 
+              fontFamily: 'NotoSansArabic'
+            ),
           ),
         ],
       ),
@@ -624,9 +767,16 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF334155).withOpacity(0.5)),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(_isDark ? 0.15 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -645,7 +795,7 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
                       children: [
                         Text(
                           '${score.score}',
-                          style: TextStyle(color: color.withOpacity(0.8), fontSize: 9, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: color.withOpacity(0.9), fontSize: 9, fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 4),
                         AnimatedContainer(
@@ -653,11 +803,18 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
                           height: h,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [color.withOpacity(0.8), color],
+                              colors: [color.withOpacity(0.7), color],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -667,12 +824,12 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
               }).toList(),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(isAr ? 'الأقدم' : 'Oldest', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10)),
-              Text(isAr ? 'الأحدث' : 'Latest', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10)),
+              Text(isAr ? 'الأقدم' : 'Oldest', style: TextStyle(color: _textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
+              Text(isAr ? 'الأحدث' : 'Latest', style: TextStyle(color: _textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
             ],
           ),
         ],
@@ -712,9 +869,16 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(anomaly.isActive ? 0.4 : 0.15)),
+        border: Border.all(color: anomaly.isActive ? color.withOpacity(0.4) : _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(_isDark ? 0.15 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,7 +888,7 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -736,7 +900,7 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
               Expanded(
                 child: Text(
                   isAr ? 'نمط صحي غير عادي' : 'Unusual health pattern',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14, fontFamily: 'NotoSansArabic'),
+                  style: TextStyle(color: _textMain, fontWeight: FontWeight.w700, fontSize: 14, fontFamily: 'NotoSansArabic'),
                 ),
               ),
               Container(
@@ -747,7 +911,7 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
                 ),
                 child: Text(
                   _anomalyStatusLabel(anomaly.status, isAr),
-                  style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700, fontFamily: 'NotoSansArabic'),
                 ),
               ),
             ],
@@ -757,7 +921,7 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
             anomaly.explanation,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12, fontFamily: 'NotoSansArabic', height: 1.4),
+            style: TextStyle(color: _textSub, fontSize: 12, fontFamily: 'NotoSansArabic', height: 1.4),
           ),
           if (anomaly.isActive) ...[
             const SizedBox(height: 12),
@@ -781,10 +945,10 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
               ],
             ),
           ],
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             _timeAgo(anomaly.createdAt, isAr),
-            style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 11, fontFamily: 'NotoSansArabic'),
+            style: TextStyle(color: _textMuted, fontSize: 11, fontFamily: 'NotoSansArabic'),
           ),
         ],
       ),
@@ -796,16 +960,23 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE11D48).withOpacity(0.2)),
+        border: Border.all(color: const Color(0xFFE11D48).withOpacity(0.25)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(_isDark ? 0.15 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFFE11D48).withOpacity(0.1),
+              color: const Color(0xFFE11D48).withOpacity(0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.emergency_rounded, color: Color(0xFFE11D48), size: 20),
@@ -817,11 +988,12 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
               children: [
                 Text(
                   isAr ? 'تقرير طوارئ صحي' : 'Health Emergency Report',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13, fontFamily: 'NotoSansArabic'),
+                  style: TextStyle(color: _textMain, fontWeight: FontWeight.w700, fontSize: 13, fontFamily: 'NotoSansArabic'),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   '${isAr ? 'درجة الخطورة:' : 'Risk score:'} ${report.riskScore}',
-                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontFamily: 'NotoSansArabic'),
+                  style: TextStyle(color: _textSub, fontSize: 12, fontFamily: 'NotoSansArabic'),
                 ),
               ],
             ),
@@ -829,12 +1001,13 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFFBBF24).withOpacity(0.1),
+              color: const Color(0xFFFBBF24).withOpacity(0.12),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFFBBF24).withOpacity(0.3)),
             ),
             child: Text(
               report.status,
-              style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w600),
+              style: const TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w700, fontFamily: 'NotoSansArabic'),
             ),
           ),
         ],
@@ -848,12 +1021,20 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
+          color: color.withOpacity(0.12),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withOpacity(0.25)),
         ),
         child: Center(
-          child: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 13, fontFamily: 'NotoSansArabic')),
+          child: Text(
+            label, 
+            style: TextStyle(
+              color: color, 
+              fontWeight: FontWeight.w800, 
+              fontSize: 13, 
+              fontFamily: 'NotoSansArabic'
+            ),
+          ),
         ),
       ),
     );
@@ -875,7 +1056,15 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
         children: [
           Icon(icon, color: const Color(0xFFE11D48), size: 20),
           const SizedBox(width: 8),
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700, fontFamily: 'NotoSansArabic')),
+          Text(
+            title, 
+            style: TextStyle(
+              color: _textMain, 
+              fontSize: 16, 
+              fontWeight: FontWeight.w800, 
+              fontFamily: 'NotoSansArabic'
+            ),
+          ),
         ],
       ),
     );
@@ -886,30 +1075,52 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFF334155).withOpacity(0.5)),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(_isDark ? 0.15 : 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Center(
-        child: Text(msg, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14, fontFamily: 'NotoSansArabic')),
+        child: Text(
+          msg, 
+          style: TextStyle(
+            color: _textMuted, 
+            fontSize: 14, 
+            fontFamily: 'NotoSansArabic',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildLoadingSkeleton() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
+          const SizedBox(
             width: 40, height: 40,
             child: CircularProgressIndicator(
               color: Color(0xFFE11D48),
               strokeWidth: 3,
             ),
           ),
-          SizedBox(height: 16),
-          Text('Loading health data...', style: TextStyle(color: Colors.white54, fontFamily: 'NotoSansArabic')),
+          const SizedBox(height: 16),
+          Text(
+            'Loading health data...', 
+            style: TextStyle(
+              color: _textMuted, 
+              fontFamily: 'NotoSansArabic',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -920,9 +1131,16 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.cloud_off_rounded, color: Colors.white38, size: 48),
+          Icon(Icons.cloud_off_rounded, color: _textMuted, size: 48),
           const SizedBox(height: 16),
-          Text(isAr ? 'تعذر تحميل بيانات الصحة' : 'Failed to load health data', style: const TextStyle(color: Colors.white54, fontFamily: 'NotoSansArabic')),
+          Text(
+            isAr ? 'تعذر تحميل بيانات الصحة' : 'Failed to load health data', 
+            style: TextStyle(
+              color: _textSub, 
+              fontFamily: 'NotoSansArabic',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 12),
           ElevatedButton.icon(
             onPressed: _loadDashboard,
@@ -931,6 +1149,7 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFE11D48),
               foregroundColor: Colors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
@@ -1039,8 +1258,9 @@ class _HealthDashboardPageState extends State<HealthDashboardPage>
 class _RiskGaugePainter extends CustomPainter {
   final int score;
   final Color color;
+  final Color trackColor;
 
-  _RiskGaugePainter({required this.score, required this.color});
+  _RiskGaugePainter({required this.score, required this.color, required this.trackColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1049,7 +1269,7 @@ class _RiskGaugePainter extends CustomPainter {
 
     // Background track
     final bgPaint = Paint()
-      ..color = const Color(0xFF334155)
+      ..color = trackColor
       ..strokeWidth = 10
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -1100,6 +1320,7 @@ class _RiskGaugePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RiskGaugePainter oldDelegate) {
-    return oldDelegate.score != score || oldDelegate.color != color;
+    return oldDelegate.score != score || oldDelegate.color != color || oldDelegate.trackColor != trackColor;
   }
 }
+

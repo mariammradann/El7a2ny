@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../core/localization/app_strings.dart';
+
 
 /// Semantic colors for the emergency dashboard
 Color getEmergencyTextDark(BuildContext context) => Theme.of(context).colorScheme.onSurface;
@@ -86,7 +88,7 @@ class EmergencyStatusChip extends StatelessWidget {
           border: Border.all(color: isDark ? Colors.green.shade400.withValues(alpha: 0.4) : Colors.green.shade600.withValues(alpha: 0.3)),
         ),
         child: Text(
-          'متصل',
+          context.loc.statusConnected,
           style: TextStyle(
             fontFamily: 'NotoSansArabic',
             fontSize: 12,
@@ -104,7 +106,7 @@ class EmergencyStatusChip extends StatelessWidget {
         border: Border.all(color: isDark ? const Color(0xFFE61717).withValues(alpha: 0.4) : const Color(0xFFE61717).withValues(alpha: 0.3)),
       ),
       child: Text(
-        'غير متصل',
+        context.loc.statusDisconnected,
         style: TextStyle(
           fontFamily: 'NotoSansArabic',
           fontSize: 12,

@@ -147,22 +147,15 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFF1E293B),
-                                Color(0xFF0F172A),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                              color: const Color(0xFFE11D48).withValues(alpha: 0.25),
                               width: 1.5,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 16,
                                 offset: const Offset(0, 6),
                               ),
@@ -176,12 +169,12 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                                      color: const Color(0xFFE11D48).withValues(alpha: 0.12),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
                                       Icons.security_rounded,
-                                      color: Color(0xFFF59E0B),
+                                      color: Color(0xFFE11D48),
                                       size: 28,
                                     ),
                                   ),
@@ -192,11 +185,11 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                       children: [
                                         Text(
                                           isAr ? 'جلسة تحكم آمنة' : 'Secured Control Session',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontFamily: 'NotoSansArabic',
                                             fontSize: 16,
                                             fontWeight: FontWeight.w900,
-                                            color: Colors.white,
+                                            color: theme.colorScheme.onSurface,
                                           ),
                                         ),
                                         const SizedBox(height: 2),
@@ -207,7 +200,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                           style: TextStyle(
                                             fontFamily: 'NotoSansArabic',
                                             fontSize: 12,
-                                            color: Colors.white.withValues(alpha: 0.7),
+                                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -222,8 +215,8 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                                   MainShellScreen.setIndex(context, 4);
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF59E0B),
-                                  foregroundColor: const Color(0xFF0F172A),
+                                  backgroundColor: const Color(0xFFE11D48),
+                                  foregroundColor: Colors.white,
                                   elevation: 2,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -723,9 +716,9 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                 gradient: LinearGradient(
                   colors: isAdmin
                       ? [
-                          const Color(0xFF0F172A), // Slate-900
-                          const Color(0xFF78350F), // Amber-900
-                          const Color(0xFFB45309), // Amber-700
+                          const Color(0xFF1E293B), // Slate-800
+                          const Color(0xFFE11D48), // Crimson-600
+                          const Color(0xFF9F1239), // Crimson-800
                         ]
                       : [
                           theme.primaryColor,
@@ -750,13 +743,13 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isAdmin ? const Color(0xFFF59E0B) : theme.scaffoldBackgroundColor,
+                        color: isAdmin ? const Color(0xFFE11D48) : theme.scaffoldBackgroundColor,
                         width: 4,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: isAdmin
-                              ? const Color(0xFFF59E0B).withValues(alpha: 0.3)
+                              ? const Color(0xFFE11D48).withValues(alpha: 0.3)
                               : Colors.black.withValues(alpha: 0.1),
                           blurRadius: isAdmin ? 24 : 20,
                           spreadRadius: isAdmin ? 2 : 0,
@@ -773,7 +766,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                       child: _user?.profileImageUrl == null
                           ? Icon(
                               Icons.person,
-                              color: isAdmin ? const Color(0xFFF59E0B) : theme.primaryColor,
+                              color: isAdmin ? const Color(0xFFE11D48) : theme.primaryColor,
                               size: 56,
                             )
                           : null,
@@ -787,7 +780,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                       if (isAdmin) ...[
                         const Icon(
                           Icons.shield_rounded,
-                          color: Color(0xFFF59E0B),
+                          color: Color(0xFFE11D48),
                           size: 24,
                         ),
                         const SizedBox(width: 6),
@@ -815,7 +808,7 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                         icon: Icon(
                           Icons.edit_rounded,
                           size: 20,
-                          color: isAdmin ? const Color(0xFFF59E0B) : theme.primaryColor,
+                          color: isAdmin ? const Color(0xFFE11D48) : theme.primaryColor,
                         ),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
@@ -828,12 +821,12 @@ class _ProfileTabPageState extends State<ProfileTabPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                          colors: [Color(0xFFE11D48), Color(0xFFBE123C)],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFD97706).withValues(alpha: 0.35),
+                            color: const Color(0xFFBE123C).withValues(alpha: 0.35),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -990,7 +983,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isAdmin = SessionService().isAdmin;
-    final headerColor = isAdmin ? const Color(0xFFD97706) : theme.primaryColor;
+    final headerColor = isAdmin ? const Color(0xFFE11D48) : theme.primaryColor;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12, left: 4, right: 4),
       child: Row(

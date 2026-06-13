@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El7a2ny – Role-Based Permission Matrix</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet" />
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0b0e1a;
+      --bg-secondary: #10152a;
+      --bg-card: #151b30;
+      --bg-hover: #1c2440;
+      --accent: #6c63ff;
+      --accent-glow: #6c63ff55;
+      --accent2: #00d4aa;
+      --text-primary: #e8ecf5;
+      --text-muted: #8892a4;
+      --border: #1e2a45;
+      --border-light: #2a3850;
+      --yes-bg: #0d2e1f;
+      --yes-text: #00d4aa;
+      --yes-border: #00d4aa33;
+      --no-bg: #2a0f0f;
+      --no-text: #ff6b6b;
+      --no-border: #ff6b6b33;
+      --partial-bg: #1e1a00;
+      --partial-text: #ffd166;
+      --partial-border: #ffd16633;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 0%, #6c63ff18 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 100%, #00d4aa12 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .logo-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #6c63ff22, #00d4aa22);
+      border: 1px solid var(--border-light);
+      border-radius: 100px;
+      padding: 6px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent2);
+      margin-bottom: 20px;
+    }
+
+    .logo-chip .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent2);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(1.4);
+      }
+    }
+
+    header h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #e8ecf5 0%, #6c63ff 50%, #00d4aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 500px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 28px;
+      text-align: center;
+      min-width: 140px;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .stat-card .num {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-card .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 360px;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    #searchInput {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 16px 11px 42px;
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #searchInput:focus {
+      border-color: var(--accent);
+    }
+
+    #searchInput::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.25s ease;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5148d4);
+      color: #fff;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px var(--accent-glow);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #00d4aa, #00a882);
+      color: #001a14;
+      box-shadow: 0 4px 16px #00d4aa33;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px #00d4aa55;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .filter-tab {
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .filter-tab:hover,
+    .filter-tab.active {
+      border-color: var(--accent);
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .filter-tab.active {
+      color: var(--accent);
+    }
+
+    .table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead tr {
+      background: linear-gradient(135deg, #151b30, #1c2440);
+    }
+
+    th {
+      padding: 14px 16px;
+      font-weight: 700;
+      text-align: left;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-size: 11px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background: #151b30;
+      min-width: 220px;
+    }
+
+    th.role-header {
+      text-align: center;
+      min-width: 100px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-hover);
+    }
+
+    td {
+      padding: 14px 16px;
+      vertical-align: middle;
+    }
+
+    td:first-child {
+      position: sticky;
+      left: 0;
+      background: var(--bg-card);
+      z-index: 2;
+      border-right: 1px solid var(--border);
+    }
+
+    tbody tr:hover td:first-child {
+      background: var(--bg-hover);
+    }
+
+    .model-name {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+    }
+
+    .model-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+
+    .model-row-info {
+      display: flex;
+      align-items: center;
+    }
+
+    td.role-cell {
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      min-width: 65px;
+    }
+
+    .badge-crud {
+      background: #0f1c3f;
+      color: #5eb3ff;
+      border: 1px solid #5eb3ff33;
+    }
+
+    .badge-cru {
+      background: #1b2e24;
+      color: #00ffaa;
+      border: 1px solid #00ffaa33;
+    }
+
+    .badge-cr {
+      background: #1a252c;
+      color: #00d4aa;
+      border: 1px solid #00d4aa33;
+    }
+
+    .badge-ru {
+      background: #242015;
+      color: #ffcc00;
+      border: 1px solid #ffcc0033;
+    }
+
+    .badge-r {
+      background: #16222f;
+      color: #8892a4;
+      border: 1px solid #8892a422;
+    }
+
+    .badge-u {
+      background: #2d1f10;
+      color: #ff9f43;
+      border: 1px solid #ff9f4333;
+    }
+
+    .badge-c {
+      background: #1e1135;
+      color: #a29bfe;
+      border: 1px solid #a29bfe33;
+    }
+
+    .badge-rd {
+      background: #2a1515;
+      color: #ff6b6b;
+      border: 1px solid #ff6b6b33;
+    }
+
+    .badge-cu {
+      background: #20102a;
+      color: #fd79a8;
+      border: 1px solid #fd79a833;
+    }
+
+    .badge-none {
+      background: transparent;
+      color: #404b60;
+      border: 1px solid transparent;
+      font-weight: 400;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .cat-core {
+      background: #1a1a2e;
+      color: #6c63ff;
+    }
+
+    .cat-incident {
+      background: #2a0f0f;
+      color: #ff6b6b;
+    }
+
+    .cat-tracking {
+      background: #0d2e1f;
+      color: #00d4aa;
+    }
+
+    .cat-social {
+      background: #1e1000;
+      color: #ff9f43;
+    }
+
+    .cat-hardware {
+      background: #1a1a2e;
+      color: #a29bfe;
+    }
+
+    .cat-training {
+      background: #200d2e;
+      color: #fd79a8;
+    }
+
+    .cat-system {
+      background: #1e1a00;
+      color: #ffd166;
+    }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      background: linear-gradient(135deg, #0d2e1f, #0a2a1c);
+      border: 1px solid var(--yes-border);
+      color: var(--yes-text);
+      padding: 14px 22px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 8px 32px rgba(0, 212, 170, 0.2);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    tr.hidden {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-wrap {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <header>
+      <div class="logo-chip"><span class="dot"></span>El7a2ny System Ecosystem</div>
+      <h1>Role-Based Access Matrix</h1>
+      <p>Official permission mapping across ecosystem sub-roles. Section DB Table is excluded.</p>
+    </header>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="num" id="statModels">26</div>
+        <div class="label">Entities / Fields</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">6</div>
+        <div class="label">System Roles</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" style="color:var(--accent2)">Full</div>
+        <div class="label">RBAC Control</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="search-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search module or operation…" />
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-success" onclick="exportToExcel()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export Permissions to Excel
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" data-filter="all">All Modules</button>
+      <button class="filter-tab" data-filter="core">Core & Identity</button>
+      <button class="filter-tab" data-filter="incident">Incidents & Communications</button>
+      <button class="filter-tab" data-filter="tracking">Tracking & Dispatch</button>
+      <button class="filter-tab" data-filter="hardware">IoT & Hardware</button>
+      <button class="filter-tab" data-filter="training">Training & Progression</button>
+      <button class="filter-tab" data-filter="social">Social & Sponsorship</button>
+      <button class="filter-tab" data-filter="system">System & Intelligence</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="permTable">
+          <thead>
+            <tr>
+              <th>Module / Entity Scope</th>
+              <th class="role-header">👤 Reporter</th>
+              <th class="role-header">🦺 Volunteer</th>
+              <th class="role-header">⚡ Admin</th>
+              <th class="role-header">🔑 Auth Svc</th>
+              <th class="role-header">⚙️ System</th>
+              <th class="role-header">📡 IoT/Sensors</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="legend">
+        <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Operations
+          Matrix:</span>
+        <span class="legend-item"><span class="badge badge-crud">CRUD</span> Complete Access</span>
+        <span class="legend-item"><span class="badge badge-cru">CRU</span> Write & Mutate</span>
+        <span class="legend-item"><span class="badge badge-cr">CR</span> Entry Create</span>
+        <span class="legend-item"><span class="badge badge-ru">RU</span> Read & Edit</span>
+        <span class="legend-item"><span class="badge badge-r">R</span> Read-Only</span>
+        <span class="legend-item"><span class="badge badge-c">C</span> Append-Only</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2.5">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+    <span id="toastMsg">Excel exported successfully!</span>
+  </div>
+
+  <script>
+    // ─────────────────────────────────────────────────────────────
+    // OFFICIAL CONVERTED MATRIX DATA FROM PDF (WITHOUT DB TABLES)
+    // ─────────────────────────────────────────────────────────────
+    const ROWS = [
+      { icon: '👤', category: 'core', name: 'User Account', reporter: 'RU', volunteer: 'RU', admin: 'CRUD', auth: 'CRUD', system: 'R', iot: '' },
+      { icon: '🔑', category: 'core', name: 'Auth/Password Token', reporter: 'CR', volunteer: '', admin: 'R', auth: 'CRUD', system: 'CRUD', iot: '' },
+      { icon: '💳', category: 'core', name: 'Subscription Plan', reporter: 'CR', volunteer: '', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '🦺', category: 'core', name: 'Volunteer Profile', reporter: 'R', volunteer: 'CRU', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '🚨', category: 'incident', name: 'Emergency Incident', reporter: 'CR', volunteer: 'R', admin: 'CRUD', auth: '', system: 'CRUD', iot: 'C' },
+      { icon: '📈', category: 'incident', name: 'Incident Status Field', reporter: 'R', volunteer: 'U', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '📝', category: 'incident', name: 'Emergency Report Alias', reporter: 'CRU', volunteer: 'R', admin: 'RD', auth: '', system: 'CRUD', iot: 'C' },
+      { icon: '📍', category: 'tracking', name: 'Location Data', reporter: 'CR', volunteer: 'R', admin: 'RU', auth: '', system: 'CRUD', iot: 'CU' },
+      { icon: '🏃', category: 'tracking', name: 'Responder Tracking', reporter: 'R', volunteer: 'CRU', admin: 'RU', auth: '', system: 'CRUD', iot: '' },
+      { icon: '🚒', category: 'tracking', name: 'Volunteer Assignment', reporter: 'R', volunteer: 'RU', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '🤖', category: 'system', name: 'AI Triage Result', reporter: 'R', volunteer: 'R', admin: 'RU', auth: '', system: 'CRUD', iot: '' },
+      { icon: '🤖', category: 'system', name: 'AI Chatbot / Assistant', reporter: 'CR', volunteer: 'CR', admin: 'CR', auth: '', system: 'CRUD', iot: '' },
+      { icon: '📡', category: 'hardware', name: 'IoT Alert Logs', reporter: '', volunteer: 'R', admin: '', auth: '', system: 'CRUD', iot: 'C' },
+      { icon: '🗳️', category: 'system', name: 'False Report Record', reporter: 'R', volunteer: 'R', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '💬', category: 'incident', name: 'Incident Chat Logs', reporter: 'CR', volunteer: 'CR', admin: 'R', auth: '', system: 'CRUD', iot: '' },
+      { icon: '🤝', category: 'social', name: 'Help Initiative', reporter: 'CRU', volunteer: 'CRU', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '🏢', category: 'social', name: 'Sponsor Request', reporter: 'CR', volunteer: '', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '⭐', category: 'social', name: 'Feedback & Ratings', reporter: 'CRU', volunteer: 'R', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '🌡️', category: 'hardware', name: 'Sensor Reading Stream', reporter: 'R', volunteer: '', admin: 'R', auth: '', system: 'CRUD', iot: 'C' },
+      { icon: '📚', category: 'training', name: 'Training Courses', reporter: 'R', volunteer: 'R', admin: 'CRUD', auth: '', system: 'RU', iot: '' },
+      { icon: '🎓', category: 'training', name: 'Training Progress Record', reporter: '', volunteer: 'CRU', admin: 'RU', auth: '', system: 'CRUD', iot: '' },
+      { icon: '🎖️', category: 'training', name: 'Volunteer Certificate Badge', reporter: '', volunteer: 'R', admin: 'CRUD', auth: '', system: 'CRU', iot: '' },
+      { icon: '❓', category: 'training', name: 'Assessment Quiz Assets', reporter: '', volunteer: 'CRU', admin: 'RU', auth: '', system: 'CRUD', iot: '' },
+      { icon: '📈', category: 'core', name: 'Trust Score Metric', reporter: 'R', volunteer: 'R', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '📋', category: 'system', name: 'System Security Logs', reporter: '', volunteer: '', admin: 'CRUD', auth: '', system: 'CRUD', iot: '' },
+      { icon: '📊', category: 'system', name: 'Emergency Analytics Metrics', reporter: '', volunteer: '', admin: 'CRUD', auth: '', system: 'RU', iot: '' },
+      { icon: '🔔', category: 'incident', name: 'Notification Streams', reporter: 'R', volunteer: 'R', admin: 'RU', auth: '', system: 'CRUD', iot: 'C' }
+    ];
+
+    // ─────────────────────────────────────────────────────────────
+    // LOGIC RENDERING
+    // ─────────────────────────────────────────────────────────────
+    let activeFilter = 'all';
+
+    function formatBadge(val) {
+      if (!val) return '<span class="badge badge-none">—</span>';
+      const cls = val.toLowerCase();
+      return `<span class="badge badge-${cls}">${val}</span>`;
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = data.map(row => `
+    <tr data-category="${row.category}">
+      <td>
+        <div class="model-row-info">
+          <span class="model-icon">${row.icon}</span>
+          <div>
+            <span class="category-badge cat-${row.category}">${row.category.toUpperCase()}</span><br/>
+            <span class="model-name">${row.name}</span>
+          </div>
+        </div>
+      </td>
+      <td class="role-cell">${formatBadge(row.reporter)}</td>
+      <td class="role-cell">${formatBadge(row.volunteer)}</td>
+      <td class="role-cell">${formatBadge(row.admin)}</td>
+      <td class="role-cell">${formatBadge(row.auth)}</td>
+      <td class="role-cell">${formatBadge(row.system)}</td>
+      <td class="role-cell">${formatBadge(row.iot)}</td>
+    </tr>
+  `).join('');
+    }
+
+    function applyFilters() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      document.querySelectorAll('#tableBody tr').forEach(tr => {
+        const cat = tr.dataset.category;
+        const text = tr.innerText.toLowerCase();
+        const catOk = activeFilter === 'all' || cat === activeFilter;
+        const srchOk = !q || text.includes(q);
+        tr.classList.toggle('hidden', !(catOk && srchOk));
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // EXCEL EXPORT WITHOUT DATABASE FIELDS
+    // ─────────────────────────────────────────────────────────────
+    function exportToExcel() {
+      const wb = XLSX.utils.book_new();
+
+      const matrixData = [
+        ['El7a2ny Ecosystem – Role-Based Permission Matrix Scope', '', '', '', '', '', ''],
+        ['Generated:', new Date().toLocaleString(), '', '', '', '', ''],
+        ['', '', '', '', '', '', ''],
+        ['Module / Entity Scope', 'Reporter', 'Volunteer', 'Admin', 'Auth Service', 'System Engine', 'IoT / Sensors Component'],
+        ...ROWS.map(r => [
+          r.name,
+          r.reporter || '—',
+          r.volunteer || '—',
+          r.admin || '—',
+          r.auth || '—',
+          r.system || '—',
+          r.iot || '—'
+        ])
+      ];
+
+      const ws1 = XLSX.utils.aoa_to_sheet(matrixData);
+      ws1['!cols'] = [{ wch: 35 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 22 }];
+      ws1['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+      XLSX.utils.book_append_sheet(wb, ws1, 'Role Security Matrix');
+
+      XLSX.writeFile(wb, 'El7a2ny_Role_Permissions_Matrix.xlsx');
+      showToast('✅ Converted Permissions Matrix downloaded!');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTable(ROWS);
+      document.getElementById('searchInput').addEventListener('input', applyFilters);
+      document.getElementById('filterTabs').addEventListener('click', e => {
+        if (!e.target.matches('.filter-tab')) return;
+        document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        activeFilter = e.target.dataset.filter;
+        applyFilters();
+      });
+    });
+  </script>
+</body>
+
+</html>

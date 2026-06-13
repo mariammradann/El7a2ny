@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen>
       'activeGradient': const [Color(0xFF16A34A), Color(0xFF15803D)],
     },
     {
-      'label': context.loc.isAr ? 'الصحة' : 'Health',
+      'label': context.loc.isAr ? 'صحتك' : 'Health',
       'activeGradient': const [Color(0xFFE11D48), Color(0xFFF43F5E)],
     },
   ];

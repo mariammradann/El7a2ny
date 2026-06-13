@@ -464,6 +464,9 @@ class AppStrings {
   String get statusInWay => isAr ? 'في الطريق' : 'En route';
   String get statusResolved => isAr ? 'تم الحل' : 'Resolved';
   String get statusDealing => isAr ? 'جاري التعامل' : 'Handling';
+  String get statusConnected => isAr ? 'متصل' : 'Connected';
+  String get statusDisconnected => isAr ? 'غير متصل' : 'Disconnected';
+
 
   // Data / Locations (Common Mocks)
   String get locDowntown =>
