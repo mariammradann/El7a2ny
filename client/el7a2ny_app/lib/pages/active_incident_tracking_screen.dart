@@ -47,11 +47,14 @@ class _ActiveIncidentTrackingScreenState
   List<Map<String, dynamic>> _volunteers = [];
   Timer? _pollingTimer;
   Timer? _volunteerLocationTimer;
+  Timer? _myLocationTimer;
   int _previousVolunteerCount = 0;
   AlertModel? _alertDetails;
   bool _hasShownCompletionPopup = false;
   bool _canceling = false;
   bool _dangerEnding = false;
+  LatLng? _myLocation;
+  bool _isMapReady = false;
 
   bool get _isCreator {
     // Highest priority: explicit override passed when navigating to this screen
@@ -86,13 +89,42 @@ class _ActiveIncidentTrackingScreenState
     if (!_isCreator) {
       _startVolunteerLocationUpdates();
     }
+    // Start tracking the current user's own location for map display
+    _startMyLocationUpdates();
   }
 
   @override
   void dispose() {
     _pollingTimer?.cancel();
     _volunteerLocationTimer?.cancel();
+    _myLocationTimer?.cancel();
     super.dispose();
+  }
+
+  /// Tracks the current user's own GPS location for map display
+  void _startMyLocationUpdates() {
+    _updateMyLocation();
+    _myLocationTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _updateMyLocation();
+    });
+  }
+
+  Future<void> _updateMyLocation() async {
+    if (!mounted) return;
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      if (mounted) {
+        setState(() {
+          _myLocation = LatLng(pos.latitude, pos.longitude);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error getting own location: $e');
+    }
   }
 
   void _startVolunteerLocationUpdates() {
@@ -128,14 +160,42 @@ class _ActiveIncidentTrackingScreenState
   }
 
   void _fitMapCamera() {
-    if (!mounted || _volunteers.isEmpty) return;
+    if (!mounted || !_isMapReady) return;
     try {
       final validVolunteers = _volunteers.where((v) => v['lat'] != null && v['lng'] != null);
       final points = [
         _incidentLocation,
         ...validVolunteers.map((v) => LatLng(v['lat'] as double, v['lng'] as double)),
+        if (_myLocation != null) _myLocation!,
       ];
-      final bounds = LatLngBounds.fromPoints(points);
+      
+      // Filter out duplicate or near-duplicate coordinates to prevent zoom-to-infinity / division by zero map bugs
+      final uniquePoints = <LatLng>[];
+      for (final p in points) {
+        if (!uniquePoints.any((up) => 
+            (up.latitude - p.latitude).abs() < 0.00001 && 
+            (up.longitude - p.longitude).abs() < 0.00001)) {
+          uniquePoints.add(p);
+        }
+      }
+
+      if (uniquePoints.length < 2) {
+        if (uniquePoints.isNotEmpty) {
+          _mapController.move(uniquePoints.first, 15.0);
+        }
+        return;
+      }
+
+      final bounds = LatLngBounds.fromPoints(uniquePoints);
+      
+      // Additional safety check: if the bounding box has extremely tiny span, center instead of calling fitCamera
+      final latDiff = (bounds.northEast.latitude - bounds.southWest.latitude).abs();
+      final lngDiff = (bounds.northEast.longitude - bounds.southWest.longitude).abs();
+      if (latDiff < 0.0001 && lngDiff < 0.0001) {
+        _mapController.move(uniquePoints.first, 15.0);
+        return;
+      }
+
       _mapController.fitCamera(
         CameraFit.bounds(
           bounds: bounds,
@@ -697,6 +757,12 @@ class _ActiveIncidentTrackingScreenState
             options: MapOptions(
               initialCenter: _incidentLocation,
               initialZoom: 14.0,
+              onMapReady: () {
+                setState(() {
+                  _isMapReady = true;
+                });
+                _fitMapCamera();
+              },
             ),
             children: [
               TileLayer(
@@ -772,6 +838,58 @@ class _ActiveIncidentTrackingScreenState
                           ),
                         ),
                       ),
+                  // Current user's own location pin
+                  if (_myLocation != null)
+                    Marker(
+                      point: _myLocation!,
+                      width: 70,
+                      height: 70,
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              isAr ? 'أنت' : 'You',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                              border: Border.all(
+                                color: const Color(0xFF10B981),
+                                width: 2,
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(2),
+                            child: const Icon(
+                              Icons.my_location_rounded,
+                              color: Color(0xFF10B981),
+                              size: 28,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ],

@@ -1389,7 +1389,7 @@ def admin_update_incident(request, incident_id):
     try:
         if request.method == "DELETE":
             incident.status = "deleted"
-            incident.save()
+            incident.save(update_fields=["status"])
             return Response({"message": f"Incident {incident_id} deleted"})
 
         action = request.data.get("action", "").strip().lower()
@@ -1402,7 +1402,7 @@ def admin_update_incident(request, incident_id):
         else:
             return Response({"error": f"Unknown action: {action}"}, status=400)
 
-        incident.save()
+        incident.save(update_fields=["status"])
         serializer = IncidentSerializer(incident)
         return Response(serializer.data)
     except Exception as e:
@@ -1826,7 +1826,7 @@ def respond_to_alert(request, incident_id):
     incident.current_volunteers = Responder.objects.filter(
         incident_id=incident.incident_id
     ).count()
-    incident.save()
+    incident.save(update_fields=["current_volunteers"])
 
     serializer = ResponderSerializer(responder)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -2040,7 +2040,7 @@ def run_dispatch_matching_and_notify(incident, analysis):
         recommended_sum = sum(int(count) for count in rec.values() if str(count).isdigit())
         if recommended_sum > 0:
             incident.total_volunteers = recommended_sum
-            incident.save()
+            incident.save(update_fields=["total_volunteers"])
             print(f"[INFO] Incident {incident.incident_id} total_volunteers dynamically set to {recommended_sum} by AI analysis.")
 
     if not rec:
@@ -2804,7 +2804,7 @@ def report_fake_incident(request, incident_id):
         
         # 1. Cancel the incident
         incident.status = "cancelled"
-        incident.save()
+        incident.save(update_fields=["status"])
         
         reported_by = request.data.get("reported_by")
         reporter = incident.user

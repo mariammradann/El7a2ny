@@ -79,6 +79,19 @@ class AlertModel {
   factory AlertModel.fromJson(Map<String, dynamic> json) {
     final currentUserId = AuthTokenStore.userId;
     final alertOwnerId = json['user']?.toString();
+
+    DateTime parseDateTime(dynamic value) {
+      if (value == null) return DateTime.now();
+      String formatted = value.toString().trim();
+      final match = RegExp(r'([+-])(\d{2})(\d{2})$').firstMatch(formatted);
+      if (match != null) {
+        final sign = match.group(1);
+        final hours = match.group(2);
+        final minutes = match.group(3);
+        formatted = formatted.substring(0, match.start) + '$sign$hours:$minutes';
+      }
+      return DateTime.tryParse(formatted)?.toLocal() ?? DateTime.now();
+    }
     
     // Parse media files
     List<String>? mediaUrls;
@@ -175,10 +188,7 @@ class AlertModel {
       lng: (json['lng'] ?? 0.0).toDouble(),
       latitude: json['lat'] != null ? (json['lat']).toDouble() : null,
       longitude: json['lng'] != null ? (json['lng']).toDouble() : null,
-      createdAt: json['created_at'] != null
-      
-    ? DateTime.parse(json['created_at'].toString().split('+')[0] + 'Z').toLocal()
-    : DateTime.now(),
+      createdAt: parseDateTime(json['created_at']),
           
       isMyAlert: currentUserId != null && alertOwnerId == currentUserId,
       mediaUrls: mediaUrls,
@@ -269,7 +279,7 @@ String timeAgoLocalized(AppStrings loc) {
   
   // BOTH must be UTC for the subtraction to work
   final now = DateTime.now().toUtc(); 
-  final diff = now.difference(createdAt!);
+  final diff = now.difference(createdAt!.toUtc());
   
   final isAr = loc.isAr;
   final minutes = diff.inMinutes; // Remove .abs() for a second to see if it's negative
