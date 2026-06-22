@@ -543,8 +543,26 @@ class IncidentViewSet(viewsets.ModelViewSet):
             return queryset
 
         if user_id:
-            # "My Reports" tab — return full history for this user
-            queryset = queryset.filter(user_id=user_id)
+            # "My Reports" tab — return full history for this user or their emergency contacts' reports
+            try:
+                current_user = User.objects.get(user_id=user_id)
+                current_phone_clean = "".join(filter(str.isdigit, current_user.phone_number))
+                
+                relative_user_ids = []
+                if current_phone_clean:
+                    for u in User.objects.exclude(user_id=user_id):
+                        for c in (u.emergency_contacts or []):
+                            c_phone = c.get("phone", "").strip()
+                            c_phone_clean = "".join(filter(str.isdigit, c_phone))
+                            if c_phone_clean and (c_phone_clean.endswith(current_phone_clean[-10:]) or current_phone_clean.endswith(c_phone_clean[-10:])):
+                                relative_user_ids.append(u.user_id)
+                                break
+                
+                queryset = queryset.filter(
+                    models.Q(user_id=user_id) | models.Q(user_id__in=relative_user_ids)
+                )
+            except User.DoesNotExist:
+                queryset = queryset.filter(user_id=user_id)
         else:
             # Public "Alerts" tab — only show incidents from the last 2 days
             cutoff = timezone.now() - timedelta(days=2)
@@ -750,6 +768,50 @@ class IncidentViewSet(viewsets.ModelViewSet):
                     relation = contact.get("relationship", "Contact")
                     msg = f"Alert! {resolved_user.name} has reported an emergency ({incident.category}) at Lat: {incident.location.latitude}, Lng: {incident.location.longitude}. Description: {incident.description or 'No details'}. Please check on them immediately!"
                     print(f"  -> SMS sent to {name} ({phone}) [{relation}]: {msg}")
+
+                # Send automated app message in chat if contact has an account
+                try:
+                    matching_users = []
+                    for contact in contacts:
+                        phone = contact.get("phone", "").strip()
+                        if not phone:
+                            continue
+                        clean_contact_phone = "".join(filter(str.isdigit, phone))
+                        if len(clean_contact_phone) >= 10:
+                            suffix = clean_contact_phone[-10:]
+                            for u in User.objects.all():
+                                u_phone_clean = "".join(filter(str.isdigit, u.phone_number))
+                                if u_phone_clean.endswith(suffix):
+                                    matching_users.append(u)
+                                    break
+                    
+                    if matching_users:
+                        chat, _ = IncidentChat.objects.get_or_create(incident_id=incident.incident_id)
+                        loc_str = f"{incident.location.latitude}, {incident.location.longitude}"
+                        if incident.location.address:
+                            loc_str += f" ({incident.location.address})"
+                        
+                        msg_text = (
+                            f"🚨 EMERGENCY ALERT!\n"
+                            f"Your emergency contact {resolved_user.name} has reported a {incident.category} emergency for themselves.\n"
+                            f"📍 Location: {loc_str}\n"
+                            f"📝 Details: {incident.description or 'No details'}.\n\n"
+                            f"🚨 تنبيه حالة طوارئ!\n"
+                            f"قام اتصال الطوارئ الخاص بك {resolved_user.name} بالإبلاغ عن حالة طوارئ ({incident.category}) لنفسه.\n"
+                            f"📍 الموقع: {loc_str}\n"
+                            f"📝 التفاصيل: {incident.description or 'لا توجد تفاصيل.'}"
+                        )
+                        
+                        ChatMessage.objects.create(
+                            chat=chat,
+                            sender_id=resolved_user.user_id,
+                            sender_name="System / نظام الطوارئ",
+                            sender_type="system",
+                            text=msg_text
+                        )
+                        print(f"[SUCCESS] Sent automated emergency contact message for incident {incident.incident_id} to {len(matching_users)} contacts")
+                except Exception as chat_err:
+                    print(f"[ERROR] Failed to send automated chat message: {chat_err}")
 
                 # Send confirmation email to the user
                 try:

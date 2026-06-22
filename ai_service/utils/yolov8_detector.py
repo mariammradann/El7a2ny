@@ -21,7 +21,8 @@ CLASS_NAMES = {
     12: "emergency-vehicle",
     13: "road-block",
     14: "animal-injured",
-    15: "dangerous-animal"
+    15: "dangerous-animal",
+    16: "fight"
 }
 
 # Mapping for the user's custom Roboflow version 2 dataset
@@ -34,90 +35,79 @@ CUSTOM_CLASS_NAMES = {
     5: "road-block",
     6: "smoke",
     7: "vehicle-accident",
-    8: "person-unconscious"
+    8: "person-unconscious",
+    9: "fight"
 }
 
 class EmergencyDetector:
-    def __init__(self, model_path: str = None):
-        if not model_path:
-            # Look for weights in ai_service/models/
-            base_dir = os.path.dirname(os.path.dirname(__file__))
-            model_path = os.path.join(base_dir, "models", "yolov8_emergency.pt")
-            
-        # Fallback to standard pretrained coco model if custom model is not yet trained/available
-        self.is_custom = True
-        if not os.path.exists(model_path):
-            logger.warning(f"Custom model weights not found at: {model_path}. Falling back to 'yolov8n.pt'")
-            model_path = "yolov8n.pt"
-            self.is_custom = False
-            
-        logger.info(f"Initializing YOLOv8 model from: {model_path} (is_custom={self.is_custom})")
-        self.model = YOLO(model_path)
+    def __init__(self, custom_model_path: str = "best.pt"):
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        
+        # Load the standard COCO model
+        logger.info("Initializing base YOLOv8 model from: yolov8n.pt")
+        self.base_model = YOLO("yolov8n.pt")
+        
+        # Load the custom trained model if it exists
+        custom_path = os.path.join(base_dir, custom_model_path)
+        self.has_custom = os.path.exists(custom_path)
+        if self.has_custom:
+            logger.info(f"Initializing custom YOLOv8 model from: {custom_path}")
+            self.custom_model = YOLO(custom_path)
+        else:
+            logger.warning(f"Custom model not found at {custom_path}. Make sure you moved best.pt to ai_service folder.")
+            self.custom_model = None
 
     def detect(self, image_source) -> tuple[list[dict], dict]:
-        """
-        Run object detection on the image source.
-        Returns:
-            raw_detections: list of dicts with box, confidence, class name.
-            detected_counts: summary dictionary with total occurrences.
-        """
-        # Run inference
-        results = self.model(image_source, verbose=False)
-        
         raw_detections = []
         detected_counts = {}
         
-        # Initialize counts for custom classes (and fallback classes to be safe)
-        active_names = CUSTOM_CLASS_NAMES if self.is_custom else CLASS_NAMES
+        # Initialize counts for known fallback classes
         for name in CLASS_NAMES.values():
             detected_counts[name] = 0
-        for name in CUSTOM_CLASS_NAMES.values():
-            detected_counts[name] = 0
             
-        # Add flags for simple checking
         detected_counts["fire_detected"] = False
         detected_counts["people_injured_count"] = 0
         detected_counts["unconscious_detected"] = False
 
-        if not results:
-            return raw_detections, detected_counts
-
-        result = results[0]
-        boxes = result.boxes
-        
-        for box in boxes:
-            cls_id = int(box.cls[0].item())
-            conf = float(box.conf[0].item())
-            xyxy = box.xyxy[0].tolist() # [x1, y1, x2, y2]
-            
-            # Map classes based on custom weights vs coco fallback
-            if not self.is_custom:
-                # Fallback mapping for demo purposes using yolov8n.pt (COCO)
-                class_name = "other"
-                if cls_id == 0:  # person
-                    class_name = "person-lying"  # Map to lying for demonstration if needed
-                elif cls_id in [2, 3, 5, 7]:  # car, motorcycle, bus, truck
-                    class_name = "damaged-vehicle"
-                elif cls_id == 9:  # traffic light
-                    class_name = "road-block"
-                elif cls_id == 10:  # fire hydrant
-                    class_name = "fire"
-                elif cls_id in [15, 16]:  # cat, dog
-                    class_name = "animal-injured"
-            else:
-                # Custom trained classes
-                class_name = CUSTOM_CLASS_NAMES.get(cls_id, "other")
-
-            raw_detections.append({
-                "class": class_name,
-                "confidence": conf,
-                "box": xyxy
-            })
-            
-            # Update summary counts
-            if class_name in detected_counts:
-                detected_counts[class_name] += 1
+        # 1. Run base model (COCO)
+        base_results = self.base_model(image_source, verbose=False)
+        if base_results:
+            for box in base_results[0].boxes:
+                cls_id = int(box.cls[0].item())
+                conf = float(box.conf[0].item())
+                xyxy = box.xyxy[0].tolist()
                 
+                class_name = "other"
+                if cls_id == 0:  
+                    class_name = "person-lying"
+                elif cls_id in [2, 3, 5, 7]:  
+                    class_name = "damaged-vehicle"
+                elif cls_id == 9:  
+                    class_name = "road-block"
+                elif cls_id == 10:  
+                    class_name = "fire"
+                elif cls_id in [15, 16]:  
+                    class_name = "animal-injured"
+                
+                raw_detections.append({"class": class_name, "confidence": conf, "box": xyxy})
+                detected_counts[class_name] = detected_counts.get(class_name, 0) + 1
+
+        # 2. Run custom model (New Training)
+        if self.has_custom:
+            custom_results = self.custom_model(image_source, verbose=False)
+            if custom_results:
+                names_dict = self.custom_model.names
+                for box in custom_results[0].boxes:
+                    cls_id = int(box.cls[0].item())
+                    conf = float(box.conf[0].item())
+                    xyxy = box.xyxy[0].tolist()
+                    
+                    # Get actual class name from the trained model mapped to normalized name
+                    class_name = CUSTOM_CLASS_NAMES.get(cls_id, names_dict.get(cls_id, "unknown"))
+                    
+                    raw_detections.append({"class": class_name, "confidence": conf, "box": xyxy})
+                    detected_counts[class_name] = detected_counts.get(class_name, 0) + 1
+
         # Fill convenience fields
         if detected_counts.get("fire", 0) > 0 or detected_counts.get("smoke", 0) > 0:
             detected_counts["fire_detected"] = True
@@ -125,7 +115,8 @@ class EmergencyDetector:
         detected_counts["people_injured_count"] = (
             detected_counts.get("person-injured", 0) + 
             detected_counts.get("person-unconscious", 0) + 
-            detected_counts.get("person-trapped", 0)
+            detected_counts.get("person-trapped", 0) +
+            detected_counts.get("person-lying", 0)
         )
         
         if detected_counts.get("person-unconscious", 0) > 0:

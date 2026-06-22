@@ -19,6 +19,7 @@ class AlertModel {
   final DateTime? createdAt;
   final String? description;
   final bool isMyAlert;
+  final bool isEmergencyContact;
   final String? address;
   final List<String>? mediaUrls;
   final String? aiSummary;
@@ -55,6 +56,7 @@ class AlertModel {
     this.createdAt,
     this.description,
     this.isMyAlert = false,
+    this.isEmergencyContact = false,
     this.address,
     this.mediaUrls,
     this.aiSummary,
@@ -180,7 +182,8 @@ class AlertModel {
     ? DateTime.parse(json['created_at'].toString().split('+')[0] + 'Z').toLocal()
     : DateTime.now(),
           
-      isMyAlert: currentUserId != null && alertOwnerId == currentUserId,
+      isMyAlert: (currentUserId != null && alertOwnerId == currentUserId) || json['is_emergency_contact'] == true,
+      isEmergencyContact: json['is_emergency_contact'] == true,
       mediaUrls: mediaUrls,
       aiSummary: isAr ? summaryAr : summaryEn,
       aiInstructions: isAr ? instructionsAr : instructionsEn,

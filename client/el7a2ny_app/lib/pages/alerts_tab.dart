@@ -527,7 +527,10 @@ class _AlertCardState extends State<_AlertCard> {
                     children: [
                       Expanded(
                         child: Text(
-                          alert.getLocalizedType(context.loc) +
+                          (alert.isEmergencyContact
+                                  ? (isAr ? '⚠️ استغاثة اتصال: ' : '⚠️ Contact SOS: ')
+                                  : '') +
+                              alert.getLocalizedType(context.loc) +
                               (isMyAlerts ? context.loc.pastAlert : context.loc.activeStatus),
                           style: TextStyle(
                             fontSize: 16,

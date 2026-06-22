@@ -974,18 +974,71 @@ await ApiService.respondToAlert(
             ),
 
             // ── Bottom Action Button ──────────────────────────────────────
-            if (!(widget.isMyAlerts || widget.alert.isMyAlert))
-              Positioned(
-                bottom: 24,
-                left: 20,
-                right: 20,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  transitionBuilder: (child, animation) => ScaleTransition(
-                    scale: animation,
-                    child: FadeTransition(opacity: animation, child: child),
-                  ),
-                  child: _isJoining
+            Positioned(
+              bottom: 96,
+              left: 20,
+              right: 20,
+              child: (widget.isMyAlerts || widget.alert.isMyAlert)
+                  ? Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).primaryColor.withValues(alpha: 0.4),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ActiveIncidentTrackingScreen(
+                                incidentId: widget.alert.id,
+                                initialLat: widget.alert.latitude,
+                                initialLng: widget.alert.longitude,
+                                isCreatorOverride: true,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              isAr ? 'تتبع الاستغاثة والدردشة' : 'Track SOS & Chat',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'NotoSansArabic',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      transitionBuilder: (child, animation) => ScaleTransition(
+                        scale: animation,
+                        child: FadeTransition(opacity: animation, child: child),
+                      ),
+                      child: _isJoining
                       // ── Loading state ──
                       ? Container(
                           key: const ValueKey('loading'),
@@ -1148,8 +1201,8 @@ await ApiService.respondToAlert(
                               ),
                             ),
                 ),
-              )
-            else if (widget.alert.status.toLowerCase() != 'resolved' &&
+              ),
+            if ((widget.isMyAlerts || widget.alert.isMyAlert) && widget.alert.status.toLowerCase() != 'resolved' &&
                 widget.alert.status.toLowerCase() != 'cancelled')
               Positioned(
                 bottom: 24,

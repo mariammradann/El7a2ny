@@ -151,7 +151,10 @@ class _ReportCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    report.category.toUpperCase(),
+                    (report.isEmergencyContact
+                            ? (isAr ? '⚠️ استغاثة جهة اتصال: ' : '⚠️ Contact SOS: ')
+                            : '') +
+                        report.category.toUpperCase(),
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   const SizedBox(height: 4),

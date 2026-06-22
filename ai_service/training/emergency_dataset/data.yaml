@@ -1,13 +1,22 @@
-train: ../train/images
-val: ../valid/images
-test: ../test/images
-
-nc: 9
-names: ['FLOOD', 'INJURED PERSON', 'collapsed building', 'crushed car', 'fire', 'road block', 'smoke', 'turned over vechile', 'unconscious people']
-
+names:
+- FLOOD
+- INJURED PERSON
+- collapsed building
+- crushed car
+- fire
+- road block
+- smoke
+- turned over vechile
+- unconscious people
+- fight
+nc: 10
+path: d:/El7a2ny-trial/ai_service/training/emergency_dataset
 roboflow:
-  workspace: mariams-workspace-u3gv0
-  project: my-first-project-khgd2
-  version: 2
   license: Private
+  project: my-first-project-khgd2
   url: https://app.roboflow.com/mariams-workspace-u3gv0/my-first-project-khgd2/2
+  version: 2
+  workspace: mariams-workspace-u3gv0
+test: test/images
+train: train/images
+val: valid/images

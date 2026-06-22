@@ -20,6 +20,7 @@ def evaluate_baseline_triage(detected_counts: dict) -> tuple[str, str, int]:
     has_road_block = detected_counts.get("road-block", 0) > 0
     has_dangerous_animal = detected_counts.get("dangerous-animal", 0) > 0
     has_flood = detected_counts.get("flood", 0) > 0
+    has_fight = detected_counts.get("fight", 0) > 0
     
     # 1. CRITICAL LEVEL TRIGGERS (Triage Red / Urgency 9-10)
     # Severe life threats: unconscious/trapped people, structural collapses with active fire, massive floods.
@@ -33,8 +34,8 @@ def evaluate_baseline_triage(detected_counts: dict) -> tuple[str, str, int]:
         return "Critical", "Red", 9
 
     # 2. HIGH LEVEL TRIGGERS (Triage Orange / Urgency 7-8)
-    # Severe but stable: Active fire, injured (conscious) victims, dangerous animals in public.
-    if has_fire or has_injured or has_dangerous_animal:
+    # Severe but stable: Active fire, injured (conscious) victims, dangerous animals in public, physical violence.
+    if has_fire or has_injured or has_dangerous_animal or has_fight:
         return "High", "Orange", 8
         
     if has_collapse:

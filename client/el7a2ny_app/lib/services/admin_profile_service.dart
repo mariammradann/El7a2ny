@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:el7a2ny_app/models/admin_profile_model.dart';
 import 'package:el7a2ny_app/core/auth/auth_token_store.dart';
+import 'package:el7a2ny_app/core/config/api_config.dart';
 
 class AdminProfileService {
-  static const String _baseUrl = 'http://127.0.0.1:8000/api';
+  static String get _baseUrl => '${ApiConfig.baseUrl}/api';
 
   static Future<AdminProfile> fetchProfile(String adminId) async {
     final token = AuthTokenStore.accessToken;

@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import '../core/config/api_config.dart';
 import '../data/models/chat_message.dart';
 
 class AiService {
-  // Use 10.0.2.2 for Android Emulator, or 127.0.0.1 for Chrome/Desktop
-  static const String _baseUrl = 'http://127.0.0.1:8000/api/assistant/chat/';
+  static String get _baseUrl => '${ApiConfig.baseUrl}/api/assistant/chat/';
 
   static Future<String> getResponse(List<ChatMessage> history) async {
     try {

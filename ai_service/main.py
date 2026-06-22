@@ -393,6 +393,8 @@ async def analyze_image(
                 incident_type = "Flood"
             elif detected_counts.get("collapsed-building", 0) > 0:
                 incident_type = "Collapsed Structure"
+            elif detected_counts.get("fight", 0) > 0:
+                incident_type = "Physical Fight"
 
         # Merge: prefer Gemini's image-aware severity over YOLO-only baseline
         gemini_severity  = gemini_res.get("severity")   # may be None if Gemini didn't return it
@@ -529,6 +531,8 @@ async def analyze_video(
                     incident_type = "Flood"
                 elif detected_counts.get("collapsed-building", 0) > 0:
                     incident_type = "Collapsed Structure"
+                elif detected_counts.get("fight", 0) > 0:
+                    incident_type = "Physical Fight"
 
             # Merge: prefer Gemini's image-aware severity over YOLO-only baseline
             gemini_severity  = gemini_res.get("severity")

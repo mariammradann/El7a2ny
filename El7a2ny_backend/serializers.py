@@ -104,6 +104,8 @@ class IncidentSerializer(serializers.ModelSerializer):
     media_files = serializers.JSONField(required=False, allow_null=True)
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
+    is_emergency_contact = serializers.SerializerMethodField()
+
     class Meta:
         model = Incident
         fields = [
@@ -124,8 +126,31 @@ class IncidentSerializer(serializers.ModelSerializer):
             "current_volunteers",
             "total_volunteers",
             "ai_analysis",
+            "is_emergency_contact",
             # "device_id",
         ]
+
+    def get_is_emergency_contact(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return False
+        user_id = request.query_params.get("user_id") or (request.data.get("user_id") if isinstance(request.data, dict) else None)
+        if not user_id:
+            return False
+        try:
+            req_user = User.objects.get(user_id=user_id)
+            reporter = obj.user
+            if not reporter or reporter.user_id == req_user.user_id:
+                return False
+            req_phone_clean = "".join(filter(str.isdigit, req_user.phone_number))
+            for c in (reporter.emergency_contacts or []):
+                c_phone = c.get("phone", "").strip()
+                c_phone_clean = "".join(filter(str.isdigit, c_phone))
+                if c_phone_clean and req_phone_clean and (c_phone_clean.endswith(req_phone_clean[-10:]) or req_phone_clean.endswith(c_phone_clean[-10:])):
+                    return True
+        except Exception:
+            pass
+        return False
 
     def create(self, validated_data):
         # 1. Pop 'location_data' so it doesn't go into the Incident constructor
