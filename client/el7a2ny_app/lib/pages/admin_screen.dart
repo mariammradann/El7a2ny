@@ -662,8 +662,11 @@ class _AdminScreenState extends State<AdminScreen>
                         const SizedBox(height: 12),
                         const Divider(height: 1),
                         const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             if (isActionLoading)
                               const SizedBox(
@@ -684,7 +687,6 @@ class _AdminScreenState extends State<AdminScreen>
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
                               ElevatedButton(
                                 onPressed: () => _handleSponsorResponse(requestId, 'approve'),
                                 style: ElevatedButton.styleFrom(
@@ -1431,7 +1433,10 @@ class _AdminScreenState extends State<AdminScreen>
                           Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
                           Text(email, style: const TextStyle(fontSize: 12, color: Colors.grey, fontFamily: 'NotoSansArabic')),
                           const SizedBox(height: 4),
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1446,13 +1451,11 @@ class _AdminScreenState extends State<AdminScreen>
                                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFF59E0B)),
                                 ),
                               ),
-                              if (renewalDate != null) ...[
-                                const SizedBox(width: 8),
+                              if (renewalDate != null)
                                 Text(
                                   '${isAr ? 'يجدد' : 'Renews'}: ${renewalDate.toString().substring(0, 10)}',
                                   style: const TextStyle(fontSize: 11, color: Colors.grey),
                                 ),
-                              ],
                             ],
                           ),
                         ],
@@ -1693,8 +1696,11 @@ class _AdminCard extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: actions
                     .map((a) => _buildActionButton(context, a))
                     .toList(),

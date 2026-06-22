@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -37,8 +38,29 @@ class _AlertDetailsPageState extends State<AlertDetailsPage> {
     _totalVols = widget.alert.totalVolunteers;
     _currVols = widget.alert.currentVolunteers;
     _progress = (_totalVols > 0) ? (_currVols / _totalVols * 100).round() : 0;
-    _pageOpenedAt = DateTime.now(); // ← ADD THIS
+    _pageOpenedAt = DateTime.now();
+    _checkIfAlreadyResponded();
+  }
 
+  /// Check if the current user already responded to this alert
+  Future<void> _checkIfAlreadyResponded() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      if (userId == null || userId == 'guest') return;
+
+      final responders = await ApiService.fetchIncidentResponders(widget.alert.id);
+      final alreadyResponded = responders.any(
+        (r) => r['user_id']?.toString() == userId,
+      );
+      if (alreadyResponded && mounted) {
+        setState(() {
+          _joined = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking if already responded: $e');
+    }
   }
 
   Color _getSeverityColor(String severity) {
@@ -243,6 +265,31 @@ await ApiService.respondToAlert(
     } catch (e) {
       debugPrint('🚨 JOIN ERROR: $e');
       if (!mounted) return;
+      // If user already responded (409), treat as joined and navigate to tracking
+      if (e.toString().contains('Already responded')) {
+        setState(() {
+          _joined = true;
+          _isJoining = false;
+        });
+        SessionService().setActiveIncident(
+          widget.alert.id,
+          lat: widget.alert.lat,
+          lng: widget.alert.lng,
+          role: IncidentRole.volunteer,
+        );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => ActiveIncidentTrackingScreen(
+              incidentId: widget.alert.id,
+              initialLat: widget.alert.lat,
+              initialLng: widget.alert.lng,
+              isCreatorOverride: false,
+            ),
+            settings: const RouteSettings(name: '/active-incident'),
+          ),
+        );
+        return;
+      }
       setState(() => _isJoining = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

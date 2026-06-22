@@ -121,83 +121,146 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
               );
             }
             final profile = snapshot.data!;
+            final isMobile = MediaQuery.of(context).size.width < 768;
+
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── Row 1: Info card + Quick Actions ──────────────────────
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left: Admin Info & Security
-                      Expanded(
-                        flex: 3,
-                        child: _InfoSecurityCard(
-                          profile: profile,
-                          cardBg: _cardBg,
-                          borderColor: _borderColor,
-                          textMain: _textMain,
-                          textSub: _textSub,
-                          textMuted: _textMuted,
-                          isDark: _isDark,
+                  if (isMobile) ...[
+                    _InfoSecurityCard(
+                      profile: profile,
+                      cardBg: _cardBg,
+                      borderColor: _borderColor,
+                      textMain: _textMain,
+                      textSub: _textSub,
+                      textMuted: _textMuted,
+                      isDark: _isDark,
+                    ),
+                    const SizedBox(height: 16),
+                    _QuickActionsPanel(
+                      cardBg: _cardBg,
+                      borderColor: _borderColor,
+                      textMain: _textMain,
+                      textSub: _textSub,
+                      isDark: _isDark,
+                    ),
+                  ] else ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left: Admin Info & Security
+                        Expanded(
+                          flex: 3,
+                          child: _InfoSecurityCard(
+                            profile: profile,
+                            cardBg: _cardBg,
+                            borderColor: _borderColor,
+                            textMain: _textMain,
+                            textSub: _textSub,
+                            textMuted: _textMuted,
+                            isDark: _isDark,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 20),
-                      // Right: Quick Actions Panel
-                      SizedBox(
-                        width: 240,
-                        child: _QuickActionsPanel(
-                          cardBg: _cardBg,
-                          borderColor: _borderColor,
-                          textMain: _textMain,
-                          textSub: _textSub,
-                          isDark: _isDark,
+                        const SizedBox(width: 20),
+                        // Right: Quick Actions Panel
+                        SizedBox(
+                          width: 240,
+                          child: _QuickActionsPanel(
+                            cardBg: _cardBg,
+                            borderColor: _borderColor,
+                            textMain: _textMain,
+                            textSub: _textSub,
+                            isDark: _isDark,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // ── Row 2: Quick Statistics ────────────────────────────────
                   _SectionTitle(title: 'Quick Statistics', textMain: _textMain),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _StatCard(
-                        title: 'Total Users Managed',
-                        value: '${profile.totalUsers}+',
-                        icon: Icons.people_alt_rounded,
-                        color: _isDark ? const Color(0xFF1E3A8A).withOpacity(0.2) : const Color(0xFFEFF6FF),
-                        iconColor: const Color(0xFF3B82F6),
-                        borderColor: _isDark ? const Color(0xFF2563EB).withOpacity(0.3) : const Color(0xFFDBEAFE),
-                        textMain: _textMain,
-                        textSub: _textSub,
-                      ),
-                      const SizedBox(width: 16),
-                      _StatCard(
-                        title: 'Total Actions Taken Today',
-                        value: '${profile.actionsToday}',
-                        icon: Icons.assignment_turned_in_rounded,
-                        color: _isDark ? const Color(0xFF581C87).withOpacity(0.2) : const Color(0xFFFAF5FF),
-                        iconColor: const Color(0xFFA855F7),
-                        borderColor: _isDark ? const Color(0xFF7C3AED).withOpacity(0.3) : const Color(0xFFF3E8FF),
-                        textMain: _textMain,
-                        textSub: _textSub,
-                      ),
-                      const SizedBox(width: 16),
-                      _StatCard(
-                        title: 'Pending Requests & Reports',
-                        value: '${profile.pendingRequests + profile.emergencyReports}',
-                        icon: Icons.notifications_active_rounded,
-                        color: _isDark ? const Color(0xFF7F1D1D).withOpacity(0.2) : const Color(0xFFFEF2F2),
-                        iconColor: const Color(0xFFEF4444),
-                        borderColor: _isDark ? const Color(0xFFDC2626).withOpacity(0.3) : const Color(0xFFFEE2E2),
-                        textMain: _textMain,
-                        textSub: _textSub,
-                      ),
-                    ],
-                  ),
+                  if (isMobile) ...[
+                    _StatCard(
+                      title: 'Total Users Managed',
+                      value: '${profile.totalUsers}+',
+                      icon: Icons.people_alt_rounded,
+                      color: _isDark ? const Color(0xFF1E3A8A).withOpacity(0.2) : const Color(0xFFEFF6FF),
+                      iconColor: const Color(0xFF3B82F6),
+                      borderColor: _isDark ? const Color(0xFF2563EB).withOpacity(0.3) : const Color(0xFFDBEAFE),
+                      textMain: _textMain,
+                      textSub: _textSub,
+                      isExpanded: false,
+                    ),
+                    const SizedBox(height: 12),
+                    _StatCard(
+                      title: 'Total Actions Taken Today',
+                      value: '${profile.actionsToday}',
+                      icon: Icons.assignment_turned_in_rounded,
+                      color: _isDark ? const Color(0xFF581C87).withOpacity(0.2) : const Color(0xFFFAF5FF),
+                      iconColor: const Color(0xFFA855F7),
+                      borderColor: _isDark ? const Color(0xFF7C3AED).withOpacity(0.3) : const Color(0xFFF3E8FF),
+                      textMain: _textMain,
+                      textSub: _textSub,
+                      isExpanded: false,
+                    ),
+                    const SizedBox(height: 12),
+                    _StatCard(
+                      title: 'Pending Requests & Reports',
+                      value: '${profile.pendingRequests + profile.emergencyReports}',
+                      icon: Icons.notifications_active_rounded,
+                      color: _isDark ? const Color(0xFF7F1D1D).withOpacity(0.2) : const Color(0xFFFEF2F2),
+                      iconColor: const Color(0xFFEF4444),
+                      borderColor: _isDark ? const Color(0xFFDC2626).withOpacity(0.3) : const Color(0xFFFEE2E2),
+                      textMain: _textMain,
+                      textSub: _textSub,
+                      isExpanded: false,
+                    ),
+                  ] else ...[
+                    Row(
+                      children: [
+                        _StatCard(
+                          title: 'Total Users Managed',
+                          value: '${profile.totalUsers}+',
+                          icon: Icons.people_alt_rounded,
+                          color: _isDark ? const Color(0xFF1E3A8A).withOpacity(0.2) : const Color(0xFFEFF6FF),
+                          iconColor: const Color(0xFF3B82F6),
+                          borderColor: _isDark ? const Color(0xFF2563EB).withOpacity(0.3) : const Color(0xFFDBEAFE),
+                          textMain: _textMain,
+                          textSub: _textSub,
+                          isExpanded: true,
+                        ),
+                        const SizedBox(width: 16),
+                        _StatCard(
+                          title: 'Total Actions Taken Today',
+                          value: '${profile.actionsToday}',
+                          icon: Icons.assignment_turned_in_rounded,
+                          color: _isDark ? const Color(0xFF581C87).withOpacity(0.2) : const Color(0xFFFAF5FF),
+                          iconColor: const Color(0xFFA855F7),
+                          borderColor: _isDark ? const Color(0xFF7C3AED).withOpacity(0.3) : const Color(0xFFF3E8FF),
+                          textMain: _textMain,
+                          textSub: _textSub,
+                          isExpanded: true,
+                        ),
+                        const SizedBox(width: 16),
+                        _StatCard(
+                          title: 'Pending Requests & Reports',
+                          value: '${profile.pendingRequests + profile.emergencyReports}',
+                          icon: Icons.notifications_active_rounded,
+                          color: _isDark ? const Color(0xFF7F1D1D).withOpacity(0.2) : const Color(0xFFFEF2F2),
+                          iconColor: const Color(0xFFEF4444),
+                          borderColor: _isDark ? const Color(0xFFDC2626).withOpacity(0.3) : const Color(0xFFFEE2E2),
+                          textMain: _textMain,
+                          textSub: _textSub,
+                          isExpanded: true,
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // ── Row 3: Audit Log ───────────────────────────────────────
@@ -244,6 +307,114 @@ class _InfoSecurityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 500;
+
+    final avatarWidget = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          children: [
+            CircleAvatar(
+              radius: 52,
+              backgroundImage: profile.avatarUrl.isNotEmpty
+                  ? NetworkImage(profile.avatarUrl)
+                  : const NetworkImage('https://i.pravatar.cc/150?img=47'),
+              backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+            ),
+            Positioned(
+              bottom: 4,
+              right: 4,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: profile.isOnline ? Colors.green : Colors.grey,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: cardBg, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.circle,
+              size: 10,
+              color: profile.isOnline ? Colors.green : Colors.grey,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              profile.isOnline ? 'Online' : 'Offline',
+              style: TextStyle(
+                fontSize: 13,
+                color: profile.isOnline ? Colors.green : Colors.grey,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'NotoSansArabic',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final detailsWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Admin Information & Security',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textMuted,
+            fontFamily: 'NotoSansArabic',
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          profile.fullName,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: textMain,
+            fontFamily: 'NotoSansArabic',
+          ),
+        ),
+        const SizedBox(height: 16),
+        _InfoRow(label: 'Admin ID:', value: profile.adminId, textMain: textMain, textSub: textSub),
+        _InfoRow(
+          label: 'Contact:',
+          value: '${profile.email} | ${profile.phone}',
+          textMain: textMain,
+          textSub: textSub,
+        ),
+        _InfoRow(label: 'Address:', value: profile.address, textMain: textMain, textSub: textSub),
+        const SizedBox(height: 20),
+        Text(
+          'Security Settings',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: textMain,
+            fontFamily: 'NotoSansArabic',
+          ),
+        ),
+        const SizedBox(height: 8),
+        _InfoRow(label: 'Role:', value: profile.roleLevel, textMain: textMain, textSub: textSub),
+        _InfoRow(
+          label: '2FA Status:',
+          value: profile.twoFactorEnabled
+              ? 'Enabled (Google Authenticator)'
+              : 'Disabled',
+          textMain: textMain,
+          textSub: textSub,
+        ),
+        _InfoRow(label: 'Last Login:', value: profile.lastLogin, textMain: textMain, textSub: textSub),
+      ],
+    );
+
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
@@ -258,119 +429,25 @@ class _InfoSecurityCard extends StatelessWidget {
         ],
       ),
       padding: const EdgeInsets.all(24),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar with Online badge
-          Column(
-            children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 52,
-                    backgroundImage: profile.avatarUrl.isNotEmpty
-                        ? NetworkImage(profile.avatarUrl)
-                        : const NetworkImage('https://i.pravatar.cc/150?img=47'),
-                    backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                  ),
-                  Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: profile.isOnline ? Colors.green : Colors.grey,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: cardBg, width: 2),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.circle,
-                    size: 10,
-                    color: profile.isOnline ? Colors.green : Colors.grey,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    profile.isOnline ? 'Online' : 'Offline',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: profile.isOnline ? Colors.green : Colors.grey,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'NotoSansArabic',
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(width: 24),
-
-          // Info details
-          Expanded(
-            child: Column(
+      child: isMobile
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                avatarWidget,
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 16),
+                detailsWidget,
+              ],
+            )
+          : Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Admin Information & Security',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: textMuted,
-                    fontFamily: 'NotoSansArabic',
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  profile.fullName,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: textMain,
-                    fontFamily: 'NotoSansArabic',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _InfoRow(label: 'Admin ID:', value: profile.adminId, textMain: textMain, textSub: textSub),
-                _InfoRow(
-                  label: 'Contact:',
-                  value: '${profile.email} | ${profile.phone}',
-                  textMain: textMain,
-                  textSub: textSub,
-                ),
-                _InfoRow(label: 'Address:', value: profile.address, textMain: textMain, textSub: textSub),
-                const SizedBox(height: 20),
-                Text(
-                  'Security Settings',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: textMain,
-                    fontFamily: 'NotoSansArabic',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                _InfoRow(label: 'Role:', value: profile.roleLevel, textMain: textMain, textSub: textSub),
-                _InfoRow(
-                  label: '2FA Status:',
-                  value: profile.twoFactorEnabled
-                      ? 'Enabled (Google Authenticator)'
-                      : 'Disabled',
-                  textMain: textMain,
-                  textSub: textSub,
-                ),
-                _InfoRow(label: 'Last Login:', value: profile.lastLogin, textMain: textMain, textSub: textSub),
+                avatarWidget,
+                const SizedBox(width: 24),
+                Expanded(child: detailsWidget),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -554,6 +631,7 @@ class _StatCard extends StatelessWidget {
   final Color borderColor;
   final Color textMain;
   final Color textSub;
+  final bool isExpanded;
 
   const _StatCard({
     required this.title,
@@ -564,52 +642,56 @@ class _StatCard extends StatelessWidget {
     required this.borderColor,
     required this.textMain,
     required this.textSub,
+    this.isExpanded = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: textSub,
-                      fontFamily: 'NotoSansArabic',
-                    ),
+    final cardContent = Container(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: textSub,
+                    fontFamily: 'NotoSansArabic',
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w900,
-                      color: textMain,
-                      fontFamily: 'NotoSansArabic',
-                    ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                    color: textMain,
+                    fontFamily: 'NotoSansArabic',
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Icon(icon, size: 36, color: iconColor),
-          ],
-        ),
+          ),
+          Icon(icon, size: 36, color: iconColor),
+        ],
       ),
     );
+
+    if (isExpanded) {
+      return Expanded(child: cardContent);
+    }
+    return cardContent;
   }
 }
 
@@ -656,6 +738,8 @@ class _AuditLogTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
@@ -684,52 +768,53 @@ class _AuditLogTable extends StatelessWidget {
               ),
             ),
           ),
-          // Header row
-          Container(
-            color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Date/Time',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                      color: textMain,
-                      fontFamily: 'NotoSansArabic',
+          if (!isMobile) ...[
+            Container(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Date/Time',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: textMain,
+                        fontFamily: 'NotoSansArabic',
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Action Taken',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                      color: textMain,
-                      fontFamily: 'NotoSansArabic',
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'Action Taken',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: textMain,
+                        fontFamily: 'NotoSansArabic',
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'Target User ID/Name',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                      color: textMain,
-                      fontFamily: 'NotoSansArabic',
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Target User ID/Name',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: textMain,
+                        fontFamily: 'NotoSansArabic',
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Divider(height: 1, color: borderColor),
+            Divider(height: 1, color: borderColor),
+          ],
           // Data rows
           if (actions.isEmpty)
             Padding(
@@ -750,6 +835,52 @@ class _AuditLogTable extends StatelessWidget {
                 final parts = act.action.split('|');
                 final actionText = parts.isNotEmpty ? parts[0].trim() : act.action;
                 final targetText = parts.length > 1 ? parts[1].trim() : '—';
+
+                if (isMobile) {
+                  return Container(
+                    color: index.isEven
+                        ? cardBg
+                        : (isDark ? const Color(0xFF1E293B).withOpacity(0.5) : const Color(0xFFF8FAFC)),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              actionText,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: textMain,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'NotoSansArabic',
+                              ),
+                            ),
+                            Text(
+                              act.timestamp,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: textMuted,
+                                fontFamily: 'NotoSansArabic',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Target: $targetText',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: textSub,
+                            fontFamily: 'NotoSansArabic',
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
                 return Container(
                   color: index.isEven
                       ? cardBg

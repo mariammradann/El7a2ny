@@ -357,10 +357,35 @@ class _CameraCard extends StatelessWidget {
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _MetricItem(label: loc.heartRate, value: monitoringEnabled ? camera.value : '0', unit: 'fps', color: monitoringEnabled ? Colors.blue : Colors.grey, icon: monitoringEnabled ? Icons.videocam_rounded : Icons.videocam_off_rounded),
-                  _MetricItem(label: loc.oxygenLevel, value: monitoringEnabled ? '98' : '0', unit: '%', color: monitoringEnabled ? Colors.green : Colors.grey, icon: Icons.wifi),
-                  _MetricItem(label: loc.caloriesBurned, value: monitoringEnabled ? '240' : '0', unit: 'GB', color: monitoringEnabled ? const Color(0xFFF18F34) : Colors.grey, icon: Icons.storage_rounded),
+                  Expanded(
+                    child: _MetricItem(
+                      label: loc.heartRate,
+                      value: monitoringEnabled ? camera.value : '0',
+                      unit: 'fps',
+                      color: monitoringEnabled ? Colors.blue : Colors.grey,
+                      icon: monitoringEnabled ? Icons.videocam_rounded : Icons.videocam_off_rounded,
+                    ),
+                  ),
+                  Expanded(
+                    child: _MetricItem(
+                      label: loc.oxygenLevel,
+                      value: monitoringEnabled ? '98' : '0',
+                      unit: '%',
+                      color: monitoringEnabled ? Colors.green : Colors.grey,
+                      icon: Icons.wifi,
+                    ),
+                  ),
+                  Expanded(
+                    child: _MetricItem(
+                      label: loc.caloriesBurned,
+                      value: monitoringEnabled ? '240' : '0',
+                      unit: 'GB',
+                      color: monitoringEnabled ? const Color(0xFFF18F34) : Colors.grey,
+                      icon: Icons.storage_rounded,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -380,13 +405,33 @@ class _MetricItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(height: 10),
-        Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-        Text(unit, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          unit,
+          style: const TextStyle(fontSize: 10, color: Colors.grey),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic')),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, fontFamily: 'NotoSansArabic'),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
       ],
     );
   }

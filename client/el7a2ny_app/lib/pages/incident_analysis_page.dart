@@ -17,6 +17,7 @@ class _IncidentAnalysisPageState extends State<IncidentAnalysisPage> {
   bool _loading = true;
   int _totalCount = 0;
   int _activeCount = 0;
+  final MapController _mapController = MapController();
 
   @override
   void initState() {
@@ -89,7 +90,7 @@ class _IncidentAnalysisPageState extends State<IncidentAnalysisPage> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  height: 250,
+                  height: 400,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF18F34).withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(12),
@@ -99,32 +100,67 @@ class _IncidentAnalysisPageState extends State<IncidentAnalysisPage> {
                   ),
                   child: _loading
                       ? const Center(child: CircularProgressIndicator())
-                      : FlutterMap(
-                          options: MapOptions(
-                            initialCenter: _alerts.isNotEmpty
-                                ? LatLng(_alerts.first.lat, _alerts.first.lng)
-                                : const LatLng(30.0444, 31.2357), // Default Cairo
-                            initialZoom: 11.0,
-                          ),
+                      : Stack(
                           children: [
-                            TileLayer(
-                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.example.el7a2ny_app',
+                            FlutterMap(
+                              mapController: _mapController,
+                              options: MapOptions(
+                                initialCenter: _alerts.isNotEmpty
+                                    ? LatLng(_alerts.first.lat, _alerts.first.lng)
+                                    : const LatLng(30.0444, 31.2357), // Default Cairo
+                                initialZoom: 11.0,
+                              ),
+                              children: [
+                                TileLayer(
+                                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                  userAgentPackageName: 'com.example.el7a2ny_app',
+                                ),
+                                CircleLayer(
+                                  circles: _alerts
+                                      .where((a) => a.lat != 0.0 && a.lng != 0.0)
+                                      .map(
+                                        (a) => CircleMarker(
+                                          point: LatLng(a.lat, a.lng),
+                                          color: const Color(0xFFE61717).withValues(alpha: 0.35),
+                                          borderStrokeWidth: 1.5,
+                                          borderColor: const Color(0xFFE61717).withValues(alpha: 0.7),
+                                          useRadiusInMeter: true,
+                                          radius: 800, // 800 meters radius
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
                             ),
-                            CircleLayer(
-                              circles: _alerts
-                                  .where((a) => a.lat != 0.0 && a.lng != 0.0)
-                                  .map(
-                                    (a) => CircleMarker(
-                                      point: LatLng(a.lat, a.lng),
-                                      color: const Color(0xFFE61717).withValues(alpha: 0.35),
-                                      borderStrokeWidth: 1.5,
-                                      borderColor: const Color(0xFFE61717).withValues(alpha: 0.7),
-                                      useRadiusInMeter: true,
-                                      radius: 800, // 800 meters radius
-                                    ),
-                                  )
-                                  .toList(),
+                            Positioned(
+                              bottom: 12,
+                              right: 12,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  FloatingActionButton.small(
+                                    heroTag: 'zoom_in_heatmap',
+                                    backgroundColor: Colors.white.withValues(alpha: 0.9),
+                                    foregroundColor: Colors.black87,
+                                    onPressed: () {
+                                      final currentZoom = _mapController.camera.zoom;
+                                      _mapController.move(_mapController.camera.center, currentZoom + 1);
+                                    },
+                                    child: const Icon(Icons.add_rounded),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  FloatingActionButton.small(
+                                    heroTag: 'zoom_out_heatmap',
+                                    backgroundColor: Colors.white.withValues(alpha: 0.9),
+                                    foregroundColor: Colors.black87,
+                                    onPressed: () {
+                                      final currentZoom = _mapController.camera.zoom;
+                                      _mapController.move(_mapController.camera.center, currentZoom - 1);
+                                    },
+                                    child: const Icon(Icons.remove_rounded),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
